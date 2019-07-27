@@ -15,28 +15,29 @@ public:
     source(source_), name(name_) {}
 };
 
-class Wire {
+class Port {
 public:
   ModuleInstance* inst;
   std::string portName;
+  bool isInput;
 };
 
-class Activation;
-
-class ConnectAndContinue {
-public:
-  bool isStartAction;
-  pair<Wire*, Wire*> connection;
-  std::vector<Activation*> continuations;
-};
+class ConnectAndContinue;
 
 typedef ConnectAndContinue CC;
 
 class Activation {
 public:
   CC* destination;
-  Wire* condition;
+  Port* condition;
   int delay;
+};
+
+class ConnectAndContinue {
+public:
+  bool isStartAction;
+  pair<Port, Port> connection;
+  std::vector<Activation> continuations;
 };
 
 // How are calling conventions different from
@@ -75,19 +76,40 @@ public:
 
 class Context {
 public:
-  
+
 };
 
 // Example: An adder module has one action, which takes
 // an adder as its first argument, and which
 
 int main() {
+
+  // Really: Modules should have ports
+  // Ports have widths
   Module* wire16 = new Module("wire16");
+  add16Inv->addArgument(wire16, "in");
+  add16Inv->addArgument(wire16, "out");
+
   Module* add16 = new Module("add16");
+  add16->addArgument(wire16, "in0");
+  add16->addArgument(wire16, "in1");
+  add16->addArgument(wire16, "out");    
 
   Module* add16Inv = new Module("add16Inv");
   add16Inv->addArgument(add16, "adder");
   add16Inv->addArgument(wire16, "in0");
+  add16Inv->addArgument(wire16, "in1");
+  add16Inv->addArgument(wire16, "out");    
+
+  Port adderIn0 = add16Inv->getArg("adder")->wire("in0");
+  Port adderIn1 = add16Inv->getArg("adder")->wire("in1");
+  Port dataIn1 = add16Inv->getArg("in0")->wire("out");
+  Port dataIn1 = add16Inv->getArg("in1")->wire("out");  
+  Port dataOut = add16Inv->getArg("out")->wire("in");    
+
+  add16Inv->addInstruction(true, {{}, {}}, );
 
   add16->addAction(add16Inv);
+
+  
 }
