@@ -82,11 +82,13 @@ public:
   }
 
   CC* addStartInstruction(const Port a, const Port b) {
-    assert(false);
+    CC* cc = new CC();
+    return cc;
   }
 
   CC* addInstruction(const Port a, const Port b) {
-    assert(false);
+    CC* cc = new CC();
+    return cc;
   }
   
   void setPrimitive(const bool isPrim) {
@@ -165,13 +167,13 @@ int main() {
   ModuleInstance* aout = add16Inv->addInstance(wire16, "adder_out");
   
   CC* in0W = add16Inv->addStartInstruction(in0->pt("out"), ain0->pt("in"));
-  CC* in1W = add16Inv->addStartInstruction(in1->pt("out"), ain1->pt("in"));
-  CC* outW = add16Inv->addStartInstruction(out->pt("in"), aout->pt("out"));
+  CC* in1W = add16Inv->addInstruction(in1->pt("out"), ain1->pt("in"));
+  CC* outW = add16Inv->addInstruction(out->pt("in"), aout->pt("out"));
 
   in0W->continueTo(oneInst->pt("out"), in0W, 0);
   in1W->continueTo(oneInst->pt("out"), outW, 0);
   
-  // add16->addAction(add16Inv);
+  add16->addAction(add16Inv);
 
   
 }
