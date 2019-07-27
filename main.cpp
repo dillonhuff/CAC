@@ -5,7 +5,18 @@ using namespace std;
 using namespace dbhc;
 
 class Module;
-  
+class ModuleInstance;
+
+class Port {
+public:
+  ModuleInstance* inst;
+  std::string portName;
+  bool isInput;
+  int width;
+};
+
+Port getPort(Module* const mod, const std::string& name);
+
 class ModuleInstance {
 public:
   Module* source;
@@ -13,13 +24,10 @@ public:
 
   ModuleInstance(Module* source_, const std::string& name_) :
     source(source_), name(name_) {}
-};
 
-class Port {
-public:
-  ModuleInstance* inst;
-  std::string portName;
-  bool isInput;
+  Port pt(const std::string& name) {
+    return getPort(source, name);
+  }
 };
 
 class ConnectAndContinue;
@@ -28,8 +36,8 @@ typedef ConnectAndContinue CC;
 
 class Activation {
 public:
+  Port condition;
   CC* destination;
-  Port* condition;
   int delay;
 };
 
@@ -38,6 +46,10 @@ public:
   bool isStartAction;
   pair<Port, Port> connection;
   std::vector<Activation> continuations;
+
+  void continueTo(Port condition, CC* next, const int delay) {
+    continuations.push_back({condition, next, delay});
+  }
 };
 
 // How are calling conventions different from
@@ -49,30 +61,71 @@ public:
 typedef Module CallingConvention;
 
 class Module {
-  std::set<CC*> body;
+  bool isPrimitive;
+  std::map<string, Port> primPorts;
 
   std::set<ModuleInstance*> resources;
-  std::set<ModuleInstance*> arguments;
-
+  std::set<CC*> body;
   std::set<CallingConvention*> actions;
   std::string name;
   
 public:
 
-  Module(const std::string name_) : name(name_) {}
+  Module(const std::string name_) : name(name_), isPrimitive(false) {}
 
-  void addArgument(Module* type, const std::string& name) {
-    arguments.insert(new ModuleInstance(type, name));
+  Port pt(const std::string& name) {
+    if (isPrimitive) {
+      return map_find(name, primPorts);
+    } else {
+      assert(false);
+    }
+  }
+
+  CC* addStartInstruction(const Port a, const Port b) {
+    assert(false);
+  }
+
+  CC* addInstruction(const Port a, const Port b) {
+    assert(false);
+  }
+  
+  void setPrimitive(const bool isPrim) {
+    isPrimitive = isPrim;
+  }
+
+  void addInPort(const int width, const std::string& name) {
+    assert(isPrimitive);
+
+    assert(!contains_key(name, primPorts));
+    primPorts.insert({name, {nullptr, name, true, width}});
+  }
+
+  void addOutPort(const int width, const std::string& name) {
+    assert(isPrimitive);
+
+    assert(!contains_key(name, primPorts));
+    primPorts.insert({name, {nullptr, name, false, width}});
+
   }
   
   int numActions() {
     return actions.size();
+  }
+
+  ModuleInstance* addInstance(Module* tp, const std::string& name) {
+    auto i = new ModuleInstance(tp, name);
+    resources.insert(i);
+    return i;
   }
   
   void addAction(CallingConvention* callingC) {
     assert(callingC->numActions() == 0);
   }
 };
+
+Port getPort(Module* const mod, const std::string& name) {
+  return mod->pt(name);
+}
 
 class Context {
 public:
@@ -84,32 +137,41 @@ public:
 
 int main() {
 
-  // Really: Modules should have ports
-  // Ports have widths
+  Module* const_1_1 = new Module("const_1_1");
+  const_1_1->setPrimitive(true);
+  const_1_1->addOutPort(1, "out");
+  
   Module* wire16 = new Module("wire16");
-  add16Inv->addArgument(wire16, "in");
-  add16Inv->addArgument(wire16, "out");
-
+  wire16->setPrimitive(true);
+  wire16->addInPort(16, "in");
+  wire16->addOutPort(16, "out");  
+  
   Module* add16 = new Module("add16");
-  add16->addArgument(wire16, "in0");
-  add16->addArgument(wire16, "in1");
-  add16->addArgument(wire16, "out");    
+  add16->setPrimitive(true);
+  add16->addInPort(16, "in0");
+  add16->addInPort(16, "in1");
+  add16->addOutPort(16, "out");
 
   Module* add16Inv = new Module("add16Inv");
-  add16Inv->addArgument(add16, "adder");
-  add16Inv->addArgument(wire16, "in0");
-  add16Inv->addArgument(wire16, "in1");
-  add16Inv->addArgument(wire16, "out");    
 
-  Port adderIn0 = add16Inv->getArg("adder")->wire("in0");
-  Port adderIn1 = add16Inv->getArg("adder")->wire("in1");
-  Port dataIn1 = add16Inv->getArg("in0")->wire("out");
-  Port dataIn1 = add16Inv->getArg("in1")->wire("out");  
-  Port dataOut = add16Inv->getArg("out")->wire("in");    
+  ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
 
-  add16Inv->addInstruction(true, {{}, {}}, );
+  ModuleInstance* in0 = add16Inv->addInstance(wire16, "in0");
+  ModuleInstance* in1 = add16Inv->addInstance(wire16, "in1");
+  ModuleInstance* out = add16Inv->addInstance(wire16, "out");
 
-  add16->addAction(add16Inv);
+  ModuleInstance* ain0 = add16Inv->addInstance(wire16, "adder_in0");
+  ModuleInstance* ain1 = add16Inv->addInstance(wire16, "adder_in1");
+  ModuleInstance* aout = add16Inv->addInstance(wire16, "adder_out");
+  
+  CC* in0W = add16Inv->addStartInstruction(in0->pt("out"), ain0->pt("in"));
+  CC* in1W = add16Inv->addStartInstruction(in1->pt("out"), ain1->pt("in"));
+  CC* outW = add16Inv->addStartInstruction(out->pt("in"), aout->pt("out"));
+
+  in0W->continueTo(oneInst->pt("out"), in0W, 0);
+  in1W->continueTo(oneInst->pt("out"), outW, 0);
+  
+  // add16->addAction(add16Inv);
 
   
 }
