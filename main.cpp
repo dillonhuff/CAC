@@ -57,12 +57,6 @@ public:
   }
 };
 
-// How are calling conventions different from
-// modules? I want them to always be inlined, but structurally
-// how are they different? Maybe they arent? A calling convention
-// is just a module with no subconventions, which therefore must
-// be inlined in to the code?
-
 typedef Module CallingConvention;
 
 class Module {
