@@ -1,6 +1,8 @@
 #include <iostream>
 #include "algorithm.h"
 
+#include <llvm/IR/Module.h>
+
 using namespace std;
 using namespace dbhc;
 
