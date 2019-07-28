@@ -19,5 +19,8 @@ namespace CAC {
     out << "endmodule";
     out.close();
   }
-  
+
+  void print(std::ostream& out, Module* source) {
+    source->print(out);
+  }
 }

@@ -9,6 +9,9 @@ using namespace dbhc;
 namespace CAC {
 
   class Module;
+
+  void print(std::ostream& out, Module* source);  
+
   class ModuleInstance;
 
   class Port {
@@ -39,6 +42,11 @@ namespace CAC {
 
     Port pt(const std::string& name) {
       return getPort(source, name);
+    }
+
+    void print(std::ostream& out) {
+      out << "submodule " << name << " of type " << endl;
+      CAC::print(out, source);
     }
   };
 
@@ -153,7 +161,7 @@ namespace CAC {
     }
 
     void print(std::ostream& out) const {
-      out << "module " << name << endl;
+      out << "module " << name << endl << endl;
 
       out << actions.size() << " actions..." << endl;
       for (CallingConvention* action : actions) {
@@ -161,6 +169,13 @@ namespace CAC {
         out << endl << endl;
       }
       out << "end of actions for " << name << endl;
+
+      out << resources.size() << " submodules..." << endl;
+      for (ModuleInstance* mod : resources) {
+        mod->print(out);
+        out << endl << endl;
+      }
+
       out << "endmodule "<< name << endl;
     }
 
