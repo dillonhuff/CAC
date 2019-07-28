@@ -136,6 +136,60 @@ intrinsics_gen/fast:
 	$(MAKE) -f CMakeFiles/intrinsics_gen.dir/build.make CMakeFiles/intrinsics_gen.dir/build
 .PHONY : intrinsics_gen/fast
 
+ir.o: ir.cpp.o
+
+.PHONY : ir.o
+
+# target to build an object file
+ir.cpp.o:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/ir.cpp.o
+.PHONY : ir.cpp.o
+
+ir.i: ir.cpp.i
+
+.PHONY : ir.i
+
+# target to preprocess a source file
+ir.cpp.i:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/ir.cpp.i
+.PHONY : ir.cpp.i
+
+ir.s: ir.cpp.s
+
+.PHONY : ir.s
+
+# target to generate assembly for a file
+ir.cpp.s:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/ir.cpp.s
+.PHONY : ir.cpp.s
+
+llvm_loader.o: llvm_loader.cpp.o
+
+.PHONY : llvm_loader.o
+
+# target to build an object file
+llvm_loader.cpp.o:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/llvm_loader.cpp.o
+.PHONY : llvm_loader.cpp.o
+
+llvm_loader.i: llvm_loader.cpp.i
+
+.PHONY : llvm_loader.i
+
+# target to preprocess a source file
+llvm_loader.cpp.i:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/llvm_loader.cpp.i
+.PHONY : llvm_loader.cpp.i
+
+llvm_loader.s: llvm_loader.cpp.s
+
+.PHONY : llvm_loader.s
+
+# target to generate assembly for a file
+llvm_loader.cpp.s:
+	$(MAKE) -f CMakeFiles/all-tests.dir/build.make CMakeFiles/all-tests.dir/llvm_loader.cpp.s
+.PHONY : llvm_loader.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -173,6 +227,12 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... all-tests"
 	@echo "... intrinsics_gen"
+	@echo "... ir.o"
+	@echo "... ir.i"
+	@echo "... ir.s"
+	@echo "... llvm_loader.o"
+	@echo "... llvm_loader.i"
+	@echo "... llvm_loader.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
