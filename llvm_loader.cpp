@@ -54,6 +54,8 @@ void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {
 
+
+  
   map<string, CAC::Module*> builtinModDefs;
   CAC::Module* ram32_128 = c.addModule("ram32_128");
   ram32_128->setPrimitive(true);
@@ -62,7 +64,28 @@ void loadLLVMFromFile(Context& c,
   ram32_128->addInPort(1, "wen");  
   ram32_128->addInPort(32, "waddr");
   ram32_128->addInPort(32, "wdata");
+
+  CAC::Module* read = c.addModule("ram32_128_read");
+  auto ramRaddr = read->addInstance(getWireMod(c, 32), "ram_raddr");
+  auto ramData = read->addInstance(getWireMod(c, 32), "ram_rdata");  
+
+  auto resRaddr = read->addInstance(getWireMod(c, 32), "res_raddr");
+  auto resRdata = read->addInstance(getWireMod(c, 32), "res_rdata");
+
+  CC* setRaddr = read->addStartInstruction(ramRaddr->pt("in"),
+                                           resRaddr->pt("out"));
+  CC* readRdata = read->addStartInstruction(ramData->pt("in"),
+                                            resRdata->pt("in"));
+  setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
+  
+  CAC::Module* write = c.addModule("ram32_128_write");
+
+  ram32_128->addAction(read);
+  ram32_128->addAction(write);
+  
   builtinModDefs["struct.ram_32_128"] = ram32_128;
+  builtinModDefs["read"] = read;
+  builtinModDefs["write"] = write;
   
   SMDiagnostic err;
   LLVMContext context;

@@ -8,6 +8,7 @@ using namespace dbhc;
 
 namespace CAC {
 
+  class Context;
   class Module;
 
   void print(std::ostream& out, Module* source);  
@@ -79,6 +80,8 @@ namespace CAC {
 
   typedef Module CallingConvention;
 
+  Module* getConstMod(Context& c, const int width, const int value);
+
   class Module {
     bool isPrimitive;
     std::map<string, Port> primPorts;
@@ -87,10 +90,31 @@ namespace CAC {
     std::set<CC*> body;
     std::set<CallingConvention*> actions;
     std::string name;
+
+    int uniqueNum;
+
+    Context* context;
   
   public:
 
-    Module(const std::string name_) : isPrimitive(false), name(name_) {}
+    Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    void setContext(Context* ctx) {
+      context = ctx;
+    }
+
+    ModuleInstance* freshInstance(Module* tp, const std::string& name) {
+      string fullName = name + "_" + to_string(uniqueNum);
+      uniqueNum++;
+      return addInstance(tp, fullName);
+    }
+
+    Port constOut(const int width, const int value) {
+      assert(context != nullptr);
+      Module* constInt = getConstMod(*context, width, value);
+      ModuleInstance* c = freshInstance(constInt, "const");
+      return c->pt("out");
+    }
 
     vector<Port> allPorts() {
       assert(false);
@@ -202,9 +226,13 @@ namespace CAC {
     }
     
     Module* addModule(const std::string& name) {
+      if (contains_key(name, mods)) {
+        cout << "Error: Module already contains " << name << endl;
+      }
       assert(!contains_key(name, mods));
       
       mods[name] = new Module(name);
+      mods[name]->setContext(this);
 
       return map_find(name, mods);
     }

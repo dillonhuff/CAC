@@ -23,4 +23,18 @@ namespace CAC {
   void print(std::ostream& out, Module* source) {
     source->print(out);
   }
+
+  Module* getConstMod(Context& c, const int width, const int value) {
+    string name = "const_" + to_string(width) + "_" + to_string(value);
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+
+    CAC::Module* w = c.addModule(name);
+    w->setPrimitive(true);
+    w->addInPort(width, "out");
+  
+    return w;
+
+  }
 }
