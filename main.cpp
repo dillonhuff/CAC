@@ -41,6 +41,11 @@ public:
   int delay;
 };
 
+enum ConnectAndContinueType {
+  CONNECT_AND_CONTINUE_TYPE_CONNECT,
+  CONNECT_AND_CONTINUE_TYPE_INVOKE
+};
+
 class ConnectAndContinue {
 public:
   bool isStartAction;
@@ -137,6 +142,10 @@ public:
 // Example: An adder module has one action, which takes
 // an adder as its first argument, and which
 
+// Note: Convert to behavioral code by pushing
+// transition conditions across edges in the program
+// and adding false transitions to non-transfer blocks
+
 int main() {
 
   Module* const_1_1 = new Module("const_1_1");
@@ -175,5 +184,16 @@ int main() {
   
   add16->addAction(add16Inv);
 
-  
+  // What to do?
+  // write a sequential program in this language
+  // add hazard descriptions
+  // add sensitive port definitions
+  // add inlining and context to manage memory
+  // implement pipelining
+
+  // For LLVM -> this language we need:
+  // structure -> primitive module
+  // method -> calling convention
+  // calling convention -> hazards
+  // data processing instructions -> modules and calling conventions
 }
