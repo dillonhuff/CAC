@@ -8,6 +8,14 @@
 using namespace llvm;
 using namespace CAC;
 
+std::string typeString(Type* const tptr) {
+  std::string str;
+  llvm::raw_string_ostream ss(str);
+  ss << *tptr;
+
+  return ss.str();
+}
+
 std::string valueString(const Value* const iptr) {
   assert(iptr != nullptr);
     
@@ -28,6 +36,20 @@ void addRAM32Primitive(Context& c) {
   m->addAction(wr);  
 }
 
+CAC::Module* getWireMod(Context& c, const int width) {
+  string name = "wire" + to_string(width);
+  if (c.hasModule(name)) {
+    return c.getModule(name);
+  }
+
+  CAC::Module* w = c.addModule(name);
+  w->setPrimitive(true);
+  w->addInPort(width, "in");
+  w->addInPort(width, "out");
+  
+  return w;
+}
+
 void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {
@@ -40,6 +62,7 @@ void loadLLVMFromFile(Context& c,
   ram32_128->addInPort(1, "wen");  
   ram32_128->addInPort(32, "waddr");
   ram32_128->addInPort(32, "wdata");
+  builtinModDefs["struct.ram_32_128"] = ram32_128;
   
   SMDiagnostic err;
   LLVMContext context;
@@ -60,6 +83,29 @@ void loadLLVMFromFile(Context& c,
   addRAM32Primitive(c);
 
   CAC::Module* mCall = c.addModule(topFunction + "_call");
+
+  for (Argument& arg : f->args()) {
+    Type* tp = arg.getType();
+    if (PointerType::classof(tp)) {
+      PointerType* ptp = dyn_cast<PointerType>(tp);
+      auto utp = ptp->getElementType();
+      assert(StructType::classof(utp));
+      auto stp = dyn_cast<StructType>(utp);
+      cout << "Struct argument name = " << typeString(stp) << endl;
+      string str = stp->getName();
+      cout << "Name = " << str << endl;
+
+      assert(contains_key(str, builtinModDefs));
+
+      CAC::Module* def = map_find(str, builtinModDefs);
+      for (Port pt : def->getInterfacePorts()) {
+        m->addInstance(getWireMod(c, pt.getWidth()), pt.getName());
+      }
+      
+    } else {
+      assert(false);
+    }
+  }
 
   // Call: set valid and wait for ready
   // and simultaneously set raddr, rdata, waddr, wdata to wires

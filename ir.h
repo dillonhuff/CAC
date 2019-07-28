@@ -17,6 +17,14 @@ namespace CAC {
     std::string portName;
     bool isInput;
     int width;
+
+    int getWidth() {
+      return width;
+    }
+
+    std::string getName() {
+      return portName;
+    }
   };
 
   Port getPort(Module* const mod, const std::string& name);
@@ -76,6 +84,22 @@ namespace CAC {
 
     Module(const std::string name_) : isPrimitive(false), name(name_) {}
 
+    vector<Port> allPorts() {
+      assert(false);
+    }
+
+    vector<Port> getInterfacePorts() {
+      if (isPrimitive) {
+        vector<Port> pts;
+        for (auto pt : primPorts) {
+          pts.push_back(pt.second);
+        }
+        return pts;
+      } else {
+        assert(false);
+      }
+    }
+    
     Port pt(const std::string& name) {
       if (isPrimitive) {
         return map_find(name, primPorts);
@@ -158,6 +182,10 @@ namespace CAC {
       return map_find(name, mods);
     }
 
+    bool hasModule(const std::string& name) {
+      return contains_key(name, mods);
+    }
+    
     Module* addModule(const std::string& name) {
       assert(!contains_key(name, mods));
       
