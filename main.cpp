@@ -64,16 +64,6 @@ int main() {
   cout << "Final module" << endl;
   cout << *m << endl;
 
-  // What to do?
-  // write a sequential program in this language
-  // add hazard descriptions
-  // add sensitive port definitions
-  // add inlining and context to manage memory
-  // implement pipelining
+  emitVerilog(c, m);
 
-  // For LLVM -> this language we need:
-  // structure -> primitive module
-  // method -> calling convention
-  // calling convention -> hazards
-  // data processing instructions -> modules and calling conventions
 }

@@ -31,6 +31,16 @@ void addRAM32Primitive(Context& c) {
 void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {
+
+  map<string, CAC::Module*> builtinModDefs;
+  CAC::Module* ram32_128 = c.addModule("ram32_128");
+  ram32_128->setPrimitive(true);
+  ram32_128->addInPort(32, "raddr");
+  ram32_128->addOutPort(32, "rdata");
+  ram32_128->addInPort(1, "wen");  
+  ram32_128->addInPort(32, "waddr");
+  ram32_128->addInPort(32, "wdata");
+  
   SMDiagnostic err;
   LLVMContext context;
 
@@ -51,6 +61,12 @@ void loadLLVMFromFile(Context& c,
 
   CAC::Module* mCall = c.addModule(topFunction + "_call");
 
+  // Call: set valid and wait for ready
+  // and simultaneously set raddr, rdata, waddr, wdata to wires
+  // while done is not high
+
+  // Im also held up by how wires in arguments will map to llvm values
+  // during translation
   m->addAction(mCall);
   
   // Now: For each argument add wires to the API

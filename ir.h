@@ -139,6 +139,8 @@ namespace CAC {
       out << "end of actions for " << name << endl;
       out << "endmodule "<< name << endl;
     }
+
+    std::string getName() const { return name; }
   };
 
   static inline
@@ -166,5 +168,6 @@ namespace CAC {
     
   };
 
+  void emitVerilog(Context& c, Module* m);
 
 }
