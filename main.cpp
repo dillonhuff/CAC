@@ -151,11 +151,6 @@ void runCmd(const std::string& cmd) {
   assert(res == 0);
 }
 
-void loadLLVMFromFile(Context& c,
-                      const std::string& topFunction,
-                      const std::string& filePath) {
-}
-
 int main() {
 
   Module* const_1_1 = new Module("const_1_1");
