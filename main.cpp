@@ -133,6 +133,9 @@ Port getPort(Module* const mod, const std::string& name) {
 class Context {
 public:
 
+  Module* getModule(const std::string& name) {
+    return nullptr;
+  }
 };
 
 // Example: An adder module has one action, which takes
@@ -141,6 +144,17 @@ public:
 // Note: Convert to behavioral code by pushing
 // transition conditions across edges in the program
 // and adding false transitions to non-transfer blocks
+
+void runCmd(const std::string& cmd) {
+  cout << "Running command " << cmd << endl;
+  int res = system(cmd.c_str());
+  assert(res == 0);
+}
+
+void loadLLVMFromFile(Context& c,
+                      const std::string& topFunction,
+                      const std::string& filePath) {
+}
 
 int main() {
 
@@ -179,6 +193,14 @@ int main() {
   in1W->continueTo(oneInst->pt("out"), outW, 0);
   
   add16->addAction(add16Inv);
+
+  runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+
+  Context c;
+  loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+
+  Module* m = c.getModule("read_write_ram");
+  assert(m != nullptr);
 
   // What to do?
   // write a sequential program in this language
