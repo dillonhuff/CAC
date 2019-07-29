@@ -127,6 +127,10 @@ namespace CAC {
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
+    bool isCallingConvention() const {
+      return !isPrimitive && actions.size() == 0;
+    }
+    
     void setContext(Context* ctx) {
       context = ctx;
     }
@@ -168,6 +172,14 @@ namespace CAC {
       }
     }
 
+    CC* addInvokeInstruction(CallingConvention* call) {
+      assert(call->isCallingConvention());
+      CC* cc = new CC();
+      cc->tp = CONNECT_AND_CONTINUE_TYPE_INVOKE;
+      body.insert(cc);
+      return cc;
+    }
+    
     CC* addEmptyInstruction() {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;

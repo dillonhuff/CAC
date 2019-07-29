@@ -20,6 +20,16 @@ bool hasPrefix(const std::string str, const std::string prefix) {
   return false;
 }
 
+string calledFuncName(llvm::Instruction* const iptr) {
+  assert(CallInst::classof(iptr));
+
+  CallInst* call = dyn_cast<CallInst>(iptr);
+  Function* called = call->getCalledFunction();
+
+  string name = called->getName();
+  return name;
+}
+
 bool matchesCall(std::string str, llvm::Instruction* const iptr) {
   if (!CallInst::classof(iptr)) {
     return false;
@@ -173,7 +183,14 @@ void loadLLVMFromFile(Context& c,
         if (matchesCall("llvm.", instr)) {
           cout << "Ignoring llvm builtin " << valueString(instr) << endl;
         } else {
-          cout << "Creating code for call..." << endl;
+          string funcName = calledFuncName(instr);          
+          cout << "Creating code for call to " << funcName << "..." << endl;
+          CAC::Module* inv = map_find(funcName, builtinModDefs);
+          assert(inv->isCallingConvention());
+
+          auto cc = m->addInvokeInstruction(inv);
+          blkInstrs.push_back(cc);
+          
         }
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
