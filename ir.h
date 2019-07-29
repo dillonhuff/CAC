@@ -31,6 +31,11 @@ namespace CAC {
     }
   };
 
+  static inline
+  bool operator==(const Port& a, const Port& b) {
+    return (a.inst == b.inst) && (a.getName() == b.getName());
+  }
+
   std::ostream& operator<<(std::ostream& out, const Port& pt);
   
   Port getPort(Module* const mod, const std::string& name);
@@ -91,6 +96,22 @@ namespace CAC {
     void bind(const std::string& invokePortName,
               Port pt) {
       assert(isInvoke());
+    }
+
+    bool wiresUp(const Port pt) {
+      if (isEmpty()) {
+        return false;
+      }
+
+      if (isInvoke()) {
+        return false;
+      }
+
+      if (isConnect()) {
+        return (connection.first == pt) || (connection.second == pt);
+      }
+
+      return false;
     }
     
     void setIsStartAction(const bool isStart) {
@@ -175,11 +196,33 @@ namespace CAC {
       return c->pt("out");
     }
 
-    vector<Port> allPorts() {
-      assert(false);
+    vector<Port> allPorts() const {
+      if (isPrimitive) {
+        return getInterfacePorts();
+      }
+      
+      vector<Port> allpts;
+      for (auto m : resources) {
+        auto rPorts = m->source->getInterfacePorts();
+        for (auto rpt : rPorts) {
+          allpts.push_back(m->pt(rpt.getName()));
+        }
+
+      }
+      cout << "Total # of ports = " << allpts.size() << endl;
+      return allpts;
     }
 
-    vector<Port> getInterfacePorts() {
+    bool neverWiredUp(const Port pt) const {
+      for (auto instr : body) {
+        if (instr->wiresUp(pt)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    vector<Port> getInterfacePorts() const {
       if (isPrimitive) {
         vector<Port> pts;
         for (auto pt : primPorts) {
@@ -187,7 +230,14 @@ namespace CAC {
         }
         return pts;
       } else {
-        assert(false);
+        vector<Port> pts = allPorts();
+        vector<Port> iPorts;
+        for (auto pt : pts) {
+          if (neverWiredUp(pt)) {
+            iPorts.push_back(pt);
+          }
+        }
+        return iPorts;
       }
     }
     
@@ -269,6 +319,13 @@ namespace CAC {
 
     void print(std::ostream& out) const {
       out << "module " << name << endl << endl;
+
+      vector<Port> pts = getInterfacePorts();
+      out << pts.size() << " ports..." << endl;
+      for (auto pt : pts) {
+        cout << "\t" << pt << endl;
+      }
+      out << endl << endl;
 
       out << actions.size() << " actions..." << endl;
       for (auto action : actions) {
