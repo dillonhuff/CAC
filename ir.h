@@ -91,8 +91,30 @@ namespace CAC {
       continuations.push_back({condition, next, delay});
     }
 
+    bool isInvoke() const {
+      return tp == CONNECT_AND_CONTINUE_TYPE_INVOKE;
+    }
+
+    bool isEmpty() const {
+      return tp == CONNECT_AND_CONTINUE_TYPE_EMPTY;
+    }
+
+    bool isConnect() const {
+      return tp == CONNECT_AND_CONTINUE_TYPE_CONNECT;
+    }
+    
     void print(std::ostream& out) const {
-      out << "If " << " do " << " then continue to [";
+      out << "If " << " do ";
+      if (isInvoke()) {
+        out << "invoke ";
+      } else if (isEmpty()) {
+        out << "{}";
+      } else if (isConnect()) {
+        out << "connect";
+      } else {
+        assert(false);
+      }
+      out << " then continue to [";
       for (auto act : continuations) {
         out << act << " ";
       }
