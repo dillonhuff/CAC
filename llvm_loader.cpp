@@ -184,6 +184,9 @@ void loadLLVMFromFile(Context& c,
 
   reg32Mod->addAction(reg32ModLd);
   reg32Mod->addAction(reg32ModSt);
+
+  map<ReturnInst*, CC*> rets;
+  CC* entryInstr = nullptr;
   
   for (auto& bb : *f) {
     vector<CC*> blkInstrs;
@@ -208,13 +211,14 @@ void loadLLVMFromFile(Context& c,
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);
+        rets[dyn_cast<ReturnInst>(instr)] = cc;
       } else if (LoadInst::classof(instr)) {
         cout << "Need to get module for load" << endl;
         auto cc = m->addInvokeInstruction(reg32ModLd);
         blkInstrs.push_back(cc);
       } else {
-        auto cc = m->addEmptyInstruction();
-        blkInstrs.push_back(cc);
+        cout << "Error: Unsupported instruction " << valueString(instr) << endl;
+        assert(false);
       }
 
     }
@@ -227,15 +231,34 @@ void loadLLVMFromFile(Context& c,
 
   }
 
-  // Call: set valid and wait for ready
-  // and simultaneously set raddr, rdata, waddr, wdata to wires
-  // while done is not high
+  assert(entryInstr != nullptr);
 
-  // Im also held up by how wires in arguments will map to llvm values
-  // during translation
+  // Create start instruction
+  auto validWire = m->addInstance(getWireMod(c, 1), "valid");
+
+  auto readyReg = getRegMod(c, 1);
+
+  auto setReady0 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
+  
+  auto setReady1 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
+  setReady1->setIsStartAction(true);
+
+  auto readValid = m->addEmptyInstruction();
+
+  CAC::Module* negMod = getNotMod(c, 1);
+  auto negInst = m->addInstance(negMod, "notValid");
+  auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
+  // Then: Create output wire
+  // Then: Bind output wire in port and valid out port to neg apply
+
+  auto setNegValid =
+    m->addInvokeInstruction(negMod->action("neg_1_apply"));
+  
+  //readValid->continueTo(setNegValid, readValid, 1);
+  
+  readValid->continueTo(validWire->pt("out"), entryInstr, 0);
+  readValid->continueTo(validWire->pt("out"), setReady0, 0);  
+
   m->addAction(mCall);
   
-  // Now: For each argument add wires to the API
-  // Add ram primitive to context
-  // Create ram invoke
 }

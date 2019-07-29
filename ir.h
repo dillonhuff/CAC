@@ -88,6 +88,10 @@ namespace CAC {
     std::vector<Activation> continuations;
     Module* invokedMod;
 
+    void setIsStartAction(const bool isStart) {
+      isStartAction = isStart;
+    }
+
     void continueTo(Port condition, CC* next, const int delay) {
       continuations.push_back({condition, next, delay});
     }
@@ -116,14 +120,16 @@ namespace CAC {
   typedef Module CallingConvention;
 
   Module* getConstMod(Context& c, const int width, const int value);
-
+  Module* getRegMod(Context& c, const int width);
+  Module* getNotMod(Context& c, const int width);
+  
   class Module {
     bool isPrimitive;
     std::map<string, Port> primPorts;
 
     std::set<ModuleInstance*> resources;
     std::set<CC*> body;
-    std::set<CallingConvention*> actions;
+    std::map<std::string, CallingConvention*> actions;
     std::string name;
 
     int uniqueNum;
@@ -133,6 +139,10 @@ namespace CAC {
   public:
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    CallingConvention* action(const std::string& name) {
+      return map_find(name, actions);
+    }
 
     bool isCallingConvention() const {
       return !isPrimitive && actions.size() == 0;
@@ -146,6 +156,10 @@ namespace CAC {
       string fullName = name + "_" + to_string(uniqueNum);
       uniqueNum++;
       return addInstance(tp, fullName);
+    }
+
+    Context* getContext() {
+      return context;
     }
 
     Port constOut(const int width, const int value) {
@@ -244,15 +258,15 @@ namespace CAC {
   
     void addAction(CallingConvention* callingC) {
       assert(callingC->numActions() == 0);
-      actions.insert(callingC);
+      actions.insert({callingC->getName(), callingC});
     }
 
     void print(std::ostream& out) const {
       out << "module " << name << endl << endl;
 
       out << actions.size() << " actions..." << endl;
-      for (CallingConvention* action : actions) {
-        action->print(out);
+      for (auto action : actions) {
+        action.second->print(out);
         out << endl << endl;
       }
       out << "end of actions for " << name << endl << endl;

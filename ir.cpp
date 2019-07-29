@@ -7,7 +7,7 @@ using namespace CAC;
 namespace CAC {
 
   void ConnectAndContinue::print(std::ostream& out) const {
-    out << this << ": If " << " do ";
+    out << (isStartAction ? "on start: " : "") << this << ": If " << " do ";
     if (isInvoke()) {
       out << "invoke " << invokedMod->getName();
     } else if (isEmpty()) {
@@ -40,6 +40,48 @@ namespace CAC {
 
   void print(std::ostream& out, Module* source) {
     source->print(out);
+  }
+
+  Module* getNotMod(Context& c, const int width) {
+    string name = "not_" + to_string(width);
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+
+    auto regMod = c.addModule(name);
+
+    regMod->setPrimitive(true);
+    regMod->addInPort(width, "in");
+    regMod->addOutPort(width, "out");
+
+    CAC::Module* regModLd = c.addModule("not_" + to_string(width) + "_apply");
+    regMod->addAction(regModLd);
+
+
+    return regMod;
+  }
+  
+  Module* getRegMod(Context& c, const int width) {
+    string name = "reg_" + to_string(width);
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+
+    auto regMod = c.addModule(name);
+
+    regMod->setPrimitive(true);
+    regMod->addInPort(1, "en");
+    regMod->addInPort(width, "in");
+    regMod->addOutPort(width, "data");
+
+    CAC::Module* regModLd = c.addModule("reg_" + to_string(width) + "_ld");
+    CAC::Module* regModSt = c.addModule("reg_" + to_string(width) + "_st");
+
+    regMod->addAction(regModLd);
+    regMod->addAction(regModSt);
+
+    return regMod;
+
   }
 
   Module* getConstMod(Context& c, const int width, const int value) {
