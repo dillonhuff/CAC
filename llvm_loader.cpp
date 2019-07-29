@@ -3,6 +3,7 @@
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 
 using namespace llvm;
@@ -136,9 +137,17 @@ void loadLLVMFromFile(Context& c,
   for (auto& bb : *f) {
     vector<CC*> blkInstrs;
     for (auto& instrR : bb) {
-      auto cc = m->addEmptyInstruction();
-      blkInstrs.push_back(cc);
+      Instruction* instr = &instrR;
+      if (AllocaInst::classof(instr)) {
+      } else if (ReturnInst::classof(instr)) {
+        auto cc = m->addEmptyInstruction();
+        blkInstrs.push_back(cc);
+      } else {
+        auto cc = m->addEmptyInstruction();
+        blkInstrs.push_back(cc);
+      }
     }
+
   }
 
   // Call: set valid and wait for ready

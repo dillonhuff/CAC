@@ -22,14 +22,20 @@ namespace CAC {
     bool isInput;
     int width;
 
-    int getWidth() {
+    int getWidth() const {
       return width;
     }
 
-    std::string getName() {
+    std::string getName() const {
       return portName;
     }
   };
+
+  static inline
+  std::ostream& operator<<(std::ostream& out, const Port& pt) {
+    out << pt.getName() << "[" << pt.getWidth() << "]";
+    return out;
+  }
 
   Port getPort(Module* const mod, const std::string& name);
 
@@ -62,6 +68,12 @@ namespace CAC {
     int delay;
   };
 
+  static inline
+  std::ostream& operator<<(std::ostream& out, const Activation& act) {
+    out << "(" << act.condition << ", " << act.destination << ", " << act.delay << ")";
+    return out;
+  }
+
   enum ConnectAndContinueType {
     CONNECT_AND_CONTINUE_TYPE_CONNECT,
     CONNECT_AND_CONTINUE_TYPE_INVOKE,
@@ -80,7 +92,11 @@ namespace CAC {
     }
 
     void print(std::ostream& out) const {
-      out << "Instr" << endl;
+      out << "If " << " do " << " then continue to [";
+      for (auto act : continuations) {
+        out << act << " ";
+      }
+      out << "]";
     }
   };
 
