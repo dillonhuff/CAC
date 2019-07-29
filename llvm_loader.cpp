@@ -210,12 +210,19 @@ void loadLLVMFromFile(Context& c,
         blkInstrs.push_back(cc);
       } else if (LoadInst::classof(instr)) {
         cout << "Need to get module for load" << endl;
-        auto cc = m->addInvokeInstruction(reg32Mod);
+        auto cc = m->addInvokeInstruction(reg32ModLd);
         blkInstrs.push_back(cc);
       } else {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);
       }
+
+    }
+
+    for (int i = 0; i < (int) blkInstrs.size() - 1; i++) {
+      auto instr = blkInstrs[i];
+      auto nextInstr = blkInstrs[i + 1];
+      instr->continueTo(m->constOut(1, 1), nextInstr, 1);
     }
 
   }
