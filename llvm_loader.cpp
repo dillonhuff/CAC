@@ -195,6 +195,8 @@ void loadLLVMFromFile(Context& c,
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);
+      } else if (LoadInst::classof(instr)) {
+        cout << "Need to get module for load" << endl;
       } else {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);

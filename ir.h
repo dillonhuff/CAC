@@ -86,6 +86,7 @@ namespace CAC {
     bool isStartAction;
     pair<Port, Port> connection;
     std::vector<Activation> continuations;
+    Module* invokedMod;
 
     void continueTo(Port condition, CC* next, const int delay) {
       continuations.push_back({condition, next, delay});
@@ -102,24 +103,8 @@ namespace CAC {
     bool isConnect() const {
       return tp == CONNECT_AND_CONTINUE_TYPE_CONNECT;
     }
-    
-    void print(std::ostream& out) const {
-      out << "If " << " do ";
-      if (isInvoke()) {
-        out << "invoke ";
-      } else if (isEmpty()) {
-        out << "{}";
-      } else if (isConnect()) {
-        out << "connect";
-      } else {
-        assert(false);
-      }
-      out << " then continue to [";
-      for (auto act : continuations) {
-        out << act << " ";
-      }
-      out << "]";
-    }
+
+    void print(std::ostream& out) const;    
   };
 
   static inline
@@ -197,6 +182,7 @@ namespace CAC {
     CC* addInvokeInstruction(CallingConvention* call) {
       assert(call->isCallingConvention());
       CC* cc = new CC();
+      cc->invokedMod = call;
       cc->tp = CONNECT_AND_CONTINUE_TYPE_INVOKE;
       body.insert(cc);
       return cc;
@@ -211,12 +197,18 @@ namespace CAC {
 
     CC* addStartInstruction(const Port a, const Port b) {
       CC* cc = new CC();
+      cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
+      cc->connection.first = a;
+      cc->connection.first = b;      
       body.insert(cc);      
       return cc;
     }
 
     CC* addInstruction(const Port a, const Port b) {
       CC* cc = new CC();
+      cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
+      cc->connection.first = a;
+      cc->connection.first = b;
       body.insert(cc);      
       return cc;
     }

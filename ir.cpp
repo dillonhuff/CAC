@@ -6,6 +6,24 @@ using namespace CAC;
 
 namespace CAC {
 
+  void ConnectAndContinue::print(std::ostream& out) const {
+    out << this << ": If " << " do ";
+    if (isInvoke()) {
+      out << "invoke " << invokedMod->getName();
+    } else if (isEmpty()) {
+      out << "{}";
+    } else if (isConnect()) {
+      out << "(" << connection.first << ", " << connection.second << ")";
+    } else {
+      assert(false);
+    }
+    out << " then continue to [";
+    for (auto act : continuations) {
+      out << act << " ";
+    }
+    out << "]";
+  }
+  
   Port getPort(Module* const mod, const std::string& name) {
     return mod->pt(name);
   }
