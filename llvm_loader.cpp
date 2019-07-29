@@ -9,6 +9,34 @@
 using namespace llvm;
 using namespace CAC;
 
+static inline
+bool hasPrefix(const std::string str, const std::string prefix) {
+  auto res = std::mismatch(prefix.begin(), prefix.end(), str.begin());
+
+  if (res.first == prefix.end()) {
+    return true;
+  }
+
+  return false;
+}
+
+bool matchesCall(std::string str, llvm::Instruction* const iptr) {
+  if (!CallInst::classof(iptr)) {
+    return false;
+  }
+
+  CallInst* call = dyn_cast<CallInst>(iptr);
+  Function* called = call->getCalledFunction();
+
+  string name = called->getName();
+
+  if (hasPrefix(name, str)) {
+    return true;
+  }
+  return false;
+
+}
+
 std::string typeString(Type* const tptr) {
   std::string str;
   llvm::raw_string_ostream ss(str);
@@ -139,6 +167,14 @@ void loadLLVMFromFile(Context& c,
     for (auto& instrR : bb) {
       Instruction* instr = &instrR;
       if (AllocaInst::classof(instr)) {
+      } else if (BitCastInst::classof(instr)) {
+        cout << "Ignoring bitcast" << endl;
+      } else if (CallInst::classof(instr)) {
+        if (matchesCall("llvm.", instr)) {
+          cout << "Ignoring llvm builtin " << valueString(instr) << endl;
+        } else {
+          cout << "Creating code for call..." << endl;
+        }
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);
