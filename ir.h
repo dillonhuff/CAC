@@ -64,11 +64,13 @@ namespace CAC {
 
   enum ConnectAndContinueType {
     CONNECT_AND_CONTINUE_TYPE_CONNECT,
-    CONNECT_AND_CONTINUE_TYPE_INVOKE
+    CONNECT_AND_CONTINUE_TYPE_INVOKE,
+    CONNECT_AND_CONTINUE_TYPE_EMPTY    
   };
 
   class ConnectAndContinue {
   public:
+    ConnectAndContinueType tp;
     bool isStartAction;
     pair<Port, Port> connection;
     std::vector<Activation> continuations;
@@ -76,7 +78,17 @@ namespace CAC {
     void continueTo(Port condition, CC* next, const int delay) {
       continuations.push_back({condition, next, delay});
     }
+
+    void print(std::ostream& out) const {
+      out << "Instr" << endl;
+    }
   };
+
+  static inline
+  std::ostream& operator<<(std::ostream& out, const ConnectAndContinue& instr) {
+    instr.print(out);
+    return out;
+  }
 
   typedef Module CallingConvention;
 
@@ -140,13 +152,22 @@ namespace CAC {
       }
     }
 
+    CC* addEmptyInstruction() {
+      CC* cc = new CC();
+      cc->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
+      body.insert(cc);
+      return cc;
+    }
+
     CC* addStartInstruction(const Port a, const Port b) {
       CC* cc = new CC();
+      body.insert(cc);      
       return cc;
     }
 
     CC* addInstruction(const Port a, const Port b) {
       CC* cc = new CC();
+      body.insert(cc);      
       return cc;
     }
   
@@ -192,12 +213,18 @@ namespace CAC {
         action->print(out);
         out << endl << endl;
       }
-      out << "end of actions for " << name << endl;
+      out << "end of actions for " << name << endl << endl;
 
       out << resources.size() << " submodules..." << endl;
       for (ModuleInstance* mod : resources) {
         mod->print(out);
         out << endl << endl;
+      }
+
+      out << "End of submodules" << endl << endl;
+
+      for (auto instr : body) {
+        out << *instr << endl;
       }
 
       out << "endmodule "<< name << endl;

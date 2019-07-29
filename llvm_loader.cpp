@@ -74,8 +74,8 @@ void loadLLVMFromFile(Context& c,
 
   CC* setRaddr = read->addStartInstruction(ramRaddr->pt("in"),
                                            resRaddr->pt("out"));
-  CC* readRdata = read->addStartInstruction(ramData->pt("in"),
-                                            resRdata->pt("in"));
+  CC* readRdata = read->addInstruction(ramData->pt("in"),
+                                       resRdata->pt("in"));
   setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
   
   CAC::Module* write = c.addModule("ram32_128_write");
@@ -127,6 +127,17 @@ void loadLLVMFromFile(Context& c,
       
     } else {
       assert(false);
+    }
+  }
+
+  // For each basic block we need to create a map from blocks to
+  // instruction sets and need to create a map from instructions to
+  // invocations?
+  for (auto& bb : *f) {
+    vector<CC*> blkInstrs;
+    for (auto& instrR : bb) {
+      auto cc = m->addEmptyInstruction();
+      blkInstrs.push_back(cc);
     }
   }
 
