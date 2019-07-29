@@ -172,6 +172,19 @@ void loadLLVMFromFile(Context& c,
   // For each basic block we need to create a map from blocks to
   // instruction sets and need to create a map from instructions to
   // invocations?
+
+  CAC::Module* reg32Mod = c.addModule("reg_32");
+  reg32Mod->setPrimitive(true);
+  reg32Mod->addInPort(1, "en");
+  reg32Mod->addInPort(32, "in");
+  reg32Mod->addOutPort(32, "data");
+
+  CAC::Module* reg32ModLd = c.addModule("reg_32_ld");
+  CAC::Module* reg32ModSt = c.addModule("reg_32_st");
+
+  reg32Mod->addAction(reg32ModLd);
+  reg32Mod->addAction(reg32ModSt);
+  
   for (auto& bb : *f) {
     vector<CC*> blkInstrs;
     for (auto& instrR : bb) {
@@ -197,6 +210,8 @@ void loadLLVMFromFile(Context& c,
         blkInstrs.push_back(cc);
       } else if (LoadInst::classof(instr)) {
         cout << "Need to get module for load" << endl;
+        auto cc = m->addInvokeInstruction(reg32Mod);
+        blkInstrs.push_back(cc);
       } else {
         auto cc = m->addEmptyInstruction();
         blkInstrs.push_back(cc);
