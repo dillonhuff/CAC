@@ -60,6 +60,8 @@ namespace CAC {
     regMod->addOutPort(width, "out");
 
     CAC::Module* regModLd = c.addModule("not_" + to_string(width) + "_apply");
+    regModLg->addInstance(getWireMod(), );
+    
     regMod->addAction(regModLd);
 
 

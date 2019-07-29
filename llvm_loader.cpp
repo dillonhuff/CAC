@@ -262,8 +262,10 @@ void loadLLVMFromFile(Context& c,
   CAC::Module* negMod = getNotMod(c, 1);
   auto negInst = m->addInstance(negMod, "notValid");
   auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
+
+  auto negModApply = negMod->action("not_1_apply");
   auto setNegValid =
-    m->addInvokeInstruction(negMod->action("not_1_apply"));
+    m->addInvokeInstruction(negModApply);
   setNegValid->bind("not_in", negInst->pt("in"));
   setNegValid->bind("not_out", negInst->pt("out"));
 
