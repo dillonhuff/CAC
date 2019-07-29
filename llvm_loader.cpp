@@ -229,7 +229,21 @@ void loadLLVMFromFile(Context& c,
       instr->continueTo(m->constOut(1, 1), nextInstr, 1);
     }
 
+    if (&(f->getEntryBlock()) == &bb) {
+      cout << "Setting entry instruction" << endl;
+      
+      assert(blkInstrs.size() > 0);
+      
+      entryInstr = blkInstrs[0];
+
+      cout << "Done setting instruction" << endl;
+    }
+
+
+
   }
+
+  cout << "Building rv controller" << endl;
 
   assert(entryInstr != nullptr);
 
@@ -248,11 +262,13 @@ void loadLLVMFromFile(Context& c,
   CAC::Module* negMod = getNotMod(c, 1);
   auto negInst = m->addInstance(negMod, "notValid");
   auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
-  // Then: Create output wire
-  // Then: Bind output wire in port and valid out port to neg apply
-
   auto setNegValid =
-    m->addInvokeInstruction(negMod->action("neg_1_apply"));
+    m->addInvokeInstruction(negMod->action("not_1_apply"));
+  setNegValid->bind("not_in", negInst->pt("in"));
+  setNegValid->bind("not_out", negInst->pt("out"));
+
+  setNegValid->bind("data_in", validWire->pt("out"));
+  setNegValid->bind("data_out", outWire->pt("in"));
   
   //readValid->continueTo(setNegValid, readValid, 1);
   
@@ -260,5 +276,6 @@ void loadLLVMFromFile(Context& c,
   readValid->continueTo(validWire->pt("out"), setReady0, 0);  
 
   m->addAction(mCall);
-  
+
+  cout << "Done building module" << endl;
 }

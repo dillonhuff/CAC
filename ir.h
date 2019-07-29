@@ -31,12 +31,8 @@ namespace CAC {
     }
   };
 
-  static inline
-  std::ostream& operator<<(std::ostream& out, const Port& pt) {
-    out << pt.getName() << "[" << pt.getWidth() << "]";
-    return out;
-  }
-
+  std::ostream& operator<<(std::ostream& out, const Port& pt);
+  
   Port getPort(Module* const mod, const std::string& name);
 
   class ModuleInstance {
@@ -47,8 +43,12 @@ namespace CAC {
     ModuleInstance(Module* source_, const std::string& name_) :
       source(source_), name(name_) {}
 
+    std::string getName() const { return name; }
+
     Port pt(const std::string& name) {
-      return getPort(source, name);
+      Port pt = getPort(source, name);
+      pt.inst = this;
+      return pt;
     }
 
     void print(std::ostream& out) {
@@ -88,6 +88,11 @@ namespace CAC {
     std::vector<Activation> continuations;
     Module* invokedMod;
 
+    void bind(const std::string& invokePortName,
+              Port pt) {
+      assert(isInvoke());
+    }
+    
     void setIsStartAction(const bool isStart) {
       isStartAction = isStart;
     }
@@ -141,6 +146,7 @@ namespace CAC {
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
     CallingConvention* action(const std::string& name) {
+      assert(contains_key(name, actions));
       return map_find(name, actions);
     }
 

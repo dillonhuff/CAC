@@ -6,6 +6,11 @@ using namespace CAC;
 
 namespace CAC {
 
+  std::ostream& operator<<(std::ostream& out, const Port& pt) {
+    out << (pt.inst == nullptr ? "self." : (pt.inst->getName() + ".")) << pt.getName() << "[" << pt.getWidth() << "]";
+    return out;
+  }
+
   void ConnectAndContinue::print(std::ostream& out) const {
     out << (isStartAction ? "on start: " : "") << this << ": If " << " do ";
     if (isInvoke()) {
