@@ -51,6 +51,17 @@ namespace CAC {
     return mod->pt(name);
   }
 
+  CC* copyInstrTo(CC* instr, Module* destMod) {
+    if (instr->isEmpty()) {
+      return destMod->addEmptyInstruction();
+    } else if (instr->isConnect()) {
+      return destMod->addEmptyInstruction();
+    } else {
+      cout << "Error: Unsupported instruction " << *instr << endl;
+      assert(false);
+    }
+  }
+  
   void inlineInvoke(CC* instr, Module* container) {
     cout << "Inlining " << *instr << endl;
     assert(instr->isInvoke());
@@ -70,10 +81,11 @@ namespace CAC {
     map<string, Port> invokedBindings = instr->invokedBinding();
     CC* invEnd = container->addEmptyInstruction();
 
-    auto trueConst = getConstMod(*(container->getContext()), 1, 1)->pt("out");
+    auto trueConst =
+      container->freshInstance(getConstMod(*(container->getContext()), 1, 1), "true")->pt("out");
     // Inline all instructions connecting dead ones to invEnd
     for (auto instr : invoked->getBody()) {
-      CC* iCpy = container->addEmptyInstruction();
+      CC* iCpy = copyInstrTo(instr, container); //container->addEmptyInstruction();
       if (iCpy->continuations.size() == 0) {
         iCpy->continueTo(trueConst, invEnd, 0);
       }
