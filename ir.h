@@ -384,6 +384,8 @@ namespace CAC {
       
       mods[name] = new Module(name);
       mods[name]->setContext(this);
+      mods[name]->addInPort(1, "clk");
+      mods[name]->addInPort(1, "rst");      
 
       return map_find(name, mods);
     }
