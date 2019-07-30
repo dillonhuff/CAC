@@ -287,7 +287,8 @@ namespace CAC {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
       cc->connection.first = a;
-      cc->connection.second = b;      
+      cc->connection.second = b;
+      cc->setIsStartAction(true);
       body.insert(cc);      
       return cc;
     }

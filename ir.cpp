@@ -82,15 +82,15 @@ namespace CAC {
     return cpy;
   }
   
-  void inlineInvoke(CC* instr, Module* container) {
-    cout << "Inlining " << *instr << endl;
-    assert(instr->isInvoke());
+  void inlineInvoke(CC* invokeInstr, Module* container) {
+    cout << "Inlining " << *invokeInstr << endl;
+    assert(invokeInstr->isInvoke());
     
-    CC* invStart = instr;
+    CC* invStart = invokeInstr;
 
     map<ModuleInstance*, ModuleInstance*> resourceMap;
     
-    Module* invoked = instr->invokedModule();
+    Module* invoked = invokeInstr->invokedModule();
 
     for (ModuleInstance* inst : invoked->getResources()) {
       Module* instMod = inst->source;
@@ -98,7 +98,7 @@ namespace CAC {
       resourceMap[inst] = i;
     }
     
-    map<string, Port> invokedBindings = instr->invokedBinding();
+    map<string, Port> invokedBindings = invokeInstr->invokedBinding();
     CC* invEnd = container->addEmptyInstruction();
 
     auto trueConst =
@@ -106,6 +106,12 @@ namespace CAC {
     // Inline all instructions connecting dead ones to invEnd
     map<CC*, CC*> ccMap;
     for (auto instr : invoked->getBody()) {
+
+      cout << "inlining invoked instr = " << *instr << endl;
+      if (instr->isStartAction) {
+        cout << "Found start of active invocation" << endl;
+      }
+      
       CC* iCpy =
         inlineInstrTo(instr, container, resourceMap, invokedBindings);
       if (iCpy->continuations.size() == 0) {
@@ -126,6 +132,11 @@ namespace CAC {
         newActivations.push_back({newCond, newDest, newDelay});
       }
       cpy->continuations = newActivations;
+
+      if (instr->isStartAction) {
+        cout << "Found start of invocation" << endl;
+        invStart->continuations.push_back({trueConst, instr, 0});
+      }
     }
     
     invStart->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;

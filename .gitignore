@@ -3,3 +3,6 @@ all-tests
 *.cmake
 CMakeLists.txt
 *.ll
+*.v
+iv
+\#*
