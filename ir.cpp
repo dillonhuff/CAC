@@ -51,12 +51,40 @@ namespace CAC {
     return mod->pt(name);
   }
 
+  void inlineInvokes(Module* m) {
+  }
 
+  void printVerilog(std::ostream& out, const Port pt) {
+    int wHigh = pt.getWidth() - 1;
+    int wLow = 0;
+    out << (pt.isInput ? "input" : "output") << " [" << wHigh << " : " << wLow << "] " << pt.getName();
+  }
+  
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
-    out << "module " << m->getName() << "();" << endl;
+    out << "module " << m->getName() << "(" << endl;
+
+    auto pts = m->getInterfacePorts();
+    for (int i = 0; i < (int) pts.size(); i++) {
+      out << "\t";
+
+      printVerilog(out, pts[i]);
+      
+      if (i < ((int) pts.size()) - 1) {
+        out << ", ";
+      }
+
+
+      out << "\n";
+    }
+
+    out << "\t);" << endl;
+
     // For every instruction in the code (no invokes at this point)
-    //  Emit an always block?
+    //  Emit an always* for connect
+    //  For each distance 0 transition:
+    //  Emit a control variable set?
+
     out << "endmodule";
     out.close();
   }

@@ -393,4 +393,6 @@ namespace CAC {
   void emitVerilog(Context& c, Module* m);
 
   CAC::Module* getWireMod(Context& c, const int width);
+
+  void inlineInvokes(Module* m);
 }
