@@ -34,22 +34,29 @@ int main() {
   add16->addOutPort(16, "out");
 
   Module* add16Inv = c.addModule("add16Inv");
+  add16Inv->addInPort(16, "in0");
+  add16Inv->addInPort(16, "in1");
+  add16Inv->addOutPort(16, "out");    
+
+  add16Inv->addOutPort(16, "adder_in0");
+  add16Inv->addOutPort(16, "adder_in1");
+  add16Inv->addInPort(16, "adder_out");
+
+  // ModuleInstance* in0 = add16Inv->addInstance(wire16, "in0");
+  // ModuleInstance* in1 = add16Inv->addInstance(wire16, "in1");
+  // ModuleInstance* out = add16Inv->addInstance(wire16, "out");
+
+  // ModuleInstance* ain0 = add16Inv->addInstance(wire16, "adder_in0");
+  // ModuleInstance* ain1 = add16Inv->addInstance(wire16, "adder_in1");
+  // ModuleInstance* aout = add16Inv->addInstance(wire16, "adder_out");
 
   ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
-
-  ModuleInstance* in0 = add16Inv->addInstance(wire16, "in0");
-  ModuleInstance* in1 = add16Inv->addInstance(wire16, "in1");
-  ModuleInstance* out = add16Inv->addInstance(wire16, "out");
-
-  ModuleInstance* ain0 = add16Inv->addInstance(wire16, "adder_in0");
-  ModuleInstance* ain1 = add16Inv->addInstance(wire16, "adder_in1");
-  ModuleInstance* aout = add16Inv->addInstance(wire16, "adder_out");
   
-  CC* in0W = add16Inv->addStartInstruction(in0->pt("out"), ain0->pt("in"));
-  CC* in1W = add16Inv->addInstruction(in1->pt("out"), ain1->pt("in"));
-  CC* outW = add16Inv->addInstruction(out->pt("in"), aout->pt("out"));
+  CC* in0W = add16Inv->addStartInstruction(add16Inv->pt("in0"), add16Inv->pt("adder_in0"));
+  CC* in1W = add16Inv->addInstruction(add16Inv->pt("in1"), add16Inv->pt("adder_in1"));
+  CC* outW = add16Inv->addInstruction(add16Inv->pt("out"), add16Inv->pt("adder_out"));
 
-  in0W->continueTo(oneInst->pt("out"), in0W, 0);
+  in0W->continueTo(oneInst->pt("out"), in1W, 0);
   in1W->continueTo(oneInst->pt("out"), outW, 0);
   
   add16->addAction(add16Inv);
