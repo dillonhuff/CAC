@@ -79,15 +79,6 @@ namespace CAC {
     // Invoked instructions are never starts
     cpy->setIsStartAction(false);
     
-    vector<Activation> newActivations;
-    for (auto act : instr->continuations) {
-      Port newCond = replacePort(act.condition, resourceMap, activeBinding);
-      // TODO: Fix this after creating instruction replacement map
-      CC* newDest = act.destination;
-      int newDelay = act.delay;
-      newActivations.push_back({newCond, newDest, newDelay});
-    }
-    cpy->continuations = newActivations;
     return cpy;
   }
   
@@ -113,12 +104,28 @@ namespace CAC {
     auto trueConst =
       container->freshInstance(getConstMod(*(container->getContext()), 1, 1), "true")->pt("out");
     // Inline all instructions connecting dead ones to invEnd
+    map<CC*, CC*> ccMap;
     for (auto instr : invoked->getBody()) {
       CC* iCpy =
         inlineInstrTo(instr, container, resourceMap, invokedBindings);
       if (iCpy->continuations.size() == 0) {
         iCpy->continueTo(trueConst, invEnd, 0);
       }
+
+      ccMap[instr] = iCpy;
+    }
+
+    for (auto ccPair : ccMap) {
+      CC* instr = ccPair.first;
+      CC* cpy = ccPair.second;
+      vector<Activation> newActivations;
+      for (auto act : instr->continuations) {
+        Port newCond = replacePort(act.condition, resourceMap, invokedBindings);
+        CC* newDest = map_find(act.destination, ccMap);
+        int newDelay = act.delay;
+        newActivations.push_back({newCond, newDest, newDelay});
+      }
+      cpy->continuations = newActivations;
     }
     
     invStart->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
