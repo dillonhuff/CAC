@@ -161,6 +161,10 @@ namespace CAC {
     int wLow = 0;
     out << (pt.isInput ? "input" : "output") << " [" << wHigh << " : " << wLow << "] " << pt.getName();
   }
+
+  std::string moduleDecl(Module* m) {
+    return "adder #(.WIDTH(16))";
+  }
   
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
@@ -188,6 +192,7 @@ namespace CAC {
     
     for (auto r : m->getResources()) {
       out << "\t// Module for " << r->getName() << endl;
+      out << "\t" << moduleDecl(r->source) + " " + r->getName() + "();";
     }
 
     out << endl;
