@@ -51,7 +51,49 @@ namespace CAC {
     return mod->pt(name);
   }
 
+  void inlineInvoke(CC* instr, Module* container) {
+    cout << "Inlining " << *instr << endl;
+    assert(instr->isInvoke());
+    
+    CC* invStart = instr;
+
+    map<ModuleInstance*, ModuleInstance*> resourceMap;
+    
+    Module* invoked = instr->invokedModule();
+
+    for (ModuleInstance* inst : invoked->getResources()) {
+      Module* instMod = inst->source;
+      ModuleInstance* i = container->freshInstance(instMod, inst->getName());
+      resourceMap[inst] = i;
+    }
+    
+    map<string, Port> invokedBindings = instr->invokedBinding();
+    CC* invEnd = container->addEmptyInstruction();
+
+    auto trueConst = getConstMod(*(container->getContext()), 1, 1)->pt("out");
+    // Inline all instructions connecting dead ones to invEnd
+    for (auto instr : invoked->getBody()) {
+      CC* iCpy = container->addEmptyInstruction();
+      if (iCpy->continuations.size() == 0) {
+        iCpy->continueTo(trueConst, invEnd, 0);
+      }
+    }
+    
+    invStart->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
+  }
+  
   void inlineInvokes(Module* m) {
+
+    bool foundInvoke = true;
+    while (foundInvoke) {
+      foundInvoke = false;
+      for (auto instr : m->getBody()) {
+        if (instr->isInvoke()) {
+          foundInvoke = true;
+          inlineInvoke(instr, m);
+        }
+      }
+    }
   }
 
   void printVerilog(std::ostream& out, const Port pt) {
@@ -79,6 +121,24 @@ namespace CAC {
     }
 
     out << "\t);" << endl;
+
+    out << endl;
+
+    out << "\t// --- Start of resource list" << endl << endl;
+    
+    for (auto r : m->getResources()) {
+      out << "\t// Module for " << r->getName() << endl;
+    }
+
+    out << endl;
+
+    out << "\t// --- End of resource list" << endl << endl;
+    
+    for (auto instr : m->getBody()) {
+      out << "\talways @(*) begin" << endl;
+      out << "\t\t// Code for " << *instr << endl;
+      out << "\tend" << endl << endl;
+    }
 
     // For every instruction in the code (no invokes at this point)
     //  Emit an always* for connect

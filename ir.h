@@ -103,6 +103,13 @@ namespace CAC {
     Module* invokedMod;
     std::map<std::string, Port> invokeBinding;
 
+    Module* invokedModule() const { assert(isInvoke()); return invokedMod; }
+
+    map<string, Port> invokedBinding() const {
+      assert(isInvoke());
+      return invokeBinding;
+    }
+    
     void bind(const std::string& invokePortName,
               Port pt) {
       assert(isInvoke());
@@ -176,6 +183,9 @@ namespace CAC {
   public:
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    std::set<CC*> getBody() const { return body; }
+    std::set<ModuleInstance*> getResources() const { return resources; }    
 
     CallingConvention* action(const std::string& name) {
       assert(contains_key(name, actions));
@@ -347,10 +357,13 @@ namespace CAC {
 
       out << "End of submodules" << endl << endl;
 
+      out << "Body:" << endl;
       for (auto instr : body) {
         out << *instr << endl;
       }
 
+      out << endl;
+      
       out << "endmodule "<< name << endl;
     }
 
