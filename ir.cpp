@@ -135,7 +135,7 @@ namespace CAC {
 
       if (instr->isStartAction) {
         cout << "Found start of invocation" << endl;
-        invStart->continuations.push_back({trueConst, instr, 0});
+        invStart->continuations.push_back({trueConst, map_find(instr, ccMap), 0});
       }
     }
     
@@ -163,7 +163,12 @@ namespace CAC {
   }
 
   std::string moduleDecl(Module* m) {
-    return "adder #(.WIDTH(16))";
+    string name = m->getName();
+    if (hasPrefix(name, "add")) {
+      return "adder #(.WIDTH(16))";
+    } else {
+      return "constant #(.WIDTH(1), .VALUE(1))";
+    }
   }
   
   void emitVerilog(Context& c, Module* m) {
@@ -202,6 +207,9 @@ namespace CAC {
     for (auto instr : m->getBody()) {
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
+      out << "\t\tif (rst) begin" << endl;
+      out << "\t\tend else begin" << endl;
+      out << "\t\tend" << endl;
       out << "\tend" << endl << endl;
     }
 

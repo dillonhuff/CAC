@@ -9,17 +9,6 @@
 using namespace llvm;
 using namespace CAC;
 
-static inline
-bool hasPrefix(const std::string str, const std::string prefix) {
-  auto res = std::mismatch(prefix.begin(), prefix.end(), str.begin());
-
-  if (res.first == prefix.end()) {
-    return true;
-  }
-
-  return false;
-}
-
 string calledFuncName(llvm::Instruction* const iptr) {
   assert(CallInst::classof(iptr));
 

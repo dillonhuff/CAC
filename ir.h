@@ -8,6 +8,17 @@ using namespace dbhc;
 
 namespace CAC {
 
+  static inline
+  bool hasPrefix(const std::string str, const std::string prefix) {
+    auto res = std::mismatch(prefix.begin(), prefix.end(), str.begin());
+
+    if (res.first == prefix.end()) {
+      return true;
+    }
+
+    return false;
+  }
+
   class Context;
   class Module;
 
@@ -246,11 +257,11 @@ namespace CAC {
     vector<Port> getInterfacePorts() const {
       
 
-        vector<Port> pts;
-        for (auto pt : primPorts) {
-          pts.push_back(pt.second);
-        }
-        return pts;
+      vector<Port> pts;
+      for (auto pt : primPorts) {
+        pts.push_back(pt.second);
+      }
+      return pts;
       // } else {
       //   vector<Port> pts = allPorts();
       //   vector<Port> iPorts;
