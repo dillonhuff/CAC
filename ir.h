@@ -226,22 +226,23 @@ namespace CAC {
     }
 
     vector<Port> getInterfacePorts() const {
-      if (isPrimitive) {
+      
+
         vector<Port> pts;
         for (auto pt : primPorts) {
           pts.push_back(pt.second);
         }
         return pts;
-      } else {
-        vector<Port> pts = allPorts();
-        vector<Port> iPorts;
-        for (auto pt : pts) {
-          if (neverWiredUp(pt)) {
-            iPorts.push_back(pt);
-          }
-        }
-        return iPorts;
-      }
+      // } else {
+      //   vector<Port> pts = allPorts();
+      //   vector<Port> iPorts;
+      //   for (auto pt : pts) {
+      //     if (neverWiredUp(pt)) {
+      //       iPorts.push_back(pt);
+      //     }
+      //   }
+      //   return iPorts;
+      // }
     }
     
     Port pt(const std::string& name) {
