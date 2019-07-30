@@ -42,22 +42,20 @@ int main() {
   add16Inv->addOutPort(16, "adder_in1");
   add16Inv->addInPort(16, "adder_out");
 
-  // ModuleInstance* in0 = add16Inv->addInstance(wire16, "in0");
-  // ModuleInstance* in1 = add16Inv->addInstance(wire16, "in1");
-  // ModuleInstance* out = add16Inv->addInstance(wire16, "out");
-
-  // ModuleInstance* ain0 = add16Inv->addInstance(wire16, "adder_in0");
-  // ModuleInstance* ain1 = add16Inv->addInstance(wire16, "adder_in1");
-  // ModuleInstance* aout = add16Inv->addInstance(wire16, "adder_out");
-
   ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
   
-  CC* in0W = add16Inv->addStartInstruction(add16Inv->pt("in0"), add16Inv->pt("adder_in0"));
-  CC* in1W = add16Inv->addInstruction(add16Inv->pt("in1"), add16Inv->pt("adder_in1"));
-  CC* outW = add16Inv->addInstruction(add16Inv->pt("out"), add16Inv->pt("adder_out"));
+  CC* in0W =
+    add16Inv->addStartInstruction(add16Inv->pt("in0"), add16Inv->pt("adder_in0"));
+  CC* in1W =
+    add16Inv->addInstruction(add16Inv->pt("in1"), add16Inv->pt("adder_in1"));
+  CC* outW =
+    add16Inv->addInstruction(add16Inv->pt("out"), add16Inv->pt("adder_out"));
 
   in0W->continueTo(oneInst->pt("out"), in1W, 0);
   in1W->continueTo(oneInst->pt("out"), outW, 0);
+
+  cout << "add16 inv" << endl;
+  cout << *add16Inv << endl;
   
   add16->addAction(add16Inv);
 
@@ -72,15 +70,17 @@ int main() {
   callAdd->setIsStartAction(true);
   
   callAdd->bind("adder_in0", mAdd->pt("in0"));
-  callAdd->bind("adder_in1", mAdd->pt("in1"));  
+  callAdd->bind("adder_in1", mAdd->pt("in1"));
   callAdd->bind("adder_out", mAdd->pt("out"));
 
   callAdd->bind("in0", addWrapper->pt("in0"));
   callAdd->bind("in1", addWrapper->pt("in1"));
   callAdd->bind("out", addWrapper->pt("out"));    
 
-  cout << "Add wrapper" << endl;
+  cout << "Add wrapper before lowering" << endl;
   cout << *addWrapper << endl;
+
+  inlineInvokes(addWrapper);
 
   emitVerilog(c, addWrapper);
 

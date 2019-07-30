@@ -32,6 +32,13 @@ namespace CAC {
   };
 
   static inline
+  Port reverseDir(const Port pt) {
+    Port cpy = pt;
+    cpy.isInput = !pt.isInput;
+    return cpy;
+  }
+
+  static inline
   bool operator==(const Port& a, const Port& b) {
     return (a.inst == b.inst) && (a.getName() == b.getName());
   }
@@ -53,6 +60,7 @@ namespace CAC {
     Port pt(const std::string& name) {
       Port pt = getPort(source, name);
       pt.inst = this;
+      pt = reverseDir(pt);
       return pt;
     }
 
@@ -269,7 +277,7 @@ namespace CAC {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
       cc->connection.first = a;
-      cc->connection.first = b;      
+      cc->connection.second = b;      
       body.insert(cc);      
       return cc;
     }
@@ -278,7 +286,7 @@ namespace CAC {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
       cc->connection.first = a;
-      cc->connection.first = b;
+      cc->connection.second = b;
       body.insert(cc);      
       return cc;
     }
@@ -288,9 +296,8 @@ namespace CAC {
     }
 
     void addInPort(const int width, const std::string& name) {
-      //assert(isPrimitive);
-
       assert(!contains_key(name, primPorts));
+
       primPorts.insert({name, {nullptr, name, true, width}});
     }
 
