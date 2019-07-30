@@ -17,22 +17,23 @@ void runCmd(const std::string& cmd) {
 
 int main() {
 
-  Module* const_1_1 = new Module("const_1_1");
+  Context c;
+  Module* const_1_1 = c.addModule("const_1_1");
   const_1_1->setPrimitive(true);
   const_1_1->addOutPort(1, "out");
   
-  Module* wire16 = new Module("wire16");
+  Module* wire16 = c.addModule("wire16");
   wire16->setPrimitive(true);
   wire16->addInPort(16, "in");
   wire16->addOutPort(16, "out");  
   
-  Module* add16 = new Module("add16");
+  Module* add16 = c.addModule("add16");
   add16->setPrimitive(true);
   add16->addInPort(16, "in0");
   add16->addInPort(16, "in1");
   add16->addOutPort(16, "out");
 
-  Module* add16Inv = new Module("add16Inv");
+  Module* add16Inv = c.addModule("add16Inv");
 
   ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
 
@@ -53,17 +54,40 @@ int main() {
   
   add16->addAction(add16Inv);
 
-  runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+  Module* addWrapper = c.addModule("add_16_wrapper");
+  addWrapper->addInPort(16, "in0");
+  addWrapper->addInPort(16, "in1");
+  addWrapper->addOutPort(16, "out");
+  
+  auto mAdd = addWrapper->addInstance(add16, "adder");
 
-  Context c;
-  loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+  CC* callAdd = addWrapper->addInvokeInstruction(add16Inv);
+  callAdd->setIsStartAction(true);
+  
+  callAdd->bind("adder_in0", mAdd->pt("in0"));
+  callAdd->bind("adder_in1", mAdd->pt("in1"));  
+  callAdd->bind("adder_out", mAdd->pt("out"));
 
-  Module* m = c.getModule("read_write_ram");
-  assert(m != nullptr);
+  callAdd->bind("in0", addWrapper->pt("in0"));
+  callAdd->bind("in1", addWrapper->pt("in1"));
+  callAdd->bind("out", addWrapper->pt("out"));    
 
-  cout << "Final module" << endl;
-  cout << *m << endl;
+  cout << "Add wrapper" << endl;
+  cout << *addWrapper << endl;
 
-  emitVerilog(c, m);
+  emitVerilog(c, addWrapper);
+
+  // runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+
+  // Context c;
+  // loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+
+  // Module* m = c.getModule("read_write_ram");
+  // assert(m != nullptr);
+
+  // cout << "Final module" << endl;
+  // cout << *m << endl;
+
+  // emitVerilog(c, m);
 
 }

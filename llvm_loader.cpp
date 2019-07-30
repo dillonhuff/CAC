@@ -75,20 +75,6 @@ void addRAM32Primitive(Context& c) {
   m->addAction(wr);  
 }
 
-CAC::Module* getWireMod(Context& c, const int width) {
-  string name = "wire" + to_string(width);
-  if (c.hasModule(name)) {
-    return c.getModule(name);
-  }
-
-  CAC::Module* w = c.addModule(name);
-  w->setPrimitive(true);
-  w->addInPort(width, "in");
-  w->addInPort(width, "out");
-  
-  return w;
-}
-
 void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {

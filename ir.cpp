@@ -6,6 +6,21 @@ using namespace CAC;
 
 namespace CAC {
 
+  CAC::Module* getWireMod(Context& c, const int width) {
+    string name = "wire" + to_string(width);
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+
+    CAC::Module* w = c.addModule(name);
+    w->setPrimitive(true);
+    w->addInPort(width, "in");
+    w->addInPort(width, "out");
+  
+    return w;
+  }
+
+  
   std::ostream& operator<<(std::ostream& out, const Port& pt) {
     out << (pt.inst == nullptr ? "self." : (pt.inst->getName() + ".")) << pt.getName() << "[" << pt.getWidth() << "]";
     return out;
@@ -15,6 +30,9 @@ namespace CAC {
     out << (isStartAction ? "on start: " : "") << this << ": If " << " do ";
     if (isInvoke()) {
       out << "invoke " << invokedMod->getName();
+      for (auto pt : invokeBinding) {
+        out << "(" << pt.first << ", " << pt.second << ")";
+      }
     } else if (isEmpty()) {
       out << "{}";
     } else if (isConnect()) {
@@ -60,7 +78,8 @@ namespace CAC {
     regMod->addOutPort(width, "out");
 
     CAC::Module* regModLd = c.addModule("not_" + to_string(width) + "_apply");
-    regModLg->addInstance(getWireMod(), );
+    regModLd->addInstance(getWireMod(c, width), "not_in");
+    regModLd->addInstance(getWireMod(c, width), "not_in");    
     
     regMod->addAction(regModLd);
 

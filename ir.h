@@ -91,11 +91,14 @@ namespace CAC {
     bool isStartAction;
     pair<Port, Port> connection;
     std::vector<Activation> continuations;
+
     Module* invokedMod;
+    std::map<std::string, Port> invokeBinding;
 
     void bind(const std::string& invokePortName,
               Port pt) {
       assert(isInvoke());
+      invokeBinding[invokePortName] = pt;
     }
 
     bool wiresUp(const Port pt) {
@@ -242,11 +245,7 @@ namespace CAC {
     }
     
     Port pt(const std::string& name) {
-      if (isPrimitive) {
-        return map_find(name, primPorts);
-      } else {
-        assert(false);
-      }
+      return map_find(name, primPorts);      
     }
 
     CC* addInvokeInstruction(CallingConvention* call) {
@@ -288,15 +287,13 @@ namespace CAC {
     }
 
     void addInPort(const int width, const std::string& name) {
-      assert(isPrimitive);
+      //assert(isPrimitive);
 
       assert(!contains_key(name, primPorts));
       primPorts.insert({name, {nullptr, name, true, width}});
     }
 
     void addOutPort(const int width, const std::string& name) {
-      assert(isPrimitive);
-
       assert(!contains_key(name, primPorts));
       primPorts.insert({name, {nullptr, name, false, width}});
 
@@ -387,4 +384,5 @@ namespace CAC {
 
   void emitVerilog(Context& c, Module* m);
 
+  CAC::Module* getWireMod(Context& c, const int width);
 }
