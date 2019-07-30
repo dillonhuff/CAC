@@ -51,15 +51,44 @@ namespace CAC {
     return mod->pt(name);
   }
 
-  CC* copyInstrTo(CC* instr, Module* destMod) {
+  Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
+    if (pt.inst == nullptr) {
+      return map_find(pt.getName(), activeBinding);
+    } else {
+      return map_find(pt.inst, resourceMap)->pt(pt.getName());
+    }
+  }
+
+  CC* inlineInstrTo(CC* instr, Module* destMod, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
+    CC* cpy = nullptr;
     if (instr->isEmpty()) {
-      return destMod->addEmptyInstruction();
+      cpy = destMod->addEmptyInstruction();
     } else if (instr->isConnect()) {
-      return destMod->addEmptyInstruction();
+      cpy =
+        destMod->addInstruction(replacePort(instr->connection.first,
+                                            resourceMap,
+                                            activeBinding),
+                                replacePort(instr->connection.second,
+                                            resourceMap,
+                                            activeBinding));
     } else {
       cout << "Error: Unsupported instruction " << *instr << endl;
       assert(false);
     }
+
+    // Invoked instructions are never starts
+    cpy->setIsStartAction(false);
+    
+    vector<Activation> newActivations;
+    for (auto act : instr->continuations) {
+      Port newCond = replacePort(act.condition, resourceMap, activeBinding);
+      // TODO: Fix this after creating instruction replacement map
+      CC* newDest = act.destination;
+      int newDelay = act.delay;
+      newActivations.push_back({newCond, newDest, newDelay});
+    }
+    cpy->continuations = newActivations;
+    return cpy;
   }
   
   void inlineInvoke(CC* instr, Module* container) {
@@ -85,7 +114,8 @@ namespace CAC {
       container->freshInstance(getConstMod(*(container->getContext()), 1, 1), "true")->pt("out");
     // Inline all instructions connecting dead ones to invEnd
     for (auto instr : invoked->getBody()) {
-      CC* iCpy = copyInstrTo(instr, container); //container->addEmptyInstruction();
+      CC* iCpy =
+        inlineInstrTo(instr, container, resourceMap, invokedBindings);
       if (iCpy->continuations.size() == 0) {
         iCpy->continueTo(trueConst, invEnd, 0);
       }
