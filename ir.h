@@ -404,6 +404,18 @@ namespace CAC {
     bool hasModule(const std::string& name) {
       return contains_key(name, mods);
     }
+
+    Module* addCombModule(const std::string& name) {
+      if (contains_key(name, mods)) {
+        cout << "Error: Module already contains " << name << endl;
+      }
+      assert(!contains_key(name, mods));
+      
+      mods[name] = new Module(name);
+      mods[name]->setContext(this);
+
+      return map_find(name, mods);
+    }
     
     Module* addModule(const std::string& name) {
       if (contains_key(name, mods)) {

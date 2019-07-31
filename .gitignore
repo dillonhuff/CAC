@@ -6,3 +6,6 @@ CMakeLists.txt
 *.v
 iv
 \#*
+tb
+CMakeCache.txt
+CMakeFiles/

@@ -18,16 +18,16 @@ void runCmd(const std::string& cmd) {
 int main() {
 
   Context c;
-  Module* const_1_1 = c.addModule("const_1_1");
+  Module* const_1_1 = c.addCombModule("const_1_1");
   const_1_1->setPrimitive(true);
   const_1_1->addOutPort(1, "out");
   
-  Module* wire16 = c.addModule("wire16");
+  Module* wire16 = c.addCombModule("wire16");
   wire16->setPrimitive(true);
   wire16->addInPort(16, "in");
   wire16->addOutPort(16, "out");  
   
-  Module* add16 = c.addModule("add16");
+  Module* add16 = c.addCombModule("add16");
   add16->setPrimitive(true);
   add16->addInPort(16, "in0");
   add16->addInPort(16, "in1");
