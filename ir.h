@@ -33,6 +33,10 @@ namespace CAC {
     bool isInput;
     int width;
 
+    bool isOutput() const {
+      return !isInput;
+    }
+    
     int getWidth() const {
       return width;
     }

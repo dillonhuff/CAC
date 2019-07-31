@@ -33,6 +33,9 @@ int main() {
   add16->addInPort(16, "in1");
   add16->addOutPort(16, "out");
 
+  assert(!add16->pt("in0").isOutput());  
+  assert(!add16->pt("out").isInput);
+  
   Module* add16Inv = c.addModule("add16Inv");
   add16Inv->addInPort(16, "in0");
   add16Inv->addInPort(16, "in1");
@@ -41,6 +44,9 @@ int main() {
   add16Inv->addOutPort(16, "adder_in0");
   add16Inv->addOutPort(16, "adder_in1");
   add16Inv->addInPort(16, "adder_out");
+
+  assert(add16Inv->pt("adder_in0").isOutput());  
+  assert(add16Inv->pt("adder_out").isInput);
 
   ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
   

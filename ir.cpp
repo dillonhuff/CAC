@@ -189,10 +189,18 @@ namespace CAC {
       // TODO: Order the ports
       if (a.isInput) {
         assert(!b.isInput);
-        return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+        if (a.inst == nullptr) {
+          return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
+        } else {
+          return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+        }
       } else {
         assert(b.isInput);
-        return verilogString(b, m) + " <= " + verilogString(a, m) + ";";        
+        if (a.inst == nullptr) {
+          return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+        } else {
+          return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
+        }
       }
     }
   }
@@ -232,7 +240,7 @@ namespace CAC {
       }
       out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
       
-      out << ");" << endl;
+      out << ");" << endl << endl;
     }
 
     out << endl;
