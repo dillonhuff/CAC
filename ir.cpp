@@ -187,7 +187,13 @@ namespace CAC {
       Port a = instr->connection.first;
       Port b = instr->connection.second;
       // TODO: Order the ports
-      return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+      if (a.isInput) {
+        assert(!b.isInput);
+        return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+      } else {
+        assert(b.isInput);
+        return verilogString(b, m) + " <= " + verilogString(a, m) + ";";        
+      }
     }
   }
   
