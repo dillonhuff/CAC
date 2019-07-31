@@ -114,9 +114,6 @@ namespace CAC {
       
       CC* iCpy =
         inlineInstrTo(instr, container, resourceMap, invokedBindings);
-      if (iCpy->continuations.size() == 0) {
-        iCpy->continueTo(trueConst, invEnd, 0);
-      }
 
       ccMap[instr] = iCpy;
     }
@@ -133,6 +130,10 @@ namespace CAC {
       }
       cpy->continuations = newActivations;
 
+      if (cpy->continuations.size() == 0) {
+        cpy->continueTo(trueConst, invEnd, 0);
+      }
+      
       if (instr->isStartAction) {
         cout << "Found start of invocation" << endl;
         invStart->continuations.push_back({trueConst, map_find(instr, ccMap), 0});
@@ -324,13 +325,18 @@ namespace CAC {
       }
       out << "\t\tend else begin" << endl;
 
-      out << "\t\tif (" << predString << ") begin" << endl;
-      out << "\t\t\t" << body << endl;
-      out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
-      out << "\t\t\tend else begin" << endl;
-      out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
-      out << "\t\t\tend" << endl;
-      out << "\t\tend" << endl << endl;
+      if (predString != "") {
+        out << "\t\t\tif (" << predString << ") begin" << endl;
+        out << "\t\t\t\t" << body << endl;
+        out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
+        out << "\t\t\tend else begin" << endl;
+        out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+        out << "\t\t\tend" << endl;
+
+      }
+
+      out << "\t\tend" << endl << endl;      
+      out << "\tend" << endl << endl;      
     }
 
     for (auto instr : m->getBody()) {
