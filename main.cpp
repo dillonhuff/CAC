@@ -84,6 +84,8 @@ int main() {
 
   emitVerilog(c, addWrapper);
 
+  runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
+
   // runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
 
   // Context c;

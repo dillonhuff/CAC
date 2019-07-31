@@ -170,6 +170,15 @@ namespace CAC {
       return "constant #(.WIDTH(1), .VALUE(1))";
     }
   }
+
+  string bodyString(CC* instr, Module* m) {
+    if (instr->isEmpty()) {
+      return "";
+    } else {
+      assert(instr->isConnect());
+      return "a <= b;";
+    }
+  }
   
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
@@ -205,10 +214,15 @@ namespace CAC {
     out << "\t// --- End of resource list" << endl << endl;
     
     for (auto instr : m->getBody()) {
+      string body = bodyString(instr, m);
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
       out << "\t\tif (rst) begin" << endl;
+      if (instr->isStartAction) {
+        out << "\t\t\t" << body << endl;
+      }
       out << "\t\tend else begin" << endl;
+      out << "\t\t\t" << body << endl;      
       out << "\t\tend" << endl;
       out << "\tend" << endl << endl;
     }
