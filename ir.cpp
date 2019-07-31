@@ -165,7 +165,7 @@ namespace CAC {
   std::string moduleDecl(Module* m) {
     string name = m->getName();
     if (hasPrefix(name, "add")) {
-      return "adder #(.WIDTH(16))";
+      return "add #(.WIDTH(16))";
     } else {
       return "constant #(.WIDTH(1), .VALUE(1))";
     }
