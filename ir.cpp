@@ -204,6 +204,50 @@ namespace CAC {
       }
     }
   }
+
+  string happenedVar(CC* instr, Module* m) {
+    return "i_" + to_string((uint64_t) instr) + "_happened";
+  }
+  
+  string happenedLastCycleVar(CC* instr, Module* m) {
+    return "i_" + to_string((uint64_t) instr) + "_happened_last_cycle";
+  }
+
+  string stringList(const std::string& sep, const std::vector<string>& strs) {
+    string res = "";
+    if (strs.size() == 0) {
+      return res;
+    }
+
+    for (int i = 0; i < (int) strs.size(); i++) {
+      res += strs[i];
+      if (i < ((int) strs.size()) - 1) {
+        res += sep;
+      }
+    }
+
+    return res;
+  }
+
+  string parens(const string& str) { return "(" + str + ")"; }
+  
+  string predHappenedString(CC* instr, Module* m) {
+    vector<string> predConds;
+    for (auto pred : m->getBody()) {
+      for (auto c : pred->continuations) {
+        if (c.destination == instr) {
+          assert(0 <= c.delay && c.delay <= 1);
+          
+          // TODO: Check transition distance
+          predConds.push_back(parens(happenedVar(pred, m) +
+                                     " && " +
+                                     verilogString(c.condition, m)));
+        }
+      }
+    }
+
+    return stringList(" || ", predConds);
+  }
   
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
@@ -255,22 +299,46 @@ namespace CAC {
     out << endl;
 
     out << "\t// --- End of resource list" << endl << endl;
+
+    // Emit check to see if any predecessor happened?
+    // Also: Emit predecessor variables
+
+    for (auto instr : m->getBody()) {
+      out << "\treg " << happenedVar(instr, m) << ";" << endl;
+      out << "\treg " << happenedLastCycleVar(instr, m) << ";" << endl;      
+    }
+
+    out << endl;
     
     for (auto instr : m->getBody()) {
+      string predString = predHappenedString(instr, m);
       string body = bodyString(instr, m);
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
       out << "\t\tif (rst) begin" << endl;
       if (instr->isStartAction) {
         out << "\t\t\t" << body << endl;
+        out << "\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl;
+      } else {
+        out << "\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
       }
       out << "\t\tend else begin" << endl;
-      out << "\t\t\t" << body << endl;      
-      out << "\t\tend" << endl;
+
+      out << "\t\tif (" << predString << ") begin" << endl;
+      out << "\t\t\t" << body << endl;
+      out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
+      out << "\t\t\tend else begin" << endl;
+      out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+      out << "\t\t\tend" << endl;
+      out << "\t\tend" << endl << endl;
+    }
+
+    for (auto instr : m->getBody()) {
+      out << "\talways @(posedge clk) begin " << endl;
+      out << "\t\t" << happenedLastCycleVar(instr, m) << " <= " << happenedVar(instr, m) << ";" << endl;
       out << "\tend" << endl << endl;
     }
 
-    // For every instruction in the code (no invokes at this point)
     //  Emit an always* for connect
     //  For each distance 0 transition:
     //  Emit a control variable set?
