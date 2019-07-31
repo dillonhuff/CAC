@@ -181,7 +181,8 @@ namespace CAC {
   Module* getConstMod(Context& c, const int width, const int value);
   Module* getRegMod(Context& c, const int width);
   Module* getNotMod(Context& c, const int width);
-  
+
+  // Maybe: Add structural connections and port default values?
   class Module {
     bool isPrimitive;
     std::map<string, Port> primPorts;
@@ -259,23 +260,11 @@ namespace CAC {
     }
 
     vector<Port> getInterfacePorts() const {
-      
-
       vector<Port> pts;
       for (auto pt : primPorts) {
         pts.push_back(pt.second);
       }
       return pts;
-      // } else {
-      //   vector<Port> pts = allPorts();
-      //   vector<Port> iPorts;
-      //   for (auto pt : pts) {
-      //     if (neverWiredUp(pt)) {
-      //       iPorts.push_back(pt);
-      //     }
-      //   }
-      //   return iPorts;
-      // }
     }
     
     Port pt(const std::string& name) {
