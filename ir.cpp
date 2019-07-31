@@ -231,14 +231,23 @@ namespace CAC {
     
     for (auto r : m->getResources()) {
       out << "\t// Module for " << r->getName() << endl;
-      for (auto pt : r->source->getInterfacePorts()) {
+      auto pts = r->source->getInterfacePorts();
+
+      for (auto pt : pts) {
         if (pt.isInput) {
-          out << "\treg " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+          out << "\treg " << "[ " << pt.getWidth() - 1 << " : 0 ] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
         } else {
-          out << "\twire " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+          out << "\twire " << "[ " << pt.getWidth() - 1 << " : 0] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
         }
       }
       out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
+
+      for (int i = 0; i < (int) pts.size(); i++) {
+        out << "." << pts[i].getName() << "(" << verilogString(r->pt(pts[i].getName()), m) << ")";
+        if (i < ((int) pts.size() - 1)) {
+          out << ", ";
+        }
+      }
       
       out << ");" << endl << endl;
     }
