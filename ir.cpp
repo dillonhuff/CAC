@@ -159,7 +159,7 @@ namespace CAC {
   void printVerilog(std::ostream& out, const Port pt) {
     int wHigh = pt.getWidth() - 1;
     int wLow = 0;
-    out << (pt.isInput ? "input" : "output") << " [" << wHigh << " : " << wLow << "] " << pt.getName();
+    out << (pt.isInput ? "input" : "output reg") << " [" << wHigh << " : " << wLow << "] " << pt.getName();
   }
 
   std::string moduleDecl(Module* m) {
@@ -171,12 +171,23 @@ namespace CAC {
     }
   }
 
+  string verilogString(const Port pt, Module* m) {
+    if (pt.inst != nullptr) {
+      return pt.inst->getName() + "_" + pt.getName();
+    } else {
+      return pt.getName();
+    }
+  }
+  
   string bodyString(CC* instr, Module* m) {
     if (instr->isEmpty()) {
       return "";
     } else {
       assert(instr->isConnect());
-      return "a <= b;";
+      Port a = instr->connection.first;
+      Port b = instr->connection.second;
+      // TODO: Order the ports
+      return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
     }
   }
   
@@ -206,7 +217,16 @@ namespace CAC {
     
     for (auto r : m->getResources()) {
       out << "\t// Module for " << r->getName() << endl;
-      out << "\t" << moduleDecl(r->source) + " " + r->getName() + "();";
+      for (auto pt : r->source->getInterfacePorts()) {
+        if (pt.isInput) {
+          out << "\treg " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+        } else {
+          out << "\twire " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+        }
+      }
+      out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
+      
+      out << ");" << endl;
     }
 
     out << endl;
