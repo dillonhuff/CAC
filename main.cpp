@@ -110,7 +110,6 @@ int main() {
     pipeAdds->addOutPort(16, "result");
 
     ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
-    
 
     // On start: If valid == 1 then transition to firstAdd?
 
