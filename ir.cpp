@@ -250,9 +250,20 @@ namespace CAC {
     return stringList(" || ", predConds);
   }
 
-  set<CC*> successors(CC* c) {
+
+  vector<Activation> combSuccessors(CC* c) {
+    vector<Activation> act;
+    for (auto a : c->continuations) {
+      if (a.delay == 0) {
+        act.push_back(a);
+      }
+    }
+    return act;
+  }
+  
+  set<CC*> nextCombInstructions(CC* c) {
     set<CC*> succ;
-    for (auto cont : c->continuations) {
+    for (auto cont : combSuccessors(c)) {
       succ.insert(cont.destination);
     }
     return succ;
@@ -332,7 +343,7 @@ namespace CAC {
             found = true;
           } else {
             for (auto pred : onRst) {
-              if (elem(instr, successors(pred))) {
+              if (elem(instr, nextCombInstructions(pred))) {
                 onRst.insert(instr);
                 found = true;
                 break;
