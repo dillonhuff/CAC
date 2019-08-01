@@ -56,43 +56,73 @@ void addBinop(Context& c, const std::string& name, const int cycleLatency) {
 
 int main() {
 
-  Context c;
+  {
+    Context c;
 
-  addBinop(c, "add16", 0);
+    addBinop(c, "add16", 0);
 
-  Module* add16 = c.getModule("add16");
-  Module* add16Inv = add16->action("add16_apply");
+    Module* add16 = c.getModule("add16");
+    Module* add16Inv = add16->action("add16_apply");
 
-  Module* addWrapper = c.addModule("add_16_wrapper");
-  addWrapper->addInPort(16, "in0");
-  addWrapper->addInPort(16, "in1");
-  addWrapper->addOutPort(16, "out");
+    Module* addWrapper = c.addModule("add_16_wrapper");
+    addWrapper->addInPort(16, "in0");
+    addWrapper->addInPort(16, "in1");
+    addWrapper->addOutPort(16, "out");
   
-  auto mAdd = addWrapper->addInstance(add16, "adder");
+    auto mAdd = addWrapper->addInstance(add16, "adder");
 
-  CC* callAdd = addWrapper->addInvokeInstruction(add16Inv);
-  callAdd->setIsStartAction(true);
+    CC* callAdd = addWrapper->addInvokeInstruction(add16Inv);
+    callAdd->setIsStartAction(true);
   
-  callAdd->bind("add16_in0", mAdd->pt("in0"));
-  callAdd->bind("add16_in1", mAdd->pt("in1"));
-  callAdd->bind("add16_out", mAdd->pt("out"));
+    callAdd->bind("add16_in0", mAdd->pt("in0"));
+    callAdd->bind("add16_in1", mAdd->pt("in1"));
+    callAdd->bind("add16_out", mAdd->pt("out"));
 
-  callAdd->bind("in0", addWrapper->ipt("in0"));
-  callAdd->bind("in1", addWrapper->ipt("in1"));
-  callAdd->bind("out", addWrapper->ipt("out"));    
+    callAdd->bind("in0", addWrapper->ipt("in0"));
+    callAdd->bind("in1", addWrapper->ipt("in1"));
+    callAdd->bind("out", addWrapper->ipt("out"));    
 
-  cout << "Add wrapper before lowering" << endl;
-  cout << *addWrapper << endl;
+    cout << "Add wrapper before lowering" << endl;
+    cout << *addWrapper << endl;
 
-  inlineInvokes(addWrapper);
+    inlineInvokes(addWrapper);
 
-  cout << "Add wrapper after lowering" << endl;
-  cout << *addWrapper << endl;
+    cout << "Add wrapper after lowering" << endl;
+    cout << *addWrapper << endl;
   
-  emitVerilog(c, addWrapper);
+    emitVerilog(c, addWrapper);
 
-  runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
+    runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
+  }
 
+  {
+    Context c;
+    addBinop(c, "add16", 0);
+    
+    Module* add16 = c.getModule("add16");
+    Module* add16Apply = c.getModule("add16_apply");
+    Module* one16 = getConstMod(c, 16, 1);
+    Module* const_1_1 = getConstMod(c, 1, 1);
+
+    Module* pipeAdds = c.addModule("pipelined_adds");
+    pipeAdds->addInPort(1, "in_valid");
+    pipeAdds->addInPort(16, "in_data");
+    pipeAdds->addOutPort(16, "result");
+
+    ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
+    
+
+    // On start: If valid == 1 then
+
+    CC* firstAdd = pipeAdds->addInvokeInstruction(add16Apply);
+    CC* secondAdd = pipeAdds->addInvokeInstruction(add16Apply);
+
+    firstAdd->continueTo(oneInst->pt("out"), secondAdd, 1);
+    // Also continue to sending registers?
+    
+    cout << "Two adds..." << endl;
+    cout << *pipeAdds << endl;
+  }
   
   // Next: two pipelined adders with a valid controller?
   // send the add output to a signal?
