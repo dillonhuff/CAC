@@ -12,7 +12,7 @@ namespace CAC {
       return c.getModule(name);
     }
 
-    CAC::Module* w = c.addModule(name);
+    CAC::Module* w = c.addCombModule(name);
     w->setPrimitive(true);
     w->addInPort(width, "in");
     w->addInPort(width, "out");
@@ -400,10 +400,6 @@ namespace CAC {
       out << "\tend" << endl << endl;
     }
 
-    //  Emit an always* for connect
-    //  For each distance 0 transition:
-    //  Emit a control variable set?
-
     out << "endmodule";
     out.close();
   }
@@ -462,9 +458,9 @@ namespace CAC {
       return c.getModule(name);
     }
 
-    CAC::Module* w = c.addModule(name);
+    CAC::Module* w = c.addCombModule(name);
     w->setPrimitive(true);
-    w->addInPort(width, "out");
+    w->addOutPort(width, "out");
   
     return w;
 
