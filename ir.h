@@ -75,7 +75,7 @@ namespace CAC {
     Port pt(const std::string& name) {
       Port pt = getPort(source, name);
       pt.inst = this;
-      pt = reverseDir(pt);
+      // pt = reverseDir(pt);
       return pt;
     }
 
@@ -266,9 +266,13 @@ namespace CAC {
       }
       return pts;
     }
+
+    Port ipt(const std::string& name) {
+      return reverseDir(ept(name));
+    }
     
-    Port pt(const std::string& name) {
-      return map_find(name, primPorts);      
+    Port ept(const std::string& name) {
+      return map_find(name, primPorts);
     }
 
     CC* addInvokeInstruction(CallingConvention* call) {

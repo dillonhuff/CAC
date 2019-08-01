@@ -22,7 +22,7 @@ namespace CAC {
 
   
   std::ostream& operator<<(std::ostream& out, const Port& pt) {
-    out << (pt.inst == nullptr ? "self." : (pt.inst->getName() + ".")) << pt.getName() << "[" << pt.getWidth() << "]";
+    out << (pt.inst == nullptr ? "self." : (pt.inst->getName() + ".")) << pt.getName() << "[" << (pt.isInput ? "in" : "out") << " : " << pt.getWidth() << "]";
     return out;
   }
 
@@ -48,7 +48,7 @@ namespace CAC {
   }
   
   Port getPort(Module* const mod, const std::string& name) {
-    return mod->pt(name);
+    return mod->ipt(name);
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
@@ -189,6 +189,7 @@ namespace CAC {
       Port b = instr->connection.second;
       // TODO: Order the ports
       if (a.isInput) {
+        cout << "Connecting input " << a << " to " << b << endl;
         assert(!b.isInput);
         if (a.inst == nullptr) {
           return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
@@ -196,6 +197,9 @@ namespace CAC {
           return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
         }
       } else {
+
+        cout << "Connecting " << a << " to " << b << endl;
+        
         assert(b.isInput);
         if (a.inst == nullptr) {
           return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
@@ -239,7 +243,6 @@ namespace CAC {
         if (c.destination == instr) {
           assert(0 <= c.delay && c.delay <= 1);
           
-          // TODO: Check transition distance
           if (c.delay == 0) {
             predConds.push_back(parens(happenedVar(pred, m) +
                                        " && " +
@@ -438,7 +441,6 @@ namespace CAC {
     regModLd->addInstance(getWireMod(c, width), "not_in");    
     
     regMod->addAction(regModLd);
-
 
     return regMod;
   }

@@ -33,8 +33,8 @@ int main() {
   add16->addInPort(16, "in1");
   add16->addOutPort(16, "out");
 
-  assert(!add16->pt("in0").isOutput());  
-  assert(!add16->pt("out").isInput);
+  assert(!add16->ept("in0").isOutput());  
+  assert(!add16->ept("out").isInput);
   
   Module* add16Inv = c.addModule("add16Inv");
   add16Inv->addInPort(16, "in0");
@@ -45,17 +45,17 @@ int main() {
   add16Inv->addOutPort(16, "adder_in1");
   add16Inv->addInPort(16, "adder_out");
 
-  assert(add16Inv->pt("adder_in0").isOutput());  
-  assert(add16Inv->pt("adder_out").isInput);
+  assert(add16Inv->ept("adder_in0").isOutput());  
+  assert(add16Inv->ept("adder_out").isInput);
 
   ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
   
   CC* in0W =
-    add16Inv->addStartInstruction(add16Inv->pt("in0"), add16Inv->pt("adder_in0"));
+    add16Inv->addStartInstruction(add16Inv->ipt("in0"), add16Inv->ipt("adder_in0"));
   CC* in1W =
-    add16Inv->addInstruction(add16Inv->pt("in1"), add16Inv->pt("adder_in1"));
+    add16Inv->addInstruction(add16Inv->ipt("in1"), add16Inv->ipt("adder_in1"));
   CC* outW =
-    add16Inv->addInstruction(add16Inv->pt("out"), add16Inv->pt("adder_out"));
+    add16Inv->addInstruction(add16Inv->ipt("out"), add16Inv->ipt("adder_out"));
 
   in0W->continueTo(oneInst->pt("out"), in1W, 0);
   in1W->continueTo(oneInst->pt("out"), outW, 0);
@@ -79,15 +79,18 @@ int main() {
   callAdd->bind("adder_in1", mAdd->pt("in1"));
   callAdd->bind("adder_out", mAdd->pt("out"));
 
-  callAdd->bind("in0", addWrapper->pt("in0"));
-  callAdd->bind("in1", addWrapper->pt("in1"));
-  callAdd->bind("out", addWrapper->pt("out"));    
+  callAdd->bind("in0", addWrapper->ipt("in0"));
+  callAdd->bind("in1", addWrapper->ipt("in1"));
+  callAdd->bind("out", addWrapper->ipt("out"));    
 
   cout << "Add wrapper before lowering" << endl;
   cout << *addWrapper << endl;
 
   inlineInvokes(addWrapper);
 
+  cout << "Add wrapper after lowering" << endl;
+  cout << *addWrapper << endl;
+  
   emitVerilog(c, addWrapper);
 
   runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
