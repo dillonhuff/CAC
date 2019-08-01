@@ -350,9 +350,22 @@ namespace CAC {
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
       out << "\t\tif (rst) begin" << endl;
-      if (elem(instr, onRst)) { //instr->isStartAction) {
-        out << "\t\t\t" << body << endl;
-        out << "\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl;
+      if (elem(instr, onRst)) {
+        if (instr->isStartAction) {
+          out << "\t\t\t" << body << endl;
+          out << "\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl;
+        } else {
+
+          assert(predString != "");
+          out << "\t\t\tif (" << predString << ") begin" << endl;
+          out << "\t\t\t\t" << body << endl;
+          out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
+          out << "\t\t\tend else begin" << endl;
+          out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+          out << "\t\t\tend" << endl;
+
+        }
+          
       } else {
         out << "\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
       }
