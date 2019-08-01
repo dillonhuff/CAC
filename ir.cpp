@@ -15,7 +15,7 @@ namespace CAC {
     CAC::Module* w = c.addCombModule(name);
     w->setPrimitive(true);
     w->addInPort(width, "in");
-    w->addInPort(width, "out");
+    w->addOutPort(width, "out");
   
     return w;
   }
@@ -52,6 +52,7 @@ namespace CAC {
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
+    cout << "Replacing port " << pt << endl;
     if (pt.inst == nullptr) {
       return map_find(pt.getName(), activeBinding);
     } else {
@@ -118,6 +119,9 @@ namespace CAC {
       ccMap[instr] = iCpy;
     }
 
+    invEnd->continuations = invStart->continuations;
+    invStart->continuations = {};
+    
     for (auto ccPair : ccMap) {
       CC* instr = ccPair.first;
       CC* cpy = ccPair.second;
@@ -465,4 +469,21 @@ namespace CAC {
     return w;
 
   }
+
+  std::ostream& operator<<(std::ostream& out, const Module& mod) {
+    mod.print(out);
+    return out;
+  }
+
+  void ConnectAndContinue::bind(const std::string& invokePortName,
+                                Port pt) {
+    assert(isInvoke());
+    assert(invokedMod != nullptr);
+
+    assert(invokedMod->hasPort(invokePortName));
+      
+    invokeBinding[invokePortName] = pt;
+  }
+
+
 }

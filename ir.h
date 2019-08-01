@@ -8,6 +8,7 @@ using namespace dbhc;
 
 namespace CAC {
 
+
   static inline
   bool hasPrefix(const std::string str, const std::string prefix) {
     auto res = std::mismatch(prefix.begin(), prefix.end(), str.begin());
@@ -21,6 +22,8 @@ namespace CAC {
 
   class Context;
   class Module;
+
+  std::ostream& operator<<(std::ostream& out, const Module& mod);
 
   void print(std::ostream& out, Module* source);  
 
@@ -124,13 +127,10 @@ namespace CAC {
       assert(isInvoke());
       return invokeBinding;
     }
-    
-    void bind(const std::string& invokePortName,
-              Port pt) {
-      assert(isInvoke());
-      invokeBinding[invokePortName] = pt;
-    }
 
+    void bind(const std::string& invokePortName,
+              Port pt);
+    
     bool wiresUp(const Port pt) {
       if (isEmpty()) {
         return false;
@@ -238,6 +238,10 @@ namespace CAC {
       return c->pt("out");
     }
 
+    bool hasPort(const std::string& port) const {
+      return contains_key(port, primPorts);
+    }
+
     vector<Port> allPorts() const {
       if (isPrimitive) {
         return getInterfacePorts();
@@ -277,6 +281,10 @@ namespace CAC {
     }
     
     Port ept(const std::string& name) {
+      if (!contains_key(name, primPorts)) {
+        cout << "Error: No port " << name << " in module " << getName() << endl;
+      }
+      assert(contains_key(name, primPorts));
       return map_find(name, primPorts);
     }
 
@@ -300,7 +308,10 @@ namespace CAC {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
 
-      assert(dirsMatch(a, b));
+      if (!dirsMatch(a, b)) {
+        cout << "Error: Adding connection with mismatched dirs: " << a << ", " << b << endl;
+        assert(false);
+      }
 
       cc->connection.first = a;
       cc->connection.second = b;
@@ -313,7 +324,10 @@ namespace CAC {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
 
-      assert(dirsMatch(a, b));      
+      if (!dirsMatch(a, b)) {
+        cout << "Error: Adding connection with mismatched dirs: " << a << ", " << b << endl;
+        assert(false);
+      }
 
       cc->connection.first = a;
       cc->connection.second = b;
@@ -389,12 +403,6 @@ namespace CAC {
 
     std::string getName() const { return name; }
   };
-
-  static inline
-  std::ostream& operator<<(std::ostream& out, const Module& mod) {
-    mod.print(out);
-    return out;
-  }
 
   class Context {
     std::map<std::string, Module*> mods;

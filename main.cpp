@@ -103,6 +103,7 @@ int main() {
     Module* add16Apply = c.getModule("add16_apply");
     Module* one16 = getConstMod(c, 16, 1);
     Module* const_1_1 = getConstMod(c, 1, 1);
+    Module* w16 = getWireMod(c, 16);
 
     Module* pipeAdds = c.addModule("pipelined_adds");
     pipeAdds->addInPort(1, "in_valid");
@@ -110,13 +111,33 @@ int main() {
     pipeAdds->addOutPort(16, "result");
 
     ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
-
+    auto add1 = pipeAdds->addInstance(add16, "add1");
+    auto add2 = pipeAdds->addInstance(add16, "add2");
+    auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
+    auto c16 = pipeAdds->addInstance(one16, "n16");
+    
     // On start: If valid == 1 then transition to firstAdd?
 
     CC* entryCheck = pipeAdds->addEmptyInstruction();
+    entryCheck->setIsStartAction(true);
 
     CC* firstAdd = pipeAdds->addInvokeInstruction(add16Apply);
+    firstAdd->bind("in0", pipeAdds->ipt("in_data"));
+    firstAdd->bind("in1", c16->pt("out"));
+    firstAdd->bind("out", add1Wire->pt("in"));
+
+    firstAdd->bind("add16_in0", add1->pt("in0"));
+    firstAdd->bind("add16_in1", add1->pt("in1"));
+    firstAdd->bind("add16_out", add1->pt("out"));
+    
     CC* secondAdd = pipeAdds->addInvokeInstruction(add16Apply);
+    secondAdd->bind("in0", add1Wire->pt("out"));
+    secondAdd->bind("in1", c16->pt("out"));
+    secondAdd->bind("out", pipeAdds->ipt("result"));
+
+    secondAdd->bind("add16_in0", add2->pt("in0"));
+    secondAdd->bind("add16_in1", add2->pt("in1"));
+    secondAdd->bind("add16_out", add2->pt("out"));
 
     entryCheck->continueTo(oneInst->pt("out"), entryCheck, 1);
     entryCheck->continueTo(pipeAdds->ipt("in_valid"), firstAdd, 0);
@@ -126,6 +147,14 @@ int main() {
     
     cout << "Two adds..." << endl;
     cout << *pipeAdds << endl;
+
+    inlineInvokes(pipeAdds);
+
+    cout << "Add wrapper after lowering" << endl;
+    cout << *pipeAdds << endl;
+  
+    emitVerilog(c, pipeAdds);
+    
   }
   
   // Next: two pipelined adders with a valid controller?
