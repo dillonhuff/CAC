@@ -249,6 +249,14 @@ namespace CAC {
 
     return stringList(" || ", predConds);
   }
+
+  set<CC*> successors(CC* c) {
+    set<CC*> succ;
+    for (auto cont : c->continuations) {
+      succ.insert(cont.destination);
+    }
+    return succ;
+  }
   
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
@@ -310,6 +318,31 @@ namespace CAC {
     }
 
     out << endl;
+
+    set<CC*> work;
+    set<CC*> onRst;
+    bool found = true;
+    while (found) {
+      found = false;
+
+      for (auto instr : m->getBody()) {
+        if (!elem(instr, onRst)) {
+          if (instr->isStartAction) {
+            onRst.insert(instr);
+            found = true;
+          } else {
+            for (auto pred : onRst) {
+              if (elem(instr, successors(pred))) {
+                onRst.insert(instr);
+                found = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+    }
     
     for (auto instr : m->getBody()) {
       string predString = predHappenedString(instr, m);
@@ -317,7 +350,7 @@ namespace CAC {
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
       out << "\t\tif (rst) begin" << endl;
-      if (instr->isStartAction) {
+      if (elem(instr, onRst)) { //instr->isStartAction) {
         out << "\t\t\t" << body << endl;
         out << "\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl;
       } else {
