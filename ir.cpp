@@ -194,26 +194,7 @@ namespace CAC {
         assert(b.isInput);
         return verilogString(b, m) + " <= " + verilogString(a, m) + ";";
       }
-      // // TODO: Order the ports
-      // if (a.isInput) {
-      //   cout << "Connecting input " << a << " to " << b << endl;
-      //   assert(!b.isInput);
-      //   if (a.inst == nullptr) {
-      //     return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
-      //   } else {
-      //     return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
-      //   }
-      // } else {
 
-      //   cout << "Connecting " << a << " to " << b << endl;
-        
-      //   assert(b.isInput);
-      //   if (a.inst == nullptr) {
-      //     return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
-      //   } else {
-      //     return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
-      //   }
-      // }
     }
   }
 
