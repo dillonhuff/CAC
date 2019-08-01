@@ -60,7 +60,7 @@ namespace CAC {
 
   std::ostream& operator<<(std::ostream& out, const Port& pt);
   
-  Port getPort(Module* const mod, const std::string& name);
+  Port getOutFacingPort(Module* const mod, const std::string& name);
 
   class ModuleInstance {
   public:
@@ -73,7 +73,7 @@ namespace CAC {
     std::string getName() const { return name; }
 
     Port pt(const std::string& name) {
-      Port pt = getPort(source, name);
+      Port pt = getOutFacingPort(source, name);
       pt.inst = this;
       // pt = reverseDir(pt);
       return pt;
@@ -181,6 +181,11 @@ namespace CAC {
   Module* getConstMod(Context& c, const int width, const int value);
   Module* getRegMod(Context& c, const int width);
   Module* getNotMod(Context& c, const int width);
+
+  static inline
+  bool dirsMatch(const Port a, const Port b) {
+    return (a.isInput && b.isOutput()) || (a.isOutput() && b.isInput);
+  }
 
   // Maybe: Add structural connections and port default values?
   class Module {
@@ -294,6 +299,9 @@ namespace CAC {
     CC* addStartInstruction(const Port a, const Port b) {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
+
+      assert(dirsMatch(a, b));
+
       cc->connection.first = a;
       cc->connection.second = b;
       cc->setIsStartAction(true);
@@ -304,6 +312,9 @@ namespace CAC {
     CC* addInstruction(const Port a, const Port b) {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
+
+      assert(dirsMatch(a, b));      
+
       cc->connection.first = a;
       cc->connection.second = b;
       body.insert(cc);      

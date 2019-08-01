@@ -47,8 +47,8 @@ namespace CAC {
     out << "]";
   }
   
-  Port getPort(Module* const mod, const std::string& name) {
-    return mod->ipt(name);
+  Port getOutFacingPort(Module* const mod, const std::string& name) {
+    return mod->ept(name);
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
@@ -187,26 +187,33 @@ namespace CAC {
       assert(instr->isConnect());
       Port a = instr->connection.first;
       Port b = instr->connection.second;
-      // TODO: Order the ports
       if (a.isInput) {
-        cout << "Connecting input " << a << " to " << b << endl;
         assert(!b.isInput);
-        if (a.inst == nullptr) {
-          return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
-        } else {
-          return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
-        }
+        return verilogString(a, m) + " <= " + verilogString(b, m) + ";";          
       } else {
-
-        cout << "Connecting " << a << " to " << b << endl;
-        
         assert(b.isInput);
-        if (a.inst == nullptr) {
-          return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
-        } else {
-          return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
-        }
+        return verilogString(b, m) + " <= " + verilogString(a, m) + ";";
       }
+      // // TODO: Order the ports
+      // if (a.isInput) {
+      //   cout << "Connecting input " << a << " to " << b << endl;
+      //   assert(!b.isInput);
+      //   if (a.inst == nullptr) {
+      //     return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
+      //   } else {
+      //     return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+      //   }
+      // } else {
+
+      //   cout << "Connecting " << a << " to " << b << endl;
+        
+      //   assert(b.isInput);
+      //   if (a.inst == nullptr) {
+      //     return verilogString(a, m) + " <= " + verilogString(b, m) + ";";
+      //   } else {
+      //     return verilogString(b, m) + " <= " + verilogString(a, m) + ";";          
+      //   }
+      // }
     }
   }
 
