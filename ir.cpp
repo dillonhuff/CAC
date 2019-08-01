@@ -240,9 +240,16 @@ namespace CAC {
           assert(0 <= c.delay && c.delay <= 1);
           
           // TODO: Check transition distance
-          predConds.push_back(parens(happenedVar(pred, m) +
-                                     " && " +
-                                     verilogString(c.condition, m)));
+          if (c.delay == 0) {
+            predConds.push_back(parens(happenedVar(pred, m) +
+                                       " && " +
+                                       verilogString(c.condition, m)));
+          } else {
+            predConds.push_back(parens(happenedLastCycleVar(pred, m) +
+                                       " && " +
+                                       verilogString(c.condition, m)));
+            
+          }
         }
       }
     }
