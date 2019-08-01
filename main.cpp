@@ -112,10 +112,15 @@ int main() {
     ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
     
 
-    // On start: If valid == 1 then
+    // On start: If valid == 1 then transition to firstAdd?
+
+    CC* entryCheck = pipeAdds->addEmptyInstruction();
 
     CC* firstAdd = pipeAdds->addInvokeInstruction(add16Apply);
     CC* secondAdd = pipeAdds->addInvokeInstruction(add16Apply);
+
+    entryCheck->continueTo(oneInst->pt("out"), entryCheck, 1);
+    entryCheck->continueTo(pipeAdds->ipt("in_valid"), firstAdd, 0);
 
     firstAdd->continueTo(oneInst->pt("out"), secondAdd, 1);
     // Also continue to sending registers?
