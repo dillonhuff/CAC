@@ -78,19 +78,20 @@ void loadLLVMFromFile(Context& c,
   ram32_128->addInPort(1, "wen");  
   ram32_128->addInPort(32, "waddr");
   ram32_128->addInPort(32, "wdata");
+  ram32_128->setDefaultValue("wen", 0);
 
   CAC::Module* read = c.addModule("ram32_128_read");
-  auto ramRaddr = read->addInstance(getWireMod(c, 32), "ram_raddr");
-  auto ramData = read->addInstance(getWireMod(c, 32), "ram_rdata");  
+  read->addOutPort(32, "ram32_128_raddr");
+  read->addInPort(32, "ram32_128_rdata");  
 
-  auto resRaddr = read->addInstance(getWireMod(c, 32), "res_raddr");
-  auto resRdata = read->addInstance(getWireMod(c, 32), "res_rdata");
+  read->addInPort(32, "raddr");
+  read->addOutPort(32, "rdata");  
 
-  CC* setRaddr = read->addStartInstruction(ramRaddr->pt("in"),
-                                           resRaddr->pt("out"));
-  CC* readRdata = read->addInstruction(ramData->pt("in"),
-                                       resRdata->pt("in"));
-  setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
+  // CC* setRaddr = read->addStartInstruction(read->ipt("in"),
+  //                                          resRaddr->pt("out"));
+  // CC* readRdata = read->addInstruction(ramData->pt("in"),
+  //                                      resRdata->pt("in"));
+  // setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
   
   CAC::Module* write = c.addModule("ram32_128_write");
 

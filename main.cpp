@@ -356,20 +356,19 @@ int main() {
     assert(runIVerilogTB(pipeAdds->getName()));
   }
 
-  // - Add default values
-  // - LLVM backend
-  
-  // runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+  {
+    runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
 
-  // Context c;
-  // loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+    Context c;
+    loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
 
-  // Module* m = c.getModule("read_write_ram");
-  // assert(m != nullptr);
+    Module* m = c.getModule("read_write_ram");
+    assert(m != nullptr);
 
-  // cout << "Final module" << endl;
-  // cout << *m << endl;
+    cout << "Final module" << endl;
+    cout << *m << endl;
 
-  // emitVerilog(c, m);
+    emitVerilog(c, m);
+  }
 
 }
