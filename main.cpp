@@ -104,6 +104,7 @@ int main() {
     Module* one16 = getConstMod(c, 16, 1);
     Module* const_1_1 = getConstMod(c, 1, 1);
     Module* w16 = getWireMod(c, 16);
+    Module* reg16 = getRegMod(c, 16);    
 
     Module* pipeAdds = c.addModule("pipelined_adds");
     pipeAdds->addInPort(1, "in_valid");
@@ -115,7 +116,8 @@ int main() {
     auto add2 = pipeAdds->addInstance(add16, "add2");
     auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
     auto c16 = pipeAdds->addInstance(one16, "n16");
-    
+    auto r16 = pipeAdds->addInstanceSeq(reg16, "storage");
+
     // On start: If valid == 1 then transition to firstAdd?
 
     CC* entryCheck = pipeAdds->addEmptyInstruction();
@@ -154,7 +156,7 @@ int main() {
     cout << *pipeAdds << endl;
   
     emitVerilog(c, pipeAdds);
-    
+    runCmd("iverilog -o tb tb_pipelined_adds.v pipelined_adds.v builtins.v");
   }
   
   // Next: two pipelined adders with a valid controller?

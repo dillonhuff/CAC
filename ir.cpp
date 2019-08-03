@@ -171,6 +171,8 @@ namespace CAC {
     string name = m->getName();
     if (hasPrefix(name, "add")) {
       return "add #(.WIDTH(16))";
+    } else if (hasPrefix(name, "reg")) {
+      return "register #(.WIDTH(16))";
     } else {
       return "constant #(.WIDTH(1), .VALUE(1))";
     }
@@ -322,12 +324,18 @@ namespace CAC {
 
     out << "\t// --- End of resource list" << endl << endl;
 
+    out << "\t// --- Structural connections" << endl;
+    for (auto sc : m->getStructuralConnections()) {
+      out << "\tassign " << verilogString(sc.first, m) << " = " << verilogString(sc.second, m) << endl;
+    }
+    out << "\t// --- End structural connections" << endl << endl;
+
     // Emit check to see if any predecessor happened?
     // Also: Emit predecessor variables
 
     for (auto instr : m->getBody()) {
       out << "\treg " << happenedVar(instr, m) << ";" << endl;
-      out << "\treg " << happenedLastCycleVar(instr, m) << ";" << endl;      
+      out << "\treg " << happenedLastCycleVar(instr, m) << ";" << endl;
     }
 
     out << endl;

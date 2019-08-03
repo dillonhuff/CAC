@@ -193,6 +193,9 @@ namespace CAC {
     std::map<string, Port> primPorts;
 
     std::set<ModuleInstance*> resources;
+
+    std::vector<pair<Port, Port> > structuralConnections;
+    
     std::set<CC*> body;
     std::map<std::string, CallingConvention*> actions;
     std::string name;
@@ -204,6 +207,21 @@ namespace CAC {
   public:
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    std::vector<pair<Port, Port> >
+    getStructuralConnections() const {
+      return structuralConnections;
+    }
+
+    void addStructuralConnection(const Port a, const Port b) {
+      assert(dirsMatch(a, b));
+
+      structuralConnections.push_back({a, b});
+    }
+
+    void addSC(const Port a, const Port b) {
+      addStructuralConnection(a, b);
+    }
 
     std::set<CC*> getBody() const { return body; }
     std::set<ModuleInstance*> getResources() const { return resources; }    
@@ -360,7 +378,16 @@ namespace CAC {
       resources.insert(i);
       return i;
     }
-  
+
+    ModuleInstance* addInstanceSeq(Module* tp, const std::string& name) {
+      auto i = new ModuleInstance(tp, name);
+      this->addSC(i->pt("clk"), this->ipt("clk"));
+      this->addSC(i->pt("rst"), this->ipt("rst"));
+      
+      resources.insert(i);
+      return i;
+    }
+    
     void addAction(CallingConvention* callingC) {
       assert(callingC->numActions() == 0);
       actions.insert({callingC->getName(), callingC});
@@ -438,7 +465,7 @@ namespace CAC {
       mods[name] = new Module(name);
       mods[name]->setContext(this);
       mods[name]->addInPort(1, "clk");
-      mods[name]->addInPort(1, "rst");      
+      mods[name]->addInPort(1, "rst");
 
       return map_find(name, mods);
     }
