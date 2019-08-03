@@ -6,6 +6,16 @@ using namespace CAC;
 
 namespace CAC {
 
+  Port source(CC* assigner) {
+    assert(assigner->isConnect());
+    if (assigner->connection.first.isOutput()) {
+      return assigner->connection.first;
+    }
+    assert(assigner->connection.second.isOutput());
+
+    return assigner->connection.second;
+  }
+  
   CAC::Module* getWireMod(Context& c, const int width) {
     string name = "wire" + to_string(width);
     if (c.hasModule(name)) {
@@ -276,13 +286,16 @@ namespace CAC {
   }
 
   bool shouldBeWire(Port pt, Module* m) {
+    cout << "Checking if " << pt << " should be a wire" << endl;
     if (pt.isInput) {
+      cout << "\t" << pt << " is an input" << endl;
       for (auto sc : m->getStructuralConnections()) {
         if ((sc.first == pt) || (sc.second == pt)) {
           return true;
         }
       }
 
+      cout << "\tbut it does not appear in structural connections" << endl;
       return false;
     }
 
@@ -315,7 +328,8 @@ namespace CAC {
     
     for (auto r : m->getResources()) {
       out << "\t// Module for " << r->getName() << endl;
-      auto pts = r->source->getInterfacePorts();
+      //auto pts = r->source->getInterfacePorts();
+      auto pts = r->getPorts();
 
       for (auto pt : pts) {
         if (shouldBeWire(pt, m)) {
@@ -384,6 +398,12 @@ namespace CAC {
     for (auto instr : m->getBody()) {
       string predString = predHappenedString(instr, m);
       string body = bodyString(instr, m);
+
+      string defaultString = "";
+      if (instr->isConnect() && (source(instr).isSensitive())) {
+        assert(false);
+      }
+      
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
       out << "\t\tif (rst) begin" << endl;
@@ -689,16 +709,6 @@ namespace CAC {
     return assigners;
   }
 
-  Port source(CC* assigner) {
-    assert(assigner->isConnect());
-    if (assigner->connection.first.isOutput()) {
-      return assigner->connection.first;
-    }
-    assert(assigner->connection.second.isOutput());
-
-    return assigner->connection.second;
-  }
-  
   void reduceStructures(Module* m) {
     // What to do here?
     // - Find all ports that are assigned exactly once
@@ -723,6 +733,8 @@ namespace CAC {
   }
 
   bool Port::isSensitive() const {
+    assert(inst != nullptr);
+    
     Module* src = inst->source;
     if (contains_key(this->getName(), src->getDefaultValues())) {
       return true;
