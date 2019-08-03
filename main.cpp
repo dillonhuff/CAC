@@ -1,5 +1,7 @@
 #include "llvm_loader.h"
 
+#include <fstream>
+
 // Example: An adder module has one action, which takes
 // an adder as its first argument, and which
 
@@ -13,6 +15,43 @@ void runCmd(const std::string& cmd) {
   cout << "Running command " << cmd << endl;
   int res = system(cmd.c_str());
   assert(res == 0);
+}
+
+bool runIVerilogTB(const std::string& moduleName) {
+  string mainName = "tb_" + moduleName + ".v";
+  string modFile = moduleName + ".v";
+
+  string genCmd = "iverilog -g2005 -o " + moduleName + " " + mainName + " " + modFile + " builtins.v";
+
+  runCmd(genCmd);
+
+  string resFile = moduleName + "_tb_result.txt";
+  string exeCmd = "./" + moduleName + " > " + resFile;
+  runCmd(exeCmd);
+
+  ifstream res(resFile);
+  std::string str((std::istreambuf_iterator<char>(res)),
+                  std::istreambuf_iterator<char>());
+
+  cout << "str = " << str << endl;
+    
+  //runCmd("rm -f " + resFile);
+
+  reverse(begin(str), end(str));
+  string lastLine;
+
+  for (int i = 1; i < (int) str.size(); i++) {
+    if (str[i] == '\n') {
+      break;
+    }
+
+    lastLine += str[i];
+  }
+
+  reverse(begin(lastLine), end(lastLine));
+
+  cout << "Lastline = " << lastLine << endl;
+  return lastLine == "Passed";
 }
 
 void addBinop(Context& c, const std::string& name, const int cycleLatency) {
@@ -92,7 +131,15 @@ int main() {
   
     emitVerilog(c, addWrapper);
 
-    runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
+    assert(runIVerilogTB("add_16_wrapper"));
+    
+    // runCmd("iverilog -o tb tb_add_16_wrapper.v add_16_wrapper.v builtins.v");
+    // runCmd("./tb >& res.txt");
+
+    // ifstream t("res.txt");
+    // std::string str((std::istreambuf_iterator<char>(t)),
+    //                 std::istreambuf_iterator<char>());
+    
   }
 
   {
@@ -166,7 +213,8 @@ int main() {
     cout << *pipeAdds << endl;
   
     emitVerilog(c, pipeAdds);
-    runCmd("iverilog -o tb tb_pipelined_adds.v pipelined_adds.v builtins.v");
+    assert(runIVerilogTB(pipeAdds->getName()));
+    //runCmd("iverilog -o tb tb_pipelined_adds.v pipelined_adds.v builtins.v");
   }
 
   {
@@ -235,7 +283,9 @@ int main() {
     cout << *pipeAdds << endl;
   
     emitVerilog(c, pipeAdds);
-    runCmd("iverilog -o tb tb_channel_pipelined_adds.v channel_pipelined_adds.v builtins.v");
+    assert(runIVerilogTB(pipeAdds->getName()));
+
+    //runCmd("iverilog -o tb tb_channel_pipelined_adds.v channel_pipelined_adds.v builtins.v");
   }
 
   // Once the signals example is working?

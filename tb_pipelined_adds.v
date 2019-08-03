@@ -53,6 +53,10 @@ module test();
 
       $display("invalid result = %d", result);
       `assert(result, 17)
+
+      #10
+
+      $display("Passed");
    end
 
    pipelined_adds dut(.clk(clk), .rst(rst), .result(result), .in_valid(valid), .in_data(in));
