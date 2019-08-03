@@ -36,6 +36,7 @@ namespace CAC {
     bool isInput;
     int width;
 
+    bool isSensitive() const;
     bool isOutput() const {
       return !isInput;
     }
@@ -224,6 +225,7 @@ namespace CAC {
   class Module {
     bool isPrimitive;
     std::map<string, Port> primPorts;
+    std::map<string, int> defaultValues;
 
     std::set<ModuleInstance*> resources;
 
@@ -243,6 +245,10 @@ namespace CAC {
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
+    void setDefaultValue(const std::string& ptName, const int value) {
+      defaultValues[ptName] = value;
+    }
+    
     void erase(ModuleInstance* inst) {
       assert(elem(inst, resources));
       set<CC*> toEmpty;
@@ -261,6 +267,10 @@ namespace CAC {
       verilogDeclString = other;
     }
 
+    std::map<string, int> getDefaultValues() const {
+      return defaultValues;
+    }
+    
     std::string getVerilogDeclString() const {
       return verilogDeclString;
     }
@@ -541,5 +551,6 @@ namespace CAC {
 
   void inlineInvokes(Module* m);
   void synthesizeChannels(Module* pipeAdds);
+  void reduceStructures(Module* m);
   
 }

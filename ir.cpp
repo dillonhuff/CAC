@@ -108,10 +108,10 @@ namespace CAC {
     map<CC*, CC*> ccMap;
     for (auto instr : invoked->getBody()) {
 
-      cout << "inlining invoked instr = " << *instr << endl;
-      if (instr->isStartAction) {
-        cout << "Found start of active invocation" << endl;
-      }
+      // cout << "inlining invoked instr = " << *instr << endl;
+      // if (instr->isStartAction) {
+      //   cout << "Found start of active invocation" << endl;
+      // }
       
       CC* iCpy =
         inlineInstrTo(instr, container, resourceMap, invokedBindings);
@@ -483,7 +483,7 @@ namespace CAC {
     regMod->addInPort(1, "en");
     regMod->addInPort(width, "in");
     regMod->addOutPort(width, "data");
-
+    regMod->setDefaultValue("en", 0);
     CAC::Module* regModLd = c.addModule("reg_" + to_string(width) + "_ld");
 
     CAC::Module* regModSt = c.addModule("reg_" + to_string(width) + "_st");
@@ -677,5 +677,56 @@ namespace CAC {
     return pts;
   }
 
+  set<CC*> getAssignmentsToPort(const Port pt, Module* m) {
+    assert(pt.isInput);
+    
+    set<CC*> assigners;
+    for (auto cc : m->getBody()) {
+      if (cc->wiresUp(pt)) {
+        assigners.insert(cc);
+      }
+    }
+    return assigners;
+  }
+
+  Port source(CC* assigner) {
+    assert(assigner->isConnect());
+    if (assigner->connection.first.isOutput()) {
+      return assigner->connection.first;
+    }
+    assert(assigner->connection.second.isOutput());
+
+    return assigner->connection.second;
+  }
   
+  void reduceStructures(Module* m) {
+    // What to do here?
+    // - Find all ports that are assigned exactly once
+    // - For each port assigned once if it is not a port with a
+    //   default value then: Make the connection a no-op and replace
+    //   it with a structural connection
+    for (auto r : m->getResources()) {
+      for (auto pt : r->getPorts()) {
+        if (pt.isInput && !pt.isSensitive()) {
+          set<CC*> assignments =
+            getAssignmentsToPort(pt, m);
+          if (assignments.size() == 1) {
+            cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
+            CC* assigner = *begin(assignments);
+            Port src = source(assigner);
+            assigner->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
+            m->addSC(pt, src);
+          }
+        }
+      }
+    }
+  }
+
+  bool Port::isSensitive() const {
+    Module* src = inst->source;
+    if (contains_key(this->getName(), src->getDefaultValues())) {
+      return true;
+    }
+    return false;
+  }
 }
