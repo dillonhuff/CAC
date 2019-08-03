@@ -177,7 +177,6 @@ namespace CAC {
       return "mod_wire #(.WIDTH(16))";
     } else {
       return m->getVerilogDeclString();
-      //return "constant #(.WIDTH(1), .VALUE(1))";
     }
   }
 
@@ -472,8 +471,25 @@ namespace CAC {
     regMod->addOutPort(width, "data");
 
     CAC::Module* regModLd = c.addModule("reg_" + to_string(width) + "_ld");
-    CAC::Module* regModSt = c.addModule("reg_" + to_string(width) + "_st");
 
+    CAC::Module* regModSt = c.addModule("reg_" + to_string(width) + "_st");
+    regModSt->addOutPort(width, name + "_in");
+    regModSt->addOutPort(1, name + "_en");
+
+    regModSt->addInPort(width, "in");
+    regModSt->addInPort(1, "en");
+
+    CC* setEn = regModSt->addStartInstruction(regModSt->ipt("in"),
+                                              regModSt->ipt(name + "_in"));
+
+    CC* setData = regModSt->addInstruction(regModSt->ipt("en"),
+                                           regModSt->ipt(name + "_en"));
+    CC* finish = regModSt->addEmptyInstruction();
+    
+    setEn->continueTo(regModSt->constOut(1, 1), setData, 0);
+    setData->continueTo(regModSt->constOut(1, 1), finish, 1);
+
+      
     regMod->addAction(regModLd);
     regMod->addAction(regModSt);
 
