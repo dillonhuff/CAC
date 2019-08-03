@@ -75,6 +75,10 @@ namespace CAC {
 
     std::string getName() const { return name; }
 
+    std::vector<Port> getPorts();
+
+    bool hasPt(const std::string& name) const;
+    
     Port pt(const std::string& name) {
       Port pt = getOutFacingPort(source, name);
       pt.inst = this;
@@ -188,6 +192,34 @@ namespace CAC {
     return (a.isInput && b.isOutput()) || (a.isOutput() && b.isInput);
   }
 
+  static inline
+  bool references(Port pt, ModuleInstance* inst) {
+    for (auto ipt : inst->getPorts()) {
+      if (ipt == pt) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  static inline
+  bool references(CC* instr, ModuleInstance* inst) {
+    if (instr->isEmpty()) {
+      return false;
+    } else if (instr->isConnect()) {
+      return references(instr->connection.first, inst) ||
+        references(instr->connection.second, inst);
+    } else {
+      assert(instr->isInvoke());
+      for (auto b : instr->invokedBinding()) {
+        if (references(b.second, inst)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  
   // Maybe: Add structural connections and port default values?
   class Module {
     bool isPrimitive;
@@ -210,6 +242,20 @@ namespace CAC {
   public:
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    void erase(ModuleInstance* inst) {
+      assert(elem(inst, resources));
+      set<CC*> toEmpty;
+      for (auto cc : body) {
+        if (references(cc, inst)) {
+          toEmpty.insert(cc);
+        }
+      }
+      for (auto cc : toEmpty) {
+        cc->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
+      }
+      resources.erase(inst);
+    }
 
     void setVerilogDeclString(const std::string& other) {
       verilogDeclString = other;

@@ -27,7 +27,7 @@ namespace CAC {
   }
 
   void ConnectAndContinue::print(std::ostream& out) const {
-    out << (isStartAction ? "on start: " : "") << this << ": If " << " do ";
+    out << (isStartAction ? "on start: " : "") << this << ": do ";
     if (isInvoke()) {
       out << "invoke " << invokedMod->getName();
       for (auto pt : invokeBinding) {
@@ -546,15 +546,15 @@ namespace CAC {
   }
 
   // Maybe channel source should actually be a port?
-  Port channelSource(ModuleInstance* chan, Module* container) {
+  CC* channelSource(ModuleInstance* chan, Module* container) {
     Port chanIn = chan->pt("in");
     
     for (auto cc : container->getBody()) {
       if (cc->isConnect()) {
         if (cc->connection.first == chanIn) {
-          return cc->connection.second;
+          return cc; //cc->connection.second;
         } else if (cc->connection.second == chanIn) {
-          return cc->connection.first;
+          return cc; //cc->connection.first;
         }
       }
     }
@@ -562,13 +562,92 @@ namespace CAC {
     assert(false);
   }
 
-  void synthesizeChannel(Port source, ModuleInstance* chan, Module* container) {
-    // Note: Assuming channels are always conditionally assigned
-    // TODO: Find all paths from source to users
+  void bindByType(CC* invocation, ModuleInstance* toBind) {
+    assert(invocation->isInvoke());
+    Module* m = toBind->source;
+    for (auto pt : toBind->getPorts()) {
+      string rcv = m->getName() + "_" + pt.getName();
+      if (invocation->invokedMod->hasPort(rcv)) {
+        invocation->bind(rcv, pt);
+      }
+    }
+  }
+
+  void replacePort(Port toReplace, Port replacement, CC* instr) {
+    if (instr->isEmpty()) {
+    } else if (instr->isInvoke()) {
+      assert(false);
+    } else if (instr->isConnect()) {
+      if (instr->connection.first == toReplace) {
+        instr->connection.first = replacement;
+      }
+
+      if (instr->connection.second == toReplace) {
+        instr->connection.second = replacement;
+      }
+      
+    }
+  }
+  
+  void synthesizeChannel(CC* source, ModuleInstance* chan, Module* container) {
+    assert(source->isConnect());
+    
     // For each path:
     //   for each transition:
     //     create a new register, store to the register
     //     replace use of channel in dest with active wire
+
+    // TODO: Add correct handling for transitions of length one
+    Port origPort = source->connection.first == chan->pt("in") ?
+      source->connection.second : source->connection.first;
+    deque<pair<CC*, Port> > valsAndSources{{source, origPort}};
+    set<CC*> visited;
+    set<CC*> original;
+    for (auto cc : container->getBody()) {
+      original.insert(cc);
+    }
+
+    while (valsAndSources.size() > 0) {
+      pair<CC*, Port> valAndSrc = valsAndSources.front();
+      valsAndSources.pop_front();
+
+      CC* val = valAndSrc.first;
+      Port src = valAndSrc.second;
+
+      int chanWidth = src.getWidth();
+      ModuleInstance* freshReg =
+        container->freshInstance(getRegMod(*(container->getContext()), chanWidth), chan->getName());
+      CC* storeRegVal =
+        container->addInvokeInstruction(freshReg->source->action(freshReg->source->getName() + "_st"));
+      bindByType(storeRegVal, freshReg);
+      storeRegVal->bind("in", src);
+      storeRegVal->bind("en", container->constOut(1, 1));
+
+      val->continueTo(container->constOut(1, 1), storeRegVal, 0);
+      
+      Port nextVal = freshReg->pt("data");
+
+      // TODO: Replace connections to chan->pt("out") with nextVal?
+      for (auto c : val->continuations) {
+        CC* dest = c.destination;
+        if (elem(dest, original) && !elem(dest, visited)) {
+          if (c.delay == 1) {
+            valsAndSources.push_back({dest, nextVal});
+            replacePort(chan->pt("out"), nextVal, dest);
+          } else {
+            assert(c.delay == 0);
+            valsAndSources.push_back({dest, src});
+            replacePort(chan->pt("out"), src, dest);
+          }
+        }
+      }
+
+      visited.insert(val);
+    }
+
+    // Check that there are not references to the channel
+    // Delete channel
+    container->erase(chan);
   }
   
   void synthesizeChannels(Module* m) {
@@ -577,10 +656,26 @@ namespace CAC {
       if (isChannel(r->source)) {
         cout << "Need to synthesize channel..." << endl;
         ModuleInstance* chan = r;
-        Port source = channelSource(chan, m);
+        auto source = channelSource(chan, m);
         synthesizeChannel(source, chan, m);
       }
     }
+
+    inlineInvokes(m);
   }
 
+  bool ModuleInstance::hasPt(const std::string& name) const {
+    return source->hasPort(name);
+  }
+    
+  
+  std::vector<Port> ModuleInstance::getPorts() {
+    vector<Port> pts;
+    for (auto mp : source->getInterfacePorts()) {
+      pts.push_back(this->pt(mp.getName()));
+    }
+    return pts;
+  }
+
+  
 }
