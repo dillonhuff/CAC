@@ -173,6 +173,8 @@ namespace CAC {
       return "add #(.WIDTH(16))";
     } else if (hasPrefix(name, "reg")) {
       return "register #(.WIDTH(16))";
+    } else if (hasPrefix(name, "wire")) {
+      return "mod_wire #(.WIDTH(16))";
     } else {
       return "constant #(.WIDTH(1), .VALUE(1))";
     }
@@ -272,6 +274,20 @@ namespace CAC {
     }
     return succ;
   }
+
+  bool shouldBeWire(Port pt, Module* m) {
+    if (pt.isInput) {
+      for (auto sc : m->getStructuralConnections()) {
+        if ((sc.first == pt) || (sc.second == pt)) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    return true;
+  }
   
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
@@ -302,10 +318,10 @@ namespace CAC {
       auto pts = r->source->getInterfacePorts();
 
       for (auto pt : pts) {
-        if (pt.isInput) {
-          out << "\treg " << "[ " << pt.getWidth() - 1 << " : 0 ] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+        if (shouldBeWire(pt, m)) {
+          out << "\twire " << "[ " << pt.getWidth() - 1 << " : 0 ] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
         } else {
-          out << "\twire " << "[ " << pt.getWidth() - 1 << " : 0] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+          out << "\treg " << "[ " << pt.getWidth() - 1 << " : 0] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
         }
       }
       out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
@@ -326,7 +342,7 @@ namespace CAC {
 
     out << "\t// --- Structural connections" << endl;
     for (auto sc : m->getStructuralConnections()) {
-      out << "\tassign " << verilogString(sc.first, m) << " = " << verilogString(sc.second, m) << endl;
+      out << "\tassign " << verilogString(sc.first, m) << " = " << verilogString(sc.second, m) << ";" << endl;
     }
     out << "\t// --- End structural connections" << endl << endl;
 
