@@ -31,6 +31,7 @@ namespace CAC {
 
   class Port {
   public:
+    Module* selfType;
     ModuleInstance* inst;
     std::string portName;
     bool isInput;
@@ -40,6 +41,8 @@ namespace CAC {
     bool isOutput() const {
       return !isInput;
     }
+
+    int defaultValue();
     
     int getWidth() const {
       return width;
@@ -245,10 +248,15 @@ namespace CAC {
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
+    int defaultValue(const std::string& portName) {
+      assert(contains_key(portName, defaultValues));
+      return map_find(portName, defaultValues);
+    }
+    
     void setDefaultValue(const std::string& ptName, const int value) {
       defaultValues[ptName] = value;
     }
-    
+
     void erase(ModuleInstance* inst) {
       assert(elem(inst, resources));
       set<CC*> toEmpty;
@@ -433,12 +441,12 @@ namespace CAC {
     void addInPort(const int width, const std::string& name) {
       assert(!contains_key(name, primPorts));
 
-      primPorts.insert({name, {nullptr, name, true, width}});
+      primPorts.insert({name, {this, nullptr, name, true, width}});
     }
 
     void addOutPort(const int width, const std::string& name) {
       assert(!contains_key(name, primPorts));
-      primPorts.insert({name, {nullptr, name, false, width}});
+      primPorts.insert({name, {this, nullptr, name, false, width}});
 
     }
   

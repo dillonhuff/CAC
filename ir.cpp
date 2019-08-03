@@ -6,6 +6,21 @@ using namespace CAC;
 
 namespace CAC {
 
+  int Port::defaultValue() {
+    Module* src = inst->source == nullptr ? selfType : inst->source;
+    return src->defaultValue(getName());
+  }
+
+  Port dest(CC* assigner) {
+    assert(assigner->isConnect());
+    if (assigner->connection.first.isOutput()) {
+      return assigner->connection.second;
+    }
+    assert(assigner->connection.second.isOutput());
+
+    return assigner->connection.first;
+  }
+  
   Port source(CC* assigner) {
     assert(assigner->isConnect());
     if (assigner->connection.first.isOutput()) {
@@ -400,8 +415,8 @@ namespace CAC {
       string body = bodyString(instr, m);
 
       string defaultString = "";
-      if (instr->isConnect() && (source(instr).isSensitive())) {
-        assert(false);
+      if (instr->isConnect() && (dest(instr).isSensitive())) {
+        defaultString = verilogString(dest(instr), m) + " <= " + to_string(dest(instr).defaultValue()) + ";\n";
       }
       
       out << "\talways @(*) begin" << endl;
@@ -418,9 +433,9 @@ namespace CAC {
           out << "\t\t\t\t" << body << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
           out << "\t\t\tend else begin" << endl;
+          out << "\t\t\t\t" << defaultString << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
           out << "\t\t\tend" << endl;
-
         }
           
       } else {
@@ -433,6 +448,7 @@ namespace CAC {
         out << "\t\t\t\t" << body << endl;
         out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
         out << "\t\t\tend else begin" << endl;
+        out << "\t\t\t\t" << defaultString << endl;        
         out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
         out << "\t\t\tend" << endl;
 
@@ -733,12 +749,22 @@ namespace CAC {
   }
 
   bool Port::isSensitive() const {
-    assert(inst != nullptr);
+    if (inst != nullptr) {
     
-    Module* src = inst->source;
-    if (contains_key(this->getName(), src->getDefaultValues())) {
-      return true;
+      Module* src = inst->source;
+      if (contains_key(this->getName(), src->getDefaultValues())) {
+        return true;
+      }
+      return false;
+    } else {
+      assert(selfType != nullptr);
+
+      Module* src = selfType;
+      if (contains_key(this->getName(), src->getDefaultValues())) {
+        return true;
+      }
+      return false;
+      
     }
-    return false;
   }
 }
