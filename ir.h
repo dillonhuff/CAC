@@ -203,10 +203,20 @@ namespace CAC {
     int uniqueNum;
 
     Context* context;
+
+    std::string verilogDeclString;
   
   public:
 
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
+
+    void setVerilogDeclString(const std::string& other) {
+      verilogDeclString = other;
+    }
+
+    std::string getVerilogDeclString() const {
+      return verilogDeclString;
+    }
 
     std::vector<pair<Port, Port> >
     getStructuralConnections() const {

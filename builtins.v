@@ -463,6 +463,25 @@ module register(input clk, input rst, input [WIDTH - 1:0] raddr, input [WIDTH - 
    
 endmodule // register
 
+module mod_register(input clk, input rst, input en, input [WIDTH - 1:0] in, output [WIDTH - 1:0] data);
+
+   parameter WIDTH = 32;
+
+   reg [WIDTH - 1:0] data_r;
+
+   always @(posedge clk) begin
+      if (en) begin
+         data_r <= in;
+         //$display("writing %d to register", wdata);
+      end
+
+      //$display("on clock data = %d", data);      
+   end
+   
+   assign data = data_r;
+   
+endmodule // register
+
 module coreir_reg(input clk,
                   input rst,
                   input                  en,

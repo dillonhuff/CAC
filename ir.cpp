@@ -172,11 +172,12 @@ namespace CAC {
     if (hasPrefix(name, "add")) {
       return "add #(.WIDTH(16))";
     } else if (hasPrefix(name, "reg")) {
-      return "register #(.WIDTH(16))";
+      return "mod_register #(.WIDTH(16))";
     } else if (hasPrefix(name, "wire")) {
       return "mod_wire #(.WIDTH(16))";
     } else {
-      return "constant #(.WIDTH(1), .VALUE(1))";
+      return m->getVerilogDeclString();
+      //return "constant #(.WIDTH(1), .VALUE(1))";
     }
   }
 
@@ -489,6 +490,7 @@ namespace CAC {
     CAC::Module* w = c.addCombModule(name);
     w->setPrimitive(true);
     w->addOutPort(width, "out");
+    w->setVerilogDeclString("constant #(.WIDTH(" + to_string(width) + "), .VALUE(" + to_string(value) + "))");
   
     return w;
 
