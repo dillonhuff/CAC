@@ -52,7 +52,7 @@ namespace CAC {
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
-    cout << "Replacing port " << pt << endl;
+    //cout << "Replacing port " << pt << endl;
     if (pt.inst == nullptr) {
       return map_find(pt.getName(), activeBinding);
     } else {
@@ -84,7 +84,7 @@ namespace CAC {
   }
   
   void inlineInvoke(CC* invokeInstr, Module* container) {
-    cout << "Inlining " << *invokeInstr << endl;
+    //cout << "Inlining " << *invokeInstr << endl;
     assert(invokeInstr->isInvoke());
     
     CC* invStart = invokeInstr;
