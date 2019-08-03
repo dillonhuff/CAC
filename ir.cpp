@@ -478,15 +478,18 @@ namespace CAC {
       return c.getModule(name);
     }
 
-    auto regMod = c.addModule(name);
+    auto regMod = c.addCombModule(name);
 
     regMod->setPrimitive(true);
     regMod->addInPort(width, "in");
     regMod->addOutPort(width, "out");
 
-    CAC::Module* regModLd = c.addModule("not_" + to_string(width) + "_apply");
-    regModLd->addInstance(getWireMod(c, width), "not_in");
-    regModLd->addInstance(getWireMod(c, width), "not_in");    
+    CAC::Module* regModLd = c.addCombModule("not_" + to_string(width) + "_apply");
+    regModLd->addOutPort(width, name + "_in");
+    regModLd->addInPort(width, name + "_out");    
+
+    regModLd->addInPort(width, "in");
+    regModLd->addOutPort(width, "out");
     
     regMod->addAction(regModLd);
 
@@ -572,6 +575,10 @@ namespace CAC {
     assert(isInvoke());
     assert(invokedMod != nullptr);
 
+    if (!invokedMod->hasPort(invokePortName)) {
+      cout << "Error: Module " << *invokedMod << endl;
+      cout << "has no port " << invokePortName << endl;
+    }
     assert(invokedMod->hasPort(invokePortName));
       
     invokeBinding[invokePortName] = pt;

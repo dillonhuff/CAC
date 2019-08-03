@@ -368,6 +368,10 @@ int main() {
     cout << "Final module" << endl;
     cout << *m << endl;
 
+    inlineInvokes(m);
+    synthesizeChannels(m);
+    reduceStructures(m);
+    
     emitVerilog(c, m);
   }
 

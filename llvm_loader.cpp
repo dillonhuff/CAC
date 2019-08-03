@@ -64,6 +64,9 @@ void addRAM32Primitive(Context& c) {
   m->addAction(wr);  
 }
 
+// Maybe better way to translate LLVM?
+//  1. Create channels for all non-pointer values
+//  2. Create registers for all pointers to non-builtins
 void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {
@@ -242,11 +245,12 @@ void loadLLVMFromFile(Context& c,
   auto negModApply = negMod->action("not_1_apply");
   auto setNegValid =
     m->addInvokeInstruction(negModApply);
-  setNegValid->bind("not_in", negInst->pt("in"));
-  setNegValid->bind("not_out", negInst->pt("out"));
+  bindByType(setNegValid, negInst);
+  // setNegValid->bind("not_in", negInst->pt("in"));
+  // setNegValid->bind("not_out", negInst->pt("out"));
 
-  setNegValid->bind("data_in", validWire->pt("out"));
-  setNegValid->bind("data_out", outWire->pt("in"));
+  setNegValid->bind("in", validWire->pt("out"));
+  setNegValid->bind("out", outWire->pt("in"));
   
   //readValid->continueTo(setNegValid, readValid, 1);
   
