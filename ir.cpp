@@ -563,7 +563,12 @@ namespace CAC {
   }
 
   void synthesizeChannel(Port source, ModuleInstance* chan, Module* container) {
-    
+    // Note: Assuming channels are always conditionally assigned
+    // TODO: Find all paths from source to users
+    // For each path:
+    //   for each transition:
+    //     create a new register, store to the register
+    //     replace use of channel in dest with active wire
   }
   
   void synthesizeChannels(Module* m) {
