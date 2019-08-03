@@ -240,6 +240,7 @@ int main() {
     cout << *pipeAdds << endl;
 
     inlineInvokes(pipeAdds);
+    synthesizeChannels(pipeAdds);
 
     cout << "Add wrapper after lowering" << endl;
     cout << *pipeAdds << endl;

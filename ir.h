@@ -488,4 +488,6 @@ namespace CAC {
   CAC::Module* getWireMod(Context& c, const int width);
 
   void inlineInvokes(Module* m);
+  void synthesizeChannels(Module* pipeAdds);
+  
 }

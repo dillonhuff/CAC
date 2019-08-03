@@ -541,5 +541,41 @@ namespace CAC {
     invokeBinding[invokePortName] = pt;
   }
 
+  bool isChannel(Module* m) {
+    return hasPrefix(m->getName(), "pipe_channel_");
+  }
+
+  // Maybe channel source should actually be a port?
+  Port channelSource(ModuleInstance* chan, Module* container) {
+    Port chanIn = chan->pt("in");
+    
+    for (auto cc : container->getBody()) {
+      if (cc->isConnect()) {
+        if (cc->connection.first == chanIn) {
+          return cc->connection.second;
+        } else if (cc->connection.second == chanIn) {
+          return cc->connection.first;
+        }
+      }
+    }
+    cout << "Error: No source for channel " << chan->getName() << endl;
+    assert(false);
+  }
+
+  void synthesizeChannel(Port source, ModuleInstance* chan, Module* container) {
+    
+  }
+  
+  void synthesizeChannels(Module* m) {
+    for (auto r : m->getResources()) {
+      cout << "Resource has type " << r->source->getName() << endl;
+      if (isChannel(r->source)) {
+        cout << "Need to synthesize channel..." << endl;
+        ModuleInstance* chan = r;
+        Port source = channelSource(chan, m);
+        synthesizeChannel(source, chan, m);
+      }
+    }
+  }
 
 }
