@@ -180,6 +180,7 @@ namespace CAC {
 
   Module* getConstMod(Context& c, const int width, const int value);
   Module* getRegMod(Context& c, const int width);
+  Module* getChannelMod(Context& c, const int width);
   Module* getNotMod(Context& c, const int width);
 
   static inline

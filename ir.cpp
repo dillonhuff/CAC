@@ -456,6 +456,20 @@ namespace CAC {
 
     return regMod;
   }
+
+  Module* getChannelMod(Context& c, const int width) {
+    string name = "pipe_channel_" + to_string(width);
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+
+    auto regMod = c.addCombModule(name);
+
+    regMod->setPrimitive(true);
+    regMod->addInPort(width, "in");
+    regMod->addOutPort(width, "out");
+    return regMod;
+  }
   
   Module* getRegMod(Context& c, const int width) {
     string name = "reg_" + to_string(width);
