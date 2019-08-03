@@ -302,6 +302,12 @@ namespace CAC {
       return addInstance(tp, fullName);
     }
 
+    ModuleInstance* freshInstanceSeq(Module* tp, const std::string& name) {
+      string fullName = name + "_" + to_string(uniqueNum);
+      uniqueNum++;
+      return addInstanceSeq(tp, fullName);
+    }
+    
     Context* getContext() {
       return context;
     }

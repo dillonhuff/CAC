@@ -203,24 +203,15 @@ int main() {
     CC* firstAdd = pipeAdds->addInvokeInstruction(add16Apply);
     firstAdd->bind("in0", pipeAdds->ipt("in_data"));
     firstAdd->bind("in1", c16->pt("out"));
-    firstAdd->bind("out", chan->pt("in")); //add1Wire->pt("in"));
+    firstAdd->bind("out", chan->pt("in"));
 
     firstAdd->bind("add16_in0", add1->pt("in0"));
     firstAdd->bind("add16_in1", add1->pt("in1"));
     firstAdd->bind("add16_out", add1->pt("out"));
-
-    // CC* storeFirstRes =
-    //   pipeAdds->addInvokeInstruction(reg16->action("reg_16_st"));
-    // storeFirstRes->bind("reg_16_in", r16->pt("in"));
-    // storeFirstRes->bind("reg_16_en", r16->pt("en"));    
-
-    // storeFirstRes->bind("in", add1Wire->pt("out"));
-    // storeFirstRes->bind("en", oneInst->pt("out"));
     
     CC* secondAdd = pipeAdds->addInvokeInstruction(add16Apply);
 
     // Bind to signal input?
-    // secondAdd->bind("in0", r16->pt("data")); //add1Wire->pt("out"));
     secondAdd->bind("in0", chan->pt("out"));
     secondAdd->bind("in1", c16->pt("out"));
     secondAdd->bind("out", pipeAdds->ipt("result"));
@@ -233,8 +224,6 @@ int main() {
     entryCheck->continueTo(pipeAdds->ipt("in_valid"), firstAdd, 0);
 
     firstAdd->continueTo(oneInst->pt("out"), secondAdd, 1);
-    //firstAdd->continueTo(oneInst->pt("out"), storeFirstRes, 0);    
-    // Also continue to sending registers?
     
     cout << "Two adds..." << endl;
     cout << *pipeAdds << endl;

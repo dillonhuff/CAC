@@ -616,7 +616,7 @@ namespace CAC {
 
       int chanWidth = src.getWidth();
       ModuleInstance* freshReg =
-        container->freshInstance(getRegMod(*(container->getContext()), chanWidth), chan->getName());
+        container->freshInstanceSeq(getRegMod(*(container->getContext()), chanWidth), chan->getName());
       CC* storeRegVal =
         container->addInvokeInstruction(freshReg->source->action(freshReg->source->getName() + "_st"));
       bindByType(storeRegVal, freshReg);

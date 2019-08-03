@@ -5,7 +5,7 @@ module test();
    reg clk;
    reg rst;
    reg [15:0] in;
-   reg [15:0] valid;
+   reg valid;
    wire [15:0] result;
 
    initial begin
