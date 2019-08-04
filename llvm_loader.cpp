@@ -195,7 +195,8 @@ void loadLLVMFromFile(Context& c,
 
   auto setReady1ThenWait = m->addEmptyInstruction();
   setReady1ThenWait->then(m->c(1, 1), setDone1, 0);
-  setReady1ThenWait->then(m->c(1, 1), setReady1_2, 0);  
+  //setReady1ThenWait->then(m->c(1, 1), setReady1_2, 0);
+  setReady1ThenWait->then(m->c(1, 1), setReady1, 0);  
   setReady1ThenWait->then(m->c(1, 1), waitForStart, 0);
 
   progStart->then(m->c(1, 1), progEnd, 2);  
