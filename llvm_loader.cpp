@@ -64,6 +64,17 @@ void addRAM32Primitive(Context& c) {
   m->addAction(wr);  
 }
 
+CC* setReg(ModuleInstance* r, const int value, CAC::Module* container) {
+  auto setR =
+    container->addInvokeInstruction(r->action("st"));
+  setR->setIsStartAction(true);
+  bindByType(setR, r);
+  setR->bind("in", container->c(r->pt("in").getWidth(), value));
+  setR->bind("en", container->c(1, 1));
+
+  return setR;
+}
+
 // Maybe better way to translate LLVM?
 //  1. Create channels for all non-pointer values
 //  2. Create registers for all pointers to non-builtins
@@ -145,7 +156,10 @@ void loadLLVMFromFile(Context& c,
   setReady1->setIsStartAction(true);
   bindByType(setReady1, readyReg);
   setReady1->bind("in", m->c(1, 1));
-  setReady1->bind("en", m->c(1, 1));  
+  setReady1->bind("en", m->c(1, 1));
+
+  auto setDone0 = setReg(doneReg, 0, m);
+  setReady1->then(m->c(1, 1), setDone0, 0);
 
   // Program start / end delimiters
   auto progStart = m->addEmpty();

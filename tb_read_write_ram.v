@@ -26,6 +26,7 @@ module test();
       #1 clk = 0;
 
       `assert(ready, 1'b1)
+      `assert(done, 1'b0)
 
       #1 rst = 0;
 

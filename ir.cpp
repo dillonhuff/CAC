@@ -235,8 +235,6 @@ namespace CAC {
     string name = m->getName();
     if (hasPrefix(name, "add")) {
       return "add #(.WIDTH(16))";
-    // } else if (hasPrefix(name, "reg")) {
-    //   return "mod_register #(.WIDTH(16))";
     } else if (hasPrefix(name, "wire")) {
       return "mod_wire #(.WIDTH(16))";
     } else {
