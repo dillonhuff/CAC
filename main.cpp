@@ -239,7 +239,7 @@ int main() {
     ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
     auto add1 = pipeAdds->addInstance(add16, "add1");
     auto add2 = pipeAdds->addInstance(add16, "add2");
-    auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
+    //auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
     auto c16 = pipeAdds->addInstance(one16, "n16");
     auto chan = pipeAdds->addInstance(chan16, "pipe_channel");
 
@@ -308,7 +308,7 @@ int main() {
     ModuleInstance* oneInst = pipeAdds->addInstance(const_1_1, "one");
     auto add1 = pipeAdds->addInstance(add16, "add1");
     auto add2 = pipeAdds->addInstance(add16, "add2");
-    auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
+    //auto add1Wire = pipeAdds->addInstance(w16, "add1Wire");
     auto c16 = pipeAdds->addInstance(one16, "n16");
     auto chan = pipeAdds->addInstance(chan16, "pipe_channel");
 

@@ -159,6 +159,10 @@ namespace CAC {
       isStartAction = isStart;
     }
 
+    void then(Port condition, CC* next, const int delay) {
+      return continueTo(condition, next, delay);
+    }
+    
     void continueTo(Port condition, CC* next, const int delay) {
       continuations.push_back({condition, next, delay});
     }
@@ -257,6 +261,10 @@ namespace CAC {
       defaultValues[ptName] = value;
     }
 
+    ModuleInstance* freshReg(const int width, const std::string& name) {
+      return freshInstance(getRegMod(*(getContext()), width), name);
+    }
+    
     void erase(ModuleInstance* inst) {
       assert(elem(inst, resources));
       set<CC*> toEmpty;
@@ -330,6 +338,10 @@ namespace CAC {
       return context;
     }
 
+    Port c(const int width, const int value) {
+      return constOut(width, value);
+    }
+    
     Port constOut(const int width, const int value) {
       assert(context != nullptr);
       Module* constInt = getConstMod(*context, width, value);
@@ -394,6 +406,10 @@ namespace CAC {
       cc->tp = CONNECT_AND_CONTINUE_TYPE_INVOKE;
       body.insert(cc);
       return cc;
+    }
+
+    CC* addEmpty() {
+      return addEmptyInstruction();
     }
     
     CC* addEmptyInstruction() {

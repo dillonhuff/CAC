@@ -131,6 +131,16 @@ void loadLLVMFromFile(Context& c,
   m->addOutPort(1, "ready");
   m->addInPort(1, "start");
   m->addOutPort(1, "done");
+
+  // Calling convention registers
+  auto readyReg = m->freshReg(1, "ready");
+  auto doneReg = m->freshReg(1, "done");
+
+  // Program start / end delimiters
+  auto progStart = m->addEmpty();
+  auto progEnd = m->addEmpty();
+
+  progStart->then(m->c(1, 1), progEnd, 3);
   
   for (Argument& arg : f->args()) {
     Type* tp = arg.getType();
