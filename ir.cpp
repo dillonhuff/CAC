@@ -294,7 +294,34 @@ namespace CAC {
   }
 
   string parens(const string& str) { return "(" + str + ")"; }
-  
+
+  string rstPredHappenedString(CC* instr, Module* m, set<CC*> onRst) {
+    vector<string> predConds;
+    for (auto pred : m->getBody()) {
+
+      if (elem(pred, onRst)) {
+        for (auto c : pred->continuations) {
+          if (c.destination == instr) {
+            assert(0 <= c.delay && c.delay <= 1);
+          
+            if (c.delay == 0) {
+              predConds.push_back(parens(happenedVar(pred, m) +
+                                         " && " +
+                                         verilogString(c.condition, m)));
+            } else {
+              predConds.push_back(parens(happenedLastCycleVar(pred, m) +
+                                         " && " +
+                                         verilogString(c.condition, m)));
+            
+            }
+          }
+        }
+      }
+    }
+
+    return stringList(" || ", predConds);
+  }
+
   string predHappenedString(CC* instr, Module* m) {
     vector<string> predConds;
     for (auto pred : m->getBody()) {
@@ -439,6 +466,8 @@ namespace CAC {
       if (instr->isConnect() && (dest(instr).isSensitive())) {
         defaultString = verilogString(dest(instr), m) + " <= " + to_string(dest(instr).defaultValue()) + ";\n";
       }
+
+      string rstPredString = rstPredHappenedString(instr, m, onRst);
       
       out << "\talways @(*) begin" << endl;
       out << "\t\t// Code for " << *instr << endl;
@@ -450,7 +479,7 @@ namespace CAC {
         } else {
 
           assert(predString != "");
-          out << "\t\t\tif (" << predString << ") begin" << endl;
+          out << "\t\t\tif (" << rstPredString << ") begin" << endl;
           out << "\t\t\t\t" << body << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
           out << "\t\t\tend else begin" << endl;
