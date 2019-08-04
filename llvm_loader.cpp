@@ -137,7 +137,7 @@ void loadLLVMFromFile(Context& c,
   m->addSC(m->ipt("ready"), readyReg->pt("data"));
 
   auto doneReg = m->freshReg(1, "done");
-  m->addSC(m->ipt("done"), readyReg->pt("data"));
+  m->addSC(m->ipt("done"), doneReg->pt("data"));
   
   // Now: On reset write one to ready
   auto setReady1 =
