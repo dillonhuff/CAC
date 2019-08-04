@@ -28,6 +28,9 @@ module test();
       `assert(ready, 1'b1)
 
       #1 rst = 0;
+
+      $display("Passed");
+      
    end
 
    read_write_ram dut(.clk(clk),

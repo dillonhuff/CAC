@@ -264,7 +264,7 @@ namespace CAC {
     }
 
     ModuleInstance* freshReg(const int width, const std::string& name) {
-      return freshInstance(getRegMod(*(getContext()), width), name);
+      return freshInstanceSeq(getRegMod(*(getContext()), width), name);
     }
     
     void erase(ModuleInstance* inst) {

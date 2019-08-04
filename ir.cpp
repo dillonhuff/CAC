@@ -6,6 +6,23 @@ using namespace CAC;
 
 namespace CAC {
 
+  bool shouldBeWire(Port pt, Module* m) {
+    //cout << "Checking if " << pt << " should be a wire" << endl;
+    if (pt.isInput) {
+      //cout << "\t" << pt << " is an input" << endl;
+      for (auto sc : m->getStructuralConnections()) {
+        if ((sc.first == pt) || (sc.second == pt)) {
+          return true;
+        }
+      }
+
+      //cout << "\tbut it does not appear in structural connections" << endl;
+      return false;
+    }
+
+    return true;
+  }
+  
   int Port::defaultValue() {
     Module* src = inst->source == nullptr ? selfType : inst->source;
     return src->defaultValue(getName());
@@ -196,10 +213,22 @@ namespace CAC {
     }
   }
 
-  void printVerilog(std::ostream& out, const Port pt) {
+  void printVerilog(std::ostream& out, const Port pt, Module* m) {
     int wHigh = pt.getWidth() - 1;
     int wLow = 0;
-    out << (pt.isInput ? "input" : "output reg") << " [" << wHigh << " : " << wLow << "] " << pt.getName();
+
+    //out << (pt.isInput ? "input" : "output reg");
+    if (!pt.isOutput()) {
+      if (shouldBeWire(pt, m)) {
+        out << "output";
+      } else {
+        out << "output reg";
+      }
+    } else {
+      assert(pt.isOutput());
+      out << "input";
+    }
+    out << " [" << wHigh << " : " << wLow << "] " << pt.getName();
   }
 
   std::string moduleDecl(Module* m) {
@@ -310,23 +339,6 @@ namespace CAC {
     return succ;
   }
 
-  bool shouldBeWire(Port pt, Module* m) {
-    //cout << "Checking if " << pt << " should be a wire" << endl;
-    if (pt.isInput) {
-      //cout << "\t" << pt << " is an input" << endl;
-      for (auto sc : m->getStructuralConnections()) {
-        if ((sc.first == pt) || (sc.second == pt)) {
-          return true;
-        }
-      }
-
-      //cout << "\tbut it does not appear in structural connections" << endl;
-      return false;
-    }
-
-    return true;
-  }
-  
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
     out << "module " << m->getName() << "(" << endl;
@@ -335,7 +347,7 @@ namespace CAC {
     for (int i = 0; i < (int) pts.size(); i++) {
       out << "\t";
 
-      printVerilog(out, pts[i]);
+      printVerilog(out, reverseDir(pts[i]), m);
       
       if (i < ((int) pts.size()) - 1) {
         out << ", ";
