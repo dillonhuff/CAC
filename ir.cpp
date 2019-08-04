@@ -58,6 +58,7 @@ namespace CAC {
     w->setPrimitive(true);
     w->addInPort(width, "in");
     w->addOutPort(width, "out");
+    w->setVerilogDeclString("mod_wire #(.WIDTH(" + to_string(width) + "))");
   
     return w;
   }
@@ -235,8 +236,8 @@ namespace CAC {
     string name = m->getName();
     if (hasPrefix(name, "add")) {
       return "add #(.WIDTH(16))";
-    } else if (hasPrefix(name, "wire")) {
-      return "mod_wire #(.WIDTH(16))";
+      //} else if (hasPrefix(name, "wire")) {
+      // return "mod_wire #(.WIDTH(16))";
     } else {
       return m->getVerilogDeclString();
     }

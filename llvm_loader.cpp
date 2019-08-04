@@ -67,7 +67,6 @@ void addRAM32Primitive(Context& c) {
 CC* setReg(ModuleInstance* r, const int value, CAC::Module* container) {
   auto setR =
     container->addInvokeInstruction(r->action("st"));
-  setR->setIsStartAction(true);
   bindByType(setR, r);
   setR->bind("in", container->c(r->pt("in").getWidth(), value));
   setR->bind("en", container->c(1, 1));
@@ -166,40 +165,41 @@ void loadLLVMFromFile(Context& c,
 
   auto doneReg = m->freshReg(1, "done");
   m->addSC(m->ipt("done"), doneReg->pt("data"));
-  
-  // Now: On reset write one to ready
-  auto setReady1 =
-    m->addInvokeInstruction(doneReg->action("st"));
-  setReady1->setIsStartAction(true);
-  bindByType(setReady1, readyReg);
-  setReady1->bind("in", m->c(1, 1));
-  setReady1->bind("en", m->c(1, 1));
 
+  // Entry instruction
+  auto entry = m->addEmptyInstruction();
+  entry->setIsStartAction(true);
+  
+  // Register set actions
+  auto setReady1 = setReg(readyReg, 1, m);
+  auto setReady1_2 = setReg(readyReg, 1, m);
+  
   auto setDone1 = setReg(doneReg, 1, m);
   auto setDone0 = setReg(doneReg, 0, m);
-
-  setReady1->then(m->c(1, 1), setDone0, 0);
-
   auto setReady0 = setReg(readyReg, 0, m);
 
+  auto waitForStart = m->addEmptyInstruction();
+  
+  entry->then(m->c(1, 1), setReady1, 0);
+  entry->then(m->c(1, 1), setDone0, 0);
+  entry->then(m->c(1, 1), waitForStart, 1);  
+  
   // Program start / end delimiters
   auto progStart = m->addEmpty();
   auto progEnd = m->addEmpty();
 
-  auto waitForStart = m->addEmptyInstruction();
   waitForStart->then(notVal(m->ipt("start"), m), waitForStart, 1);
   waitForStart->then(m->ipt("start"), progStart, 0);
   waitForStart->then(m->ipt("start"), setReady0, 0);  
+  waitForStart->then(m->ipt("start"), setDone0, 0);  
 
-  auto setReady1ThenWait = setReg(readyReg, 1, m);
-  setReady1ThenWait->then(m->c(1, 1), waitForStart, 1);
-  setReady1ThenWait->then(m->c(1, 1), setDone1, 0);  
+  auto setReady1ThenWait = m->addEmptyInstruction();
+  setReady1ThenWait->then(m->c(1, 1), setDone1, 0);
+  setReady1ThenWait->then(m->c(1, 1), setReady1_2, 0);  
+  setReady1ThenWait->then(m->c(1, 1), waitForStart, 0);
 
+  progStart->then(m->c(1, 1), progEnd, 2);  
   progEnd->then(m->c(1, 1), setReady1ThenWait, 0);
-  
-  setReady1->then(m->c(1, 1), waitForStart, 1);
-
-  progStart->then(m->c(1, 1), progEnd, 3);
   
   for (Argument& arg : f->args()) {
     Type* tp = arg.getType();

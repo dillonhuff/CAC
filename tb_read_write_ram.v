@@ -25,6 +25,8 @@ module test();
       #1 clk = 1;
       #1 clk = 0;
 
+      $display("after rst done = %d", done);
+      $display("after rst ready = %d", ready);      
       
       `assert(ready, 1'b1)
       `assert(done, 1'b0)
@@ -56,6 +58,14 @@ module test();
 
       // 3
 
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+      
+      $display("At end ready = %d", ready);
+      $display("At end done  = %d", done);
+      $display("Start        = %d", start);
+      
       `assert(done, 1'b1)
       `assert(ready, 1'b1)      
 
