@@ -9,3 +9,4 @@ iv
 tb
 CMakeCache.txt
 CMakeFiles/
+*.txt
