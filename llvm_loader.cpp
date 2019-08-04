@@ -196,6 +196,9 @@ void loadLLVMFromFile(Context& c,
   waitForStart->then(m->ipt("start"), setReady0, 0);  
   waitForStart->then(m->ipt("start"), setDone0, 0);  
 
+  // Maybe the problem is that set ready 0 can happen even if we are not in reset?
+  // - No that is not the problem
+  // Ready one is not happening...
   auto setReady1ThenWait = m->addEmptyInstruction();
   setReady1ThenWait->then(m->c(1, 1), setDone1, 0);
   //setReady1ThenWait->then(m->c(1, 1), setReady1_2, 0);
