@@ -170,8 +170,13 @@ void loadLLVMFromFile(Context& c,
   m->addSC(m->ipt("done"), doneReg->pt("data"));
 
   // Entry instruction
+  auto trueEntry = m->addEmptyInstruction();  
+  trueEntry->setIsStartAction(true);
+  
   auto entry = m->addEmptyInstruction();
-  entry->setIsStartAction(true);
+  //entry->setIsStartAction(true);
+
+  trueEntry->then(m->c(1, 1), entry, 1);
   
   // Register set actions
   auto setReady1 = setReg(readyReg, 1, m);
