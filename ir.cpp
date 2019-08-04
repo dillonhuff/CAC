@@ -502,6 +502,8 @@ namespace CAC {
         out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
         out << "\t\t\tend" << endl;
 
+      } else {
+        out << "\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;        
       }
 
       out << "\t\tend" << endl << endl;      
