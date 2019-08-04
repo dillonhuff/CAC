@@ -175,7 +175,9 @@ void loadLLVMFromFile(Context& c,
   setReady1->bind("in", m->c(1, 1));
   setReady1->bind("en", m->c(1, 1));
 
+  auto setDone1 = setReg(doneReg, 1, m);
   auto setDone0 = setReg(doneReg, 0, m);
+
   setReady1->then(m->c(1, 1), setDone0, 0);
 
   auto setReady0 = setReg(readyReg, 0, m);
@@ -183,11 +185,17 @@ void loadLLVMFromFile(Context& c,
   // Program start / end delimiters
   auto progStart = m->addEmpty();
   auto progEnd = m->addEmpty();
-  
+
   auto waitForStart = m->addEmptyInstruction();
   waitForStart->then(notVal(m->ipt("start"), m), waitForStart, 1);
   waitForStart->then(m->ipt("start"), progStart, 0);
   waitForStart->then(m->ipt("start"), setReady0, 0);  
+
+  auto setReady1ThenWait = setReg(readyReg, 1, m);
+  setReady1ThenWait->then(m->c(1, 1), waitForStart, 1);
+  setReady1ThenWait->then(m->c(1, 1), setDone1, 0);  
+
+  progEnd->then(m->c(1, 1), setReady1ThenWait, 0);
   
   setReady1->then(m->c(1, 1), waitForStart, 1);
 
