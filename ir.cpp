@@ -744,11 +744,6 @@ namespace CAC {
   }
 
   void reduceStructures(Module* m) {
-    // What to do here?
-    // - Find all ports that are assigned exactly once
-    // - For each port assigned once if it is not a port with a
-    //   default value then: Make the connection a no-op and replace
-    //   it with a structural connection
     for (auto r : m->getResources()) {
       for (auto pt : r->getPorts()) {
         if (pt.isInput && !pt.isSensitive()) {
@@ -783,6 +778,39 @@ namespace CAC {
       }
       return false;
       
+    }
+  }
+
+  void synthesizeDelays(Module* m) {
+    // Now: For each transition with delays > 1
+    bool foundHighDelay = true;
+    while (foundHighDelay) {
+      foundHighDelay = false;
+
+      for (auto cc : m->getBody()) {
+        bool fd = false;        
+
+        for (Activation& ct : cc->continuations) {
+          if (ct.delay > 1) {
+            // TODO: Add extra instruction
+            auto freshD = m->addEmptyInstruction();
+            Activation cpy = ct;
+            cpy.delay = 1;
+            freshD->continuations.push_back(cpy);
+
+            ct.destination = freshD;
+
+            ct.delay--;
+            fd = true;
+            break;
+          }
+        }
+
+        if (fd) {
+          foundHighDelay = true;
+          break;
+        }
+      }
     }
   }
 }

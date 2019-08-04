@@ -370,6 +370,7 @@ int main() {
 
     inlineInvokes(m);
     synthesizeChannels(m);
+    synthesizeDelays(m);
     reduceStructures(m);
     
     emitVerilog(c, m);

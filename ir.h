@@ -576,7 +576,8 @@ namespace CAC {
   void inlineInvokes(Module* m);
   void synthesizeChannels(Module* pipeAdds);
   void reduceStructures(Module* m);
-
+  void synthesizeDelays(Module* m);
+  
   void bindByType(CC* invocation, ModuleInstance* toBind);
   
 }
