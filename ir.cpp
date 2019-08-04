@@ -77,8 +77,16 @@ namespace CAC {
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
-    //cout << "Replacing port " << pt << endl;
+    cout << "Replacing port " << pt << endl;
     if (pt.inst == nullptr) {
+      if (!contains_key(pt.getName(), activeBinding)) {
+        cout << "No port named " << pt.getName() << " in binding:" << endl;
+        for (auto b : activeBinding) {
+          cout << "\t" << b.first << " -> " << b.second << endl;
+        }
+      }
+      assert(contains_key(pt.getName(), activeBinding));
+      
       return map_find(pt.getName(), activeBinding);
     } else {
       return map_find(pt.inst, resourceMap)->pt(pt.getName());
@@ -86,6 +94,8 @@ namespace CAC {
   }
 
   CC* inlineInstrTo(CC* instr, Module* destMod, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
+    cout << "Inlining " << *instr << endl;
+    
     CC* cpy = nullptr;
     if (instr->isEmpty()) {
       cpy = destMod->addEmptyInstruction();
@@ -109,7 +119,7 @@ namespace CAC {
   }
   
   void inlineInvoke(CC* invokeInstr, Module* container) {
-    //cout << "Inlining " << *invokeInstr << endl;
+    cout << "Inlining invoke " << *invokeInstr << endl;
     assert(invokeInstr->isInvoke());
     
     CC* invStart = invokeInstr;
@@ -617,6 +627,7 @@ namespace CAC {
   }
 
   void replacePort(Port toReplace, Port replacement, CC* instr) {
+    
     if (instr->isEmpty()) {
     } else if (instr->isInvoke()) {
       assert(false);

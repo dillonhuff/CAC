@@ -90,8 +90,8 @@ void loadLLVMFromFile(Context& c,
   read->addInPort(32, "raddr");
   read->addOutPort(32, "rdata");  
 
-  // CC* setRaddr = read->addStartInstruction(read->ipt("in"),
-  //                                          resRaddr->pt("out"));
+  CC* setRaddr = read->addStartInstruction(read->ipt("raddr"),
+                                           read->ipt("ram32_128_raddr"));
   // CC* readRdata = read->addInstruction(ramData->pt("in"),
   //                                      resRdata->pt("in"));
   // setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
@@ -125,6 +125,13 @@ void loadLLVMFromFile(Context& c,
 
   CAC::Module* mCall = c.addModule(topFunction + "_call");
 
+  map<Argument*, CAC::Module*> argTypes;
+
+  // Calling convention ports
+  m->addOutPort(1, "ready");
+  m->addInPort(1, "start");
+  m->addOutPort(1, "done");
+  
   for (Argument& arg : f->args()) {
     Type* tp = arg.getType();
     if (PointerType::classof(tp)) {
@@ -140,7 +147,12 @@ void loadLLVMFromFile(Context& c,
 
       CAC::Module* def = map_find(str, builtinModDefs);
       for (Port pt : def->getInterfacePorts()) {
-        m->addInstance(getWireMod(c, pt.getWidth()), pt.getName());
+        if (pt.isInput) {
+          m->addOutPort(pt.getWidth(), string(arg.getName()) + "_" + pt.getName());
+        } else {
+          m->addInPort(pt.getWidth(), string(arg.getName()) + "_" + pt.getName());
+        }
+        //m->addInstance(getWireMod(c, pt.getWidth()), pt.getName());
       }
       
     } else {
@@ -152,112 +164,120 @@ void loadLLVMFromFile(Context& c,
   // instruction sets and need to create a map from instructions to
   // invocations?
 
-  CAC::Module* reg32Mod = c.addModule("reg_32");
-  reg32Mod->setPrimitive(true);
-  reg32Mod->addInPort(1, "en");
-  reg32Mod->addInPort(32, "in");
-  reg32Mod->addOutPort(32, "data");
+  // CAC::Module* reg32Mod = c.addModule("reg_32");
+  // reg32Mod->setPrimitive(true);
+  // reg32Mod->addInPort(1, "en");
+  // reg32Mod->addInPort(32, "in");
+  // reg32Mod->addOutPort(32, "data");
 
-  CAC::Module* reg32ModLd = c.addModule("reg_32_ld");
-  CAC::Module* reg32ModSt = c.addModule("reg_32_st");
+  // CAC::Module* reg32ModLd = c.addModule("reg_32_ld");
+  // CAC::Module* reg32ModSt = c.addModule("reg_32_st");
 
-  reg32Mod->addAction(reg32ModLd);
-  reg32Mod->addAction(reg32ModSt);
+  // reg32Mod->addAction(reg32ModLd);
+  // reg32Mod->addAction(reg32ModSt);
 
-  map<ReturnInst*, CC*> rets;
-  CC* entryInstr = nullptr;
+  // map<ReturnInst*, CC*> rets;
+  // CC* entryInstr = nullptr;
   
-  for (auto& bb : *f) {
-    vector<CC*> blkInstrs;
-    for (auto& instrR : bb) {
-      Instruction* instr = &instrR;
-      if (AllocaInst::classof(instr)) {
-      } else if (BitCastInst::classof(instr)) {
-        cout << "Ignoring bitcast" << endl;
-      } else if (CallInst::classof(instr)) {
-        if (matchesCall("llvm.", instr)) {
-          cout << "Ignoring llvm builtin " << valueString(instr) << endl;
-        } else {
-          string funcName = calledFuncName(instr);          
-          cout << "Creating code for call to " << funcName << "..." << endl;
-          CAC::Module* inv = map_find(funcName, builtinModDefs);
-          assert(inv->isCallingConvention());
+  // for (auto& bb : *f) {
+  //   vector<CC*> blkInstrs;
+  //   for (auto& instrR : bb) {
+  //     Instruction* instr = &instrR;
+  //     if (AllocaInst::classof(instr)) {
+  //     } else if (BitCastInst::classof(instr)) {
+  //       cout << "Ignoring bitcast" << endl;
+  //     } else if (CallInst::classof(instr)) {
+  //       if (matchesCall("llvm.", instr)) {
+  //         cout << "Ignoring llvm builtin " << valueString(instr) << endl;
+  //       } else {
+  //         string funcName = calledFuncName(instr);          
+  //         cout << "Creating code for call to " << funcName << "..." << endl;
+  //         CAC::Module* inv = map_find(funcName, builtinModDefs);
+  //         assert(inv->isCallingConvention());
 
-          auto cc = m->addInvokeInstruction(inv);
-          blkInstrs.push_back(cc);
+  //         auto cc = m->addInvokeInstruction(inv);
+  //         blkInstrs.push_back(cc);
           
-        }
-      } else if (ReturnInst::classof(instr)) {
-        auto cc = m->addEmptyInstruction();
-        blkInstrs.push_back(cc);
-        rets[dyn_cast<ReturnInst>(instr)] = cc;
-      } else if (LoadInst::classof(instr)) {
-        cout << "Need to get module for load" << endl;
-        auto cc = m->addInvokeInstruction(reg32ModLd);
-        blkInstrs.push_back(cc);
-      } else {
-        cout << "Error: Unsupported instruction " << valueString(instr) << endl;
-        assert(false);
-      }
+  //       }
+  //     } else if (ReturnInst::classof(instr)) {
+  //       auto cc = m->addEmptyInstruction();
+  //       blkInstrs.push_back(cc);
+  //       rets[dyn_cast<ReturnInst>(instr)] = cc;
+  //     } else if (LoadInst::classof(instr)) {
+  //       cout << "Need to get module for load" << endl;
+  //       auto cc = m->addInvokeInstruction(reg32ModLd);
+  //       blkInstrs.push_back(cc);
+  //     } else {
+  //       cout << "Error: Unsupported instruction " << valueString(instr) << endl;
+  //       assert(false);
+  //     }
 
-    }
+  //   }
 
-    for (int i = 0; i < (int) blkInstrs.size() - 1; i++) {
-      auto instr = blkInstrs[i];
-      auto nextInstr = blkInstrs[i + 1];
-      instr->continueTo(m->constOut(1, 1), nextInstr, 1);
-    }
+  //   for (int i = 0; i < (int) blkInstrs.size() - 1; i++) {
+  //     auto instr = blkInstrs[i];
+  //     auto nextInstr = blkInstrs[i + 1];
+  //     instr->continueTo(m->constOut(1, 1), nextInstr, 1);
+  //   }
 
-    if (&(f->getEntryBlock()) == &bb) {
-      cout << "Setting entry instruction" << endl;
+  //   if (&(f->getEntryBlock()) == &bb) {
+  //     cout << "Setting entry instruction" << endl;
       
-      assert(blkInstrs.size() > 0);
+  //     assert(blkInstrs.size() > 0);
       
-      entryInstr = blkInstrs[0];
+  //     entryInstr = blkInstrs[0];
 
-      cout << "Done setting instruction" << endl;
-    }
+  //     cout << "Done setting instruction" << endl;
+  //   }
 
 
 
-  }
+  // }
 
-  cout << "Building rv controller" << endl;
+  // cout << "Building rv controller" << endl;
 
-  assert(entryInstr != nullptr);
+  // assert(entryInstr != nullptr);
 
-  // Create start instruction
-  auto validWire = m->addInstance(getWireMod(c, 1), "valid");
+  // // Create start instruction
+  // auto validWire = m->addInstance(getWireMod(c, 1), "valid");
 
-  auto readyReg = getRegMod(c, 1);
+  // auto readyReg = getRegMod(c, 1);
+  // auto rdyReg = m->freshInstance(readyReg, "ready_register");
 
-  auto setReady0 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
+  // auto setReady0 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
+  // bindByType(setReady0, rdyReg);
+  // setReady0->bind("in", m->constOut(1, 0));
+  // setReady0->bind("en", m->constOut(1, 1));  
   
-  auto setReady1 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
-  setReady1->setIsStartAction(true);
-
-  auto readValid = m->addEmptyInstruction();
-
-  CAC::Module* negMod = getNotMod(c, 1);
-  auto negInst = m->addInstance(negMod, "notValid");
-  auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
-
-  auto negModApply = negMod->action("not_1_apply");
-  auto setNegValid =
-    m->addInvokeInstruction(negModApply);
-  bindByType(setNegValid, negInst);
-  // setNegValid->bind("not_in", negInst->pt("in"));
-  // setNegValid->bind("not_out", negInst->pt("out"));
-
-  setNegValid->bind("in", validWire->pt("out"));
-  setNegValid->bind("out", outWire->pt("in"));
+  // auto setReady1 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
+  // bindByType(setReady1, rdyReg);  
+  // setReady1->setIsStartAction(true);
+  // setReady1->bind("in", m->constOut(1, 1));
+  // setReady1->bind("en", m->constOut(1, 1));  
   
-  //readValid->continueTo(setNegValid, readValid, 1);
+
+  // auto readValid = m->addEmptyInstruction();
+
+  // CAC::Module* negMod = getNotMod(c, 1);
+  // auto negInst = m->addInstance(negMod, "notValid");
+  // auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
+
+  // auto negModApply = negMod->action("not_1_apply");
+  // auto setNegValid =
+  //   m->addInvokeInstruction(negModApply);
+  // bindByType(setNegValid, negInst);
+  // // setNegValid->bind("not_in", negInst->pt("in"));
+  // // setNegValid->bind("not_out", negInst->pt("out"));
+
+  // setNegValid->bind("in", validWire->pt("out"));
+  // setNegValid->bind("out", outWire->pt("in"));
   
-  readValid->continueTo(validWire->pt("out"), entryInstr, 0);
-  readValid->continueTo(validWire->pt("out"), setReady0, 0);  
+  // //readValid->continueTo(setNegValid, readValid, 1);
+  
+  // readValid->continueTo(validWire->pt("out"), entryInstr, 0);
+  // readValid->continueTo(validWire->pt("out"), setReady0, 0);  
 
-  m->addAction(mCall);
+  // m->addAction(mCall);
 
-  cout << "Done building module" << endl;
+  // cout << "Done building module" << endl;
 }
