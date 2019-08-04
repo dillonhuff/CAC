@@ -77,7 +77,7 @@ namespace CAC {
   }
 
   Port replacePort(Port pt, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
-    cout << "Replacing port " << pt << endl;
+    //cout << "Replacing port " << pt << endl;
     if (pt.inst == nullptr) {
       if (!contains_key(pt.getName(), activeBinding)) {
         cout << "No port named " << pt.getName() << " in binding:" << endl;
@@ -311,16 +311,16 @@ namespace CAC {
   }
 
   bool shouldBeWire(Port pt, Module* m) {
-    cout << "Checking if " << pt << " should be a wire" << endl;
+    //cout << "Checking if " << pt << " should be a wire" << endl;
     if (pt.isInput) {
-      cout << "\t" << pt << " is an input" << endl;
+      //cout << "\t" << pt << " is an input" << endl;
       for (auto sc : m->getStructuralConnections()) {
         if ((sc.first == pt) || (sc.second == pt)) {
           return true;
         }
       }
 
-      cout << "\tbut it does not appear in structural connections" << endl;
+      //cout << "\tbut it does not appear in structural connections" << endl;
       return false;
     }
 
@@ -813,4 +813,10 @@ namespace CAC {
       }
     }
   }
+
+  Module* ModuleInstance::action(const std::string& actionSuffix) {
+    return source->action(source->getName() + "_" + actionSuffix);
+  }
+
+  
 }

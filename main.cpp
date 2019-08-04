@@ -228,7 +228,7 @@ int main() {
     Module* add16Apply = c.getModule("add16_apply");
     Module* one16 = getConstMod(c, 16, 1);
     Module* const_1_1 = getConstMod(c, 1, 1);
-    Module* w16 = getWireMod(c, 16);
+    //Module* w16 = getWireMod(c, 16);
     Module* chan16 = getChannelMod(c, 16);
 
     Module* pipeAdds = c.addModule("channel_pipelined_adds");
@@ -297,7 +297,7 @@ int main() {
     Module* add16Apply = c.getModule("add16_apply");
     Module* one16 = getConstMod(c, 16, 1);
     Module* const_1_1 = getConstMod(c, 1, 1);
-    Module* w16 = getWireMod(c, 16);
+    //Module* w16 = getWireMod(c, 16);
     Module* chan16 = getChannelMod(c, 16);
 
     Module* pipeAdds = c.addModule("structure_reduce_channel_pipelined_adds");
@@ -374,6 +374,7 @@ int main() {
     reduceStructures(m);
     
     emitVerilog(c, m);
+    assert(runIVerilogTB(m->getName()));
   }
 
 }

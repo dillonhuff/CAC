@@ -81,6 +81,8 @@ namespace CAC {
 
     std::vector<Port> getPorts();
 
+    Module* action(const std::string& actionSuffix);
+    
     bool hasPt(const std::string& name) const;
     
     Port pt(const std::string& name) {

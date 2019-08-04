@@ -134,7 +134,18 @@ void loadLLVMFromFile(Context& c,
 
   // Calling convention registers
   auto readyReg = m->freshReg(1, "ready");
+  m->addSC(readyReg->pt("data"), m->ipt("ready"));
+
   auto doneReg = m->freshReg(1, "done");
+  m->addSC(readyReg->pt("data"), m->ipt("done"));
+  
+  // Now: On reset write one to ready
+  auto setReady1 =
+    m->addInvokeInstruction(doneReg->action("st"));
+  setReady1->setIsStartAction(true);
+  bindByType(setReady1, readyReg);
+  setReady1->bind("in", m->c(1, 1));
+  setReady1->bind("en", m->c(1, 1));  
 
   // Program start / end delimiters
   auto progStart = m->addEmpty();
