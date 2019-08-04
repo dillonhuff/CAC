@@ -513,6 +513,8 @@ namespace CAC {
     
     regMod->addAction(regModLd);
 
+    regMod->setVerilogDeclString("notOp #(.WIDTH(" + to_string(width) + "))");
+
     return regMod;
   }
 

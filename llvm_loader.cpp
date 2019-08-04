@@ -75,6 +75,23 @@ CC* setReg(ModuleInstance* r, const int value, CAC::Module* container) {
   return setR;
 }
 
+Port notVal(const Port toNegate, CAC::Module* m) {
+  auto nm = getNotMod(*(m->getContext()), 1);
+  auto notI = m->freshInstance(nm, "not");
+  auto notAct = notI->action("apply");
+
+  auto resWire =
+    m->freshInstance(getWireMod(*(m->getContext()), toNegate.getWidth()),
+                     "not_res");
+
+  auto notActInv = m->addInvokeInstruction(notAct);
+  bindByType(notActInv, notI);
+  notActInv->bind("in", toNegate);
+  notActInv->bind("out", resWire->pt("in"));  
+
+  return resWire->pt("out");
+}
+
 // Maybe better way to translate LLVM?
 //  1. Create channels for all non-pointer values
 //  2. Create registers for all pointers to non-builtins
@@ -161,9 +178,18 @@ void loadLLVMFromFile(Context& c,
   auto setDone0 = setReg(doneReg, 0, m);
   setReady1->then(m->c(1, 1), setDone0, 0);
 
+  auto setReady0 = setReg(readyReg, 0, m);
+
   // Program start / end delimiters
   auto progStart = m->addEmpty();
   auto progEnd = m->addEmpty();
+  
+  auto waitForStart = m->addEmptyInstruction();
+  waitForStart->then(notVal(m->ipt("start"), m), waitForStart, 1);
+  waitForStart->then(m->ipt("start"), progStart, 0);
+  waitForStart->then(m->ipt("start"), setReady0, 0);  
+  
+  setReady1->then(m->c(1, 1), waitForStart, 1);
 
   progStart->then(m->c(1, 1), progEnd, 3);
   

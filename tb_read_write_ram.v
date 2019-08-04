@@ -25,10 +25,36 @@ module test();
       #1 clk = 1;
       #1 clk = 0;
 
+      
       `assert(ready, 1'b1)
       `assert(done, 1'b0)
 
       #1 rst = 0;
+
+      #1 start = 1;
+      
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      #1 start = 0;
+      
+      // 1
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      // 2
+
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      // 3
+
+      `assert(done, 1'b1)
+      
+      
 
       $display("Passed");
       
