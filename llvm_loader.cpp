@@ -134,10 +134,10 @@ void loadLLVMFromFile(Context& c,
 
   // Calling convention registers
   auto readyReg = m->freshReg(1, "ready");
-  m->addSC(readyReg->pt("data"), m->ipt("ready"));
+  m->addSC(m->ipt("ready"), readyReg->pt("data"));
 
   auto doneReg = m->freshReg(1, "done");
-  m->addSC(readyReg->pt("data"), m->ipt("done"));
+  m->addSC(m->ipt("done"), readyReg->pt("data"));
   
   // Now: On reset write one to ready
   auto setReady1 =

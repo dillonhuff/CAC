@@ -556,6 +556,7 @@ namespace CAC {
     regMod->addAction(regModLd);
     regMod->addAction(regModSt);
 
+    regMod->setVerilogDeclString("mod_register #(.WIDTH(" + to_string(width) + "))");    
     return regMod;
 
   }
