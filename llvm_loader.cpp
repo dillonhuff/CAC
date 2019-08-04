@@ -94,6 +94,9 @@ Port notVal(const Port toNegate, CAC::Module* m) {
 // Maybe better way to translate LLVM?
 //  1. Create channels for all non-pointer values
 //  2. Create registers for all pointers to non-builtins
+
+// TODO: Add unit test of ready valid controller?
+// TODO: Add debug printouts?
 void loadLLVMFromFile(Context& c,
                       const std::string& topFunction,
                       const std::string& filePath) {
