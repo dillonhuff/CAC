@@ -359,55 +359,10 @@ void loadLLVMFromFile(Context& c,
       assert(blkInstrs.size() > 0);
       
       entryInstr = blkInstrs[0];
+      progStart->then(m->c(1, 1), entryInstr, 0);
 
       cout << "Done setting instruction" << endl;
     }
   }
 
-  // cout << "Building rv controller" << endl;
-
-  // assert(entryInstr != nullptr);
-
-  // // Create start instruction
-  // auto validWire = m->addInstance(getWireMod(c, 1), "valid");
-
-  // auto readyReg = getRegMod(c, 1);
-  // auto rdyReg = m->freshInstance(readyReg, "ready_register");
-
-  // auto setReady0 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
-  // bindByType(setReady0, rdyReg);
-  // setReady0->bind("in", m->constOut(1, 0));
-  // setReady0->bind("en", m->constOut(1, 1));  
-  
-  // auto setReady1 = m->addInvokeInstruction(readyReg->action("reg_1_st"));
-  // bindByType(setReady1, rdyReg);  
-  // setReady1->setIsStartAction(true);
-  // setReady1->bind("in", m->constOut(1, 1));
-  // setReady1->bind("en", m->constOut(1, 1));  
-  
-
-  // auto readValid = m->addEmptyInstruction();
-
-  // CAC::Module* negMod = getNotMod(c, 1);
-  // auto negInst = m->addInstance(negMod, "notValid");
-  // auto outWire = m->addInstance(getWireMod(c, 1), "negValidWire");
-
-  // auto negModApply = negMod->action("not_1_apply");
-  // auto setNegValid =
-  //   m->addInvokeInstruction(negModApply);
-  // bindByType(setNegValid, negInst);
-  // // setNegValid->bind("not_in", negInst->pt("in"));
-  // // setNegValid->bind("not_out", negInst->pt("out"));
-
-  // setNegValid->bind("in", validWire->pt("out"));
-  // setNegValid->bind("out", outWire->pt("in"));
-  
-  // //readValid->continueTo(setNegValid, readValid, 1);
-  
-  // readValid->continueTo(validWire->pt("out"), entryInstr, 0);
-  // readValid->continueTo(validWire->pt("out"), setReady0, 0);  
-
-  // m->addAction(mCall);
-
-  // cout << "Done building module" << endl;
 }
