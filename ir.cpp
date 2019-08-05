@@ -192,7 +192,7 @@ namespace CAC {
       }
       
       if (instr->isStartAction) {
-        cout << "Found start of invocation" << endl;
+        //cout << "Found start of invocation" << endl;
         invStart->continuations.push_back({trueConst, map_find(instr, ccMap), 0});
       }
     }
@@ -675,7 +675,7 @@ namespace CAC {
     
     if (instr->isEmpty()) {
     } else if (instr->isInvoke()) {
-      cout << "Replacing port in invoke " << *instr << endl;
+      //cout << "Replacing port in invoke " << *instr << endl;
       vector<pair<string, Port> > replacements;
       for (auto p : instr->invokedBinding()) {
         if (p.second == toReplace) {
@@ -807,7 +807,7 @@ namespace CAC {
           set<CC*> assignments =
             getAssignmentsToPort(pt, m);
           if (assignments.size() == 1) {
-            cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
+            //cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
             CC* assigner = *begin(assignments);
             Port src = source(assigner);
             assigner->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
