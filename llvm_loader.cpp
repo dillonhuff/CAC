@@ -347,7 +347,8 @@ void loadLLVMFromFile(Context& c,
         auto chan = m->freshInstance(getRegMod(c, width), "alloca");
         state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
       } else if (LoadInst::classof(instr) ||
-                 CallInst::classof(instr)) {
+                 CallInst::classof(instr) ||
+                 BinaryOperator::classof(instr)) {
         if (!instr->getType()->isVoidTy()) {
           int width = getTypeBitWidth(instr->getType());
           auto chan = m->freshInstance(getChannelMod(c, width), "channel");
@@ -439,7 +440,21 @@ void loadLLVMFromFile(Context& c,
         auto out = instr;
         auto outC = state.getChannel(out);
 
-        assert(false);
+        int width = getTypeBitWidth(out->getType());
+        
+        // TODO: Generalize adder
+        string name = "add_" + to_string(width);
+        addBinop(c, name, 0);
+
+        CAC::Module* opMod = c.getModule(name);
+        auto op = m->freshInstance(opMod, "add");
+        auto opApply = op->action("apply");
+        auto opApplyInv = m->addInvokeInstruction(opApply);
+        bindByType(opApplyInv, op);
+        opApplyInv->bind("in0", c0->pt("out"));
+        opApplyInv->bind("in1", c1->pt("out"));
+        opApplyInv->bind("out", outC->pt("in"));        
+        blkInstrs.push_back(opApplyInv);
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);

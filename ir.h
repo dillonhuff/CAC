@@ -591,5 +591,7 @@ namespace CAC {
   void synthesizeDelays(Module* m);
   
   void bindByType(CC* invocation, ModuleInstance* toBind);
+
+  void addBinop(Context& c, const std::string& name, const int cycleLatency);
   
 }

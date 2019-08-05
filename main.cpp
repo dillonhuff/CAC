@@ -54,45 +54,6 @@ bool runIVerilogTB(const std::string& moduleName) {
   return lastLine == "Passed";
 }
 
-void addBinop(Context& c, const std::string& name, const int cycleLatency) {
-  Module* const_1_1 = getConstMod(c, 1, 1);
-
-  Module* add16 = c.addCombModule(name);
-  add16->setPrimitive(true);
-  add16->addInPort(16, "in0");
-  add16->addInPort(16, "in1");
-  add16->addOutPort(16, "out");
-
-  assert(!add16->ept("in0").isOutput());  
-  assert(!add16->ept("out").isInput);
-  
-  Module* add16Inv = c.addModule(name + "_apply");
-  add16Inv->addInPort(16, "in0");
-  add16Inv->addInPort(16, "in1");
-  add16Inv->addOutPort(16, "out");    
-
-  add16Inv->addOutPort(16, name + "_in0");
-  add16Inv->addOutPort(16, name + "_in1");
-  add16Inv->addInPort(16, name + "_out");
-
-  assert(add16Inv->ept(name + "_in0").isOutput());  
-  assert(add16Inv->ept(name + "_out").isInput);
-
-  ModuleInstance* oneInst = add16Inv->addInstance(const_1_1, "one");
-  
-  CC* in0W =
-    add16Inv->addStartInstruction(add16Inv->ipt("in0"), add16Inv->ipt(name + "_in0"));
-  CC* in1W =
-    add16Inv->addInstruction(add16Inv->ipt("in1"), add16Inv->ipt(name + "_in1"));
-  CC* outW =
-    add16Inv->addInstruction(add16Inv->ipt("out"), add16Inv->ipt(name + "_out"));
-
-  in0W->continueTo(oneInst->pt("out"), in1W, 0);
-  in1W->continueTo(oneInst->pt("out"), outW, cycleLatency);
-
-  add16->addAction(add16Inv);
-}
-
 int main() {
 
   {
