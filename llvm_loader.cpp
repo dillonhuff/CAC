@@ -106,25 +106,25 @@ void loadLLVMFromFile(Context& c,
   map<string, CAC::Module*> builtinModDefs;
   CAC::Module* ram32_128 = c.addModule("ram32_128");
   ram32_128->setPrimitive(true);
-  ram32_128->addInPort(32, "raddr");
-  ram32_128->addOutPort(32, "rdata");
-  ram32_128->addInPort(1, "wen");  
-  ram32_128->addInPort(32, "waddr");
-  ram32_128->addInPort(32, "wdata");
-  ram32_128->setDefaultValue("wen", 0);
+  ram32_128->addInPort(32, "raddr_0");
+  ram32_128->addOutPort(32, "rdata_0");
+  ram32_128->addInPort(1, "wen_0");  
+  ram32_128->addInPort(32, "waddr_0");
+  ram32_128->addInPort(32, "wdata_0");
+  ram32_128->setDefaultValue("wen_0", 0);
 
   CAC::Module* read = c.addModule("ram32_128_read");
-  read->addOutPort(32, "ram32_128_raddr");
-  read->addInPort(32, "ram32_128_rdata");  
+  read->addOutPort(32, "ram32_128_raddr_0");
+  read->addInPort(32, "ram32_128_rdata_0");  
 
-  read->addInPort(32, "raddr");
-  read->addOutPort(32, "rdata");  
+  read->addInPort(32, "raddr_0");
+  read->addOutPort(32, "rdata_0");  
 
-  CC* setRaddr = read->addStartInstruction(read->ipt("raddr"),
-                                           read->ipt("ram32_128_raddr"));
-  // CC* readRdata = read->addInstruction(ramData->pt("in"),
-  //                                      resRdata->pt("in"));
-  // setRaddr->continueTo(read->constOut(1, 1), readRdata, 1);
+  CC* setRaddr = read->addStartInstruction(read->ipt("raddr_0"),
+                                           read->ipt("ram32_128_raddr_0"));
+  CC* readRdata = read->addInstruction(read->ipt("rdata_0"),
+                                       read->ipt("ram32_128_rdata_0"));
+  setRaddr->continueTo(read->c(1, 1), readRdata, 1);
   
   CAC::Module* write = c.addModule("ram32_128_write");
 

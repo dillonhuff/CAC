@@ -21,7 +21,7 @@ bool runIVerilogTB(const std::string& moduleName) {
   string mainName = "tb_" + moduleName + ".v";
   string modFile = moduleName + ".v";
 
-  string genCmd = "iverilog -g2005 -o " + moduleName + " " + mainName + " " + modFile + " builtins.v";
+  string genCmd = "iverilog -g2005 -o " + moduleName + " " + mainName + " " + modFile + " builtins.v RAM.v delay.v";
 
   runCmd(genCmd);
 

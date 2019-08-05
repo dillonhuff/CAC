@@ -76,13 +76,23 @@ module test();
 
       $display("Passed");
       
-   end
+   end // initial begin
+
+   RAM ram(.clk(clk), .rst(rst));
+   
 
    read_write_ram dut(.clk(clk),
                       .rst(rst),
                       .ready(ready),
                       .start(start),
-                      .done(done));
+                      .done(done),
+
+                      .ram_raddr_0(ram.raddr_0),
+                      .ram_rdata_0(ram.rdata_0),
+
+                      .ram_waddr_0(ram.waddr_0),
+                      .ram_wen_0(ram.wen_0),
+                      .ram_wdata_0(ram.wdata_0));
    
    
 endmodule
