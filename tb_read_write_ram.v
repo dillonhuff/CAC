@@ -8,8 +8,21 @@ module test();
    reg start;
    wire done;
    wire ready;
+
+   reg  debug_write_en;
+   reg [31:0] debug_write_data;
+   reg [31:0] debug_write_addr;
+
+   wire [31:0] debug_read_data;
+   reg [31:0] debug_read_addr;
    
    initial begin
+      #1 debug_write_addr = 10;
+      #1 debug_write_data = 15;
+      #1 debug_write_en = 1;
+
+      #1 debug_read_addr = 12;
+      
       #1 clk = 0;
       #1 rst = 0;
       #1 start = 0;
@@ -18,6 +31,9 @@ module test();
       #1 clk = 1;
       #1 clk = 0;
 
+      #1 debug_write_en = 0;
+
+      
       #1 rst = 1;
 
       // #1 clk = 0;
@@ -70,15 +86,24 @@ module test();
       $display("At end ready = %d", ready);
       $display("At end done  = %d", done);
       $display("Start        = %d", start);
-      
+      $display("ram[12]      = %d", debug_read_data);      
+
       `assert(done, 1'b1)
-      `assert(ready, 1'b1)      
+      `assert(ready, 1'b1)
 
       $display("Passed");
       
    end // initial begin
 
-   RAM ram(.clk(clk), .rst(rst));
+   RAM ram(.clk(clk),
+           .rst(rst),
+
+           .debug_data(debug_read_data),
+           .debug_addr(debug_read_addr),           
+
+           .debug_write_data(debug_write_data),
+           .debug_write_en(debug_write_en),
+           .debug_write_addr(debug_write_addr));
    
 
    read_write_ram dut(.clk(clk),
