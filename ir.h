@@ -516,7 +516,6 @@ namespace CAC {
       out << resources.size() << " submodules..." << endl;
       for (ModuleInstance* mod : resources) {
         out << "\t" << mod->getName() << " : " << mod->source->getName() << endl;
-        //mod->print(out);
       }
 
       out << "End of submodules" << endl << endl;
