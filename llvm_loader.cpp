@@ -146,11 +146,21 @@ Port notVal(const Port toNegate, CAC::Module* m) {
 
 class CodeGenState {
 public:
+  CAC::Module* m;
   map<AllocaInst*, ModuleInstance*> registersForAllocas;
   map<Value*, ModuleInstance*> channelsForValues;  
   map<Argument*, vector<Port> > portsForArgs;
 
   ModuleInstance* getChannel(Value* v) {
+    if (ConstantInt::classof(v)) {
+      int width = getTypeBitWidth(v->getType());
+      ConstantInt* vc = dyn_cast<ConstantInt>(v);
+      int iVal = vc->getValue().getLimitedValue();
+      
+      //return m->c(width, iVal);
+      CAC::Module* cm = getConstMod(*(m->getContext()), width, iVal);
+      return m->freshInstance(cm, "v_const");
+    }
     assert(contains_key(v, channelsForValues));
     return map_find(v, channelsForValues);
   }
@@ -185,6 +195,7 @@ void loadLLVMFromFile(Context& c,
 
   read->addInPort(32, "raddr_0");
   read->addOutPort(32, "rdata_0");  
+  read->addOutPort(1, "rdata_en_0");  
 
   CC* setRaddr = read->addStartInstruction(read->ipt("raddr_0"),
                                            read->ipt("ram32_128_raddr_0"));
@@ -275,6 +286,7 @@ void loadLLVMFromFile(Context& c,
   progEnd->then(m->c(1, 1), setReady1ThenWait, 0);
 
   CodeGenState state;
+  state.m = m;
   
   for (Argument& arg : f->args()) {
     Type* tp = arg.getType();
@@ -316,7 +328,7 @@ void loadLLVMFromFile(Context& c,
         state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
       } else if (LoadInst::classof(instr)) {
         int width = getTypeBitWidth(instr->getType());
-        auto chan = m->freshInstance(getRegMod(c, width), "channel");        
+        auto chan = m->freshInstance(getRegMod(c, width), "channel");     
         state.channelsForValues[dyn_cast<Value>(instr)] = chan;
       }
     }
@@ -346,11 +358,16 @@ void loadLLVMFromFile(Context& c,
           if (funcName == "read") {
             // TODO: Generalize for arbitrary argument
             cc->bind("ram32_128_raddr_0", m->ipt("ram_raddr_0"));
+            cc->bind("ram32_128_rdata_0", m->ipt("ram_rdata_0"));
 
             Value* addr = instr->getOperand(1);
             auto addrChannel = state.getChannel(addr);
             Value* targetVal = instr->getOperand(2);
             auto targetReg = state.getReg(targetVal);
+
+            cc->bind("raddr_0", addrChannel->pt("out"));
+            cc->bind("rdata_0", targetReg->pt("in"));
+            cc->bind("rdata_en_0", targetReg->pt("en"));                        
           }
 
           blkInstrs.push_back(cc);
