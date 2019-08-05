@@ -150,6 +150,7 @@ public:
   map<AllocaInst*, ModuleInstance*> registersForAllocas;
   map<Value*, ModuleInstance*> channelsForValues;  
   map<Argument*, vector<Port> > portsForArgs;
+  map<BasicBlock*, CC*> blockStarts;
 
   ModuleInstance* getChannel(Value* v) {
     if (ConstantInt::classof(v)) {
@@ -340,6 +341,7 @@ void loadLLVMFromFile(Context& c,
   }
 
   for (auto& bb : *f) {
+    state.blockStarts[&bb] = m->addEmpty();
     for (auto& instrR : bb) {
       auto instr = &instrR;
       if (AllocaInst::classof(instr)) {
@@ -455,6 +457,17 @@ void loadLLVMFromFile(Context& c,
         opApplyInv->bind("in1", c1->pt("out"));
         opApplyInv->bind("out", outC->pt("in"));        
         blkInstrs.push_back(opApplyInv);
+      } else if (BranchInst::classof(instr)) {
+        BranchInst* br = dyn_cast<BranchInst>(instr);
+        if (br->isConditional()) {
+          //
+        } else {
+          BasicBlock* s = br->getSuccessor(0);
+
+          auto brI = m->addEmpty();
+          brI->continueTo(m->c(1, 1), map_find(s, state.blockStarts), 1);
+          blkInstrs.push_back(brI);
+        }
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);

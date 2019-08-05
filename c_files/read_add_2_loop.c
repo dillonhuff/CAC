@@ -1,6 +1,6 @@
 #include "ram.h"
 
-void read_add_2_ram(ram_32_128* ram) {
+void read_add_2_loop(ram_32_128* ram) {
   int i;
   for (i = 0; i < 20; i++) {
     int data = read(ram, i);
