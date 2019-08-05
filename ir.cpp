@@ -734,6 +734,7 @@ namespace CAC {
             valsAndSources.push_back({dest, nextVal});
             replacePort(chan->pt("out"), nextVal, dest);
           } else {
+            cout << "Delay for " << *val << " == " << c.delay << endl;
             assert(c.delay == 0);
             valsAndSources.push_back({dest, src});
             replacePort(chan->pt("out"), src, dest);

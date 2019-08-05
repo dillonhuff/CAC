@@ -220,8 +220,11 @@ void loadLLVMFromFile(Context& c,
                               write->ipt("waddr_0"));
   CC* setWdata = write->addCC(write->ipt("ram32_128_wdata_0"),
                               write->ipt("wdata_0"));
+  CC* end = write->addEmpty();
+  
   setWen->then(write->c(1, 1), setWaddr, 0);
-  setWen->then(write->c(1, 1), setWdata, 0);  
+  setWaddr->then(write->c(1, 1), setWdata, 0);
+  setWdata->then(write->c(1, 1), end, 3);
 
   ram32_128->addAction(read);
   ram32_128->addAction(write);

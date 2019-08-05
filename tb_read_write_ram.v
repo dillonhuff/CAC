@@ -82,6 +82,18 @@ module test();
       #1 clk = 0;
       #1 clk = 1;
       #1 clk = 0;
+
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
+
+      #1 clk = 0;
+      #1 clk = 1;
+      #1 clk = 0;
       
       $display("At end ready = %d", ready);
       $display("At end done  = %d", done);

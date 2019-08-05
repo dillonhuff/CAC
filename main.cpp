@@ -369,12 +369,12 @@ int main() {
     cout << *m << endl;
 
     inlineInvokes(m);
-    synthesizeChannels(m);
     synthesizeDelays(m);
+    synthesizeChannels(m);
     reduceStructures(m);
 
-    cout << "After synthesis" << endl;
-    cout << *m << endl;
+    // cout << "After synthesis" << endl;
+    // cout << *m << endl;
     
     emitVerilog(c, m);
     assert(runIVerilogTB(m->getName()));
