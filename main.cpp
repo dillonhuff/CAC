@@ -373,9 +373,27 @@ int main() {
     synthesizeChannels(m);
     reduceStructures(m);
 
-    // cout << "After synthesis" << endl;
-    // cout << *m << endl;
-    
+    emitVerilog(c, m);
+    assert(runIVerilogTB(m->getName()));
+  }
+
+  {
+    runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+
+    Context c;
+    loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+
+    Module* m = c.getModule("read_write_ram");
+    assert(m != nullptr);
+
+    cout << "Final module" << endl;
+    cout << *m << endl;
+
+    inlineInvokes(m);
+    synthesizeDelays(m);
+    synthesizeChannels(m);
+    reduceStructures(m);
+
     emitVerilog(c, m);
     assert(runIVerilogTB(m->getName()));
   }
