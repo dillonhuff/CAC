@@ -751,9 +751,9 @@ namespace CAC {
   
   void synthesizeChannels(Module* m) {
     for (auto r : m->getResources()) {
-      cout << "Resource has type " << r->source->getName() << endl;
+      //cout << "Resource has type " << r->source->getName() << endl;
       if (isChannel(r->source)) {
-        cout << "Need to synthesize channel..." << endl;
+        //cout << "Need to synthesize channel..." << endl;
         ModuleInstance* chan = r;
         auto source = channelSource(chan, m);
         synthesizeChannel(source, chan, m);

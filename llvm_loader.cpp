@@ -9,6 +9,63 @@
 using namespace llvm;
 using namespace CAC;
 
+Type* getPointedToType(llvm::Type* tp) {
+  assert(PointerType::classof(tp));
+  return dyn_cast<PointerType>(tp)->getElementType();
+}
+
+std::string typeString(Type* const tptr) {
+  std::string str;
+  llvm::raw_string_ostream ss(str);
+  ss << *tptr;
+
+  return ss.str();
+}
+
+int getTypeBitWidth(Type* const tp) {
+  int width;
+
+  if (IntegerType::classof(tp)) {
+    IntegerType* iTp = dyn_cast<IntegerType>(tp);
+    width = iTp->getBitWidth();
+  } else if (PointerType::classof(tp)) {
+    PointerType* pTp = dyn_cast<PointerType>(tp);
+
+    if (!IntegerType::classof(pTp->getElementType())) {
+      cout << "Element type = " << typeString(pTp->getElementType()) << endl;
+    }
+    assert(IntegerType::classof(pTp->getElementType()));
+
+    IntegerType* iTp = dyn_cast<IntegerType>(pTp->getElementType());
+    width = iTp->getBitWidth();
+
+  } else if (tp->isFloatTy()) {
+    // TODO: Make floating point width parametric
+    return 32;
+  } else if (tp->isStructTy()) {
+    width = 0;
+    StructType* stp = dyn_cast<StructType>(tp);
+    for (auto* fieldType : stp->elements()) {
+      width += getTypeBitWidth(fieldType);
+    }
+  } else {
+    std::cout << "Type = " << typeString(tp) << std::endl;
+    assert(ArrayType::classof(tp));
+    Type* iTp = dyn_cast<ArrayType>(tp)->getElementType();
+    assert(IntegerType::classof(iTp));
+    width = dyn_cast<IntegerType>(iTp)->getBitWidth();
+          
+    //cout << "Array width = " << dyn_cast<ArrayType>(tp)->getElementType() << endl;
+    //assert(false);
+  }
+
+  return width;
+
+  // assert(IntegerType::classof(tp));
+
+  // return dyn_cast<IntegerType>(tp)->getBitWidth();
+}
+
 string calledFuncName(llvm::Instruction* const iptr) {
   assert(CallInst::classof(iptr));
 
@@ -34,14 +91,6 @@ bool matchesCall(std::string str, llvm::Instruction* const iptr) {
   }
   return false;
 
-}
-
-std::string typeString(Type* const tptr) {
-  std::string str;
-  llvm::raw_string_ostream ss(str);
-  ss << *tptr;
-
-  return ss.str();
 }
 
 std::string valueString(const Value* const iptr) {
@@ -97,8 +146,8 @@ Port notVal(const Port toNegate, CAC::Module* m) {
 
 class CodeGenState {
 public:
-  map<AllocaInst*, ModuleInstance*> channelsForRegisters;
-  map<Argument*, set<CC*> > portsForArgs;
+  map<AllocaInst*, ModuleInstance*> registersForAllocas;
+  map<Argument*, vector<Port> > portsForArgs;
 };
 
 // TODO: Add unit test of ready valid controller?
@@ -133,6 +182,7 @@ void loadLLVMFromFile(Context& c,
   setRaddr->continueTo(read->c(1, 1), readRdata, 1);
   
   CAC::Module* write = c.addModule("ram32_128_write");
+  // Add set ports, add end and delay
 
   ram32_128->addAction(read);
   ram32_128->addAction(write);
@@ -212,6 +262,8 @@ void loadLLVMFromFile(Context& c,
 
   progStart->then(m->c(1, 1), progEnd, 2);  
   progEnd->then(m->c(1, 1), setReady1ThenWait, 0);
+
+  CodeGenState state;
   
   for (Argument& arg : f->args()) {
     Type* tp = arg.getType();
@@ -227,23 +279,35 @@ void loadLLVMFromFile(Context& c,
       assert(contains_key(str, builtinModDefs));
 
       CAC::Module* def = map_find(str, builtinModDefs);
+      vector<Port> portsForArg;
       for (Port pt : def->getInterfacePorts()) {
+        string ptName = string(arg.getName()) + "_" + pt.getName();
         if (pt.isInput) {
-          m->addOutPort(pt.getWidth(), string(arg.getName()) + "_" + pt.getName());
+          m->addOutPort(pt.getWidth(), ptName);
         } else {
-          m->addInPort(pt.getWidth(), string(arg.getName()) + "_" + pt.getName());
+          m->addInPort(pt.getWidth(), ptName);
         }
-        //m->addInstance(getWireMod(c, pt.getWidth()), pt.getName());
+        portsForArg.push_back(m->ipt(ptName));
       }
+      state.portsForArgs[&arg] = portsForArg;
       
     } else {
       assert(false);
     }
   }
 
-  CC* entryInstr = nullptr;
+  for (auto& bb : *f) {
+    for (auto& instrR : bb) {
+      auto instr = &instrR;
+      if (AllocaInst::classof(instr)) {
+        int width = getTypeBitWidth(getPointedToType(instr->getType()));
+        auto chan = m->freshInstance(getRegMod(c, width), "alloca");
+        state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
+      }
+    }
+  }
 
-  auto reg32Mod = getRegMod(c, 32);
+  CC* entryInstr = nullptr;
 
   for (auto& bb : *f) {
     vector<CC*> blkInstrs;
@@ -269,6 +333,7 @@ void loadLLVMFromFile(Context& c,
         }
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
+        cc->then(m->c(1, 1), progEnd, 0);
         blkInstrs.push_back(cc);
       } else if (LoadInst::classof(instr)) {
         cout << "Need to get module for load" << endl;

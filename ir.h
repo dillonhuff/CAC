@@ -437,6 +437,10 @@ namespace CAC {
       return cc;
     }
 
+    CC* addCC(const Port a, const Port b) {
+      return addInstruction(a, b);
+    }
+
     CC* addInstruction(const Port a, const Port b) {
       CC* cc = new CC();
       cc->tp = CONNECT_AND_CONTINUE_TYPE_CONNECT;
