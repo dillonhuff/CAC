@@ -147,6 +147,7 @@ Port notVal(const Port toNegate, CAC::Module* m) {
 class CodeGenState {
 public:
   map<AllocaInst*, ModuleInstance*> registersForAllocas;
+  map<Value*, ModuleInstance*> channelsForValues;  
   map<Argument*, vector<Port> > portsForArgs;
 };
 
@@ -303,6 +304,10 @@ void loadLLVMFromFile(Context& c,
         int width = getTypeBitWidth(getPointedToType(instr->getType()));
         auto chan = m->freshInstance(getRegMod(c, width), "alloca");
         state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
+      } else if (LoadInst::classof(instr)) {
+        int width = getTypeBitWidth(instr->getType());
+        auto chan = m->freshInstance(getRegMod(c, width), "channel");        
+        state.channelsForValues[dyn_cast<Value>(instr)] = chan;
       }
     }
   }
@@ -337,9 +342,18 @@ void loadLLVMFromFile(Context& c,
         blkInstrs.push_back(cc);
       } else if (LoadInst::classof(instr)) {
         cout << "Need to get module for load" << endl;
-        auto cc = m->addEmpty();
-          //m->addInvokeInstruction(reg32Mod->action("reg_32_ld"));
-        blkInstrs.push_back(cc);
+        auto arg = instr->getOperand(0);
+        assert(AllocaInst::classof(arg));
+        ModuleInstance* reg = map_find(dyn_cast<AllocaInst>(arg), state.registersForAllocas);
+        ModuleInstance* chan = map_find(dyn_cast<Value>(instr),
+                                        state.channelsForValues);
+        CC* readReg = m->addCC(chan->pt("in"), reg->pt("data"));
+        
+        //auto cc = m->addInvokeInstruction(reg32Mod->action("ld"));
+        //bindByType(cc, reg);
+
+        blkInstrs.push_back(readReg);
+
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);
