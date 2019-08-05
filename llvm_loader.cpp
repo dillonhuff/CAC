@@ -241,79 +241,63 @@ void loadLLVMFromFile(Context& c,
     }
   }
 
-  // For each basic block we need to create a map from blocks to
-  // instruction sets and need to create a map from instructions to
-  // invocations?
+  CC* entryInstr = nullptr;
 
-  // CAC::Module* reg32Mod = c.addModule("reg_32");
-  // reg32Mod->setPrimitive(true);
-  // reg32Mod->addInPort(1, "en");
-  // reg32Mod->addInPort(32, "in");
-  // reg32Mod->addOutPort(32, "data");
+  auto reg32Mod = getRegMod(c, 32);
 
-  // CAC::Module* reg32ModLd = c.addModule("reg_32_ld");
-  // CAC::Module* reg32ModSt = c.addModule("reg_32_st");
+  for (auto& bb : *f) {
+    vector<CC*> blkInstrs;
+    for (auto& instrR : bb) {
+      Instruction* instr = &instrR;
+      if (AllocaInst::classof(instr)) {
+      } else if (BitCastInst::classof(instr)) {
+        cout << "Ignoring bitcast" << endl;
+      } else if (CallInst::classof(instr)) {
+        if (matchesCall("llvm.", instr)) {
+          cout << "Ignoring llvm builtin " << valueString(instr) << endl;
+        } else {
+          string funcName = calledFuncName(instr);          
+          cout << "Creating code for call to " << funcName << "..." << endl;
 
-  // reg32Mod->addAction(reg32ModLd);
-  // reg32Mod->addAction(reg32ModSt);
+          CAC::Module* inv = map_find(funcName, builtinModDefs);
+          assert(inv->isCallingConvention());
 
-  // map<ReturnInst*, CC*> rets;
-  // CC* entryInstr = nullptr;
-  
-  // for (auto& bb : *f) {
-  //   vector<CC*> blkInstrs;
-  //   for (auto& instrR : bb) {
-  //     Instruction* instr = &instrR;
-  //     if (AllocaInst::classof(instr)) {
-  //     } else if (BitCastInst::classof(instr)) {
-  //       cout << "Ignoring bitcast" << endl;
-  //     } else if (CallInst::classof(instr)) {
-  //       if (matchesCall("llvm.", instr)) {
-  //         cout << "Ignoring llvm builtin " << valueString(instr) << endl;
-  //       } else {
-  //         string funcName = calledFuncName(instr);          
-  //         cout << "Creating code for call to " << funcName << "..." << endl;
-  //         CAC::Module* inv = map_find(funcName, builtinModDefs);
-  //         assert(inv->isCallingConvention());
-
-  //         auto cc = m->addInvokeInstruction(inv);
-  //         blkInstrs.push_back(cc);
+          auto cc = m->addEmpty();
+            //m->addInvokeInstruction(inv);
+          blkInstrs.push_back(cc);
           
-  //       }
-  //     } else if (ReturnInst::classof(instr)) {
-  //       auto cc = m->addEmptyInstruction();
-  //       blkInstrs.push_back(cc);
-  //       rets[dyn_cast<ReturnInst>(instr)] = cc;
-  //     } else if (LoadInst::classof(instr)) {
-  //       cout << "Need to get module for load" << endl;
-  //       auto cc = m->addInvokeInstruction(reg32ModLd);
-  //       blkInstrs.push_back(cc);
-  //     } else {
-  //       cout << "Error: Unsupported instruction " << valueString(instr) << endl;
-  //       assert(false);
-  //     }
+        }
+      } else if (ReturnInst::classof(instr)) {
+        auto cc = m->addEmptyInstruction();
+        blkInstrs.push_back(cc);
+      } else if (LoadInst::classof(instr)) {
+        cout << "Need to get module for load" << endl;
+        auto cc = m->addEmpty();
+          //m->addInvokeInstruction(reg32Mod->action("reg_32_ld"));
+        blkInstrs.push_back(cc);
+      } else {
+        cout << "Error: Unsupported instruction " << valueString(instr) << endl;
+        assert(false);
+      }
 
-  //   }
+    }
 
-  //   for (int i = 0; i < (int) blkInstrs.size() - 1; i++) {
-  //     auto instr = blkInstrs[i];
-  //     auto nextInstr = blkInstrs[i + 1];
-  //     instr->continueTo(m->constOut(1, 1), nextInstr, 1);
-  //   }
+    for (int i = 0; i < (int) blkInstrs.size() - 1; i++) {
+      auto instr = blkInstrs[i];
+      auto nextInstr = blkInstrs[i + 1];
+      instr->continueTo(m->constOut(1, 1), nextInstr, 1);
+    }
 
-  //   if (&(f->getEntryBlock()) == &bb) {
-  //     cout << "Setting entry instruction" << endl;
+    if (&(f->getEntryBlock()) == &bb) {
+      cout << "Setting entry instruction" << endl;
       
-  //     assert(blkInstrs.size() > 0);
+      assert(blkInstrs.size() > 0);
       
-  //     entryInstr = blkInstrs[0];
+      entryInstr = blkInstrs[0];
 
-  //     cout << "Done setting instruction" << endl;
-  //   }
-
-
-
-  // }
+      cout << "Done setting instruction" << endl;
+    }
+  }
 
   // cout << "Building rv controller" << endl;
 
