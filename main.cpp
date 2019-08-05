@@ -378,12 +378,12 @@ int main() {
   }
 
   {
-    runCmd("clang -S -emit-llvm ./c_files/read_write_ram.c -c -O3");
+    runCmd("clang -S -emit-llvm ./c_files/read_add_2_ram.c -c -O3");
 
     Context c;
-    loadLLVMFromFile(c, "read_write_ram", "./read_write_ram.ll");
+    loadLLVMFromFile(c, "read_add_2_ram", "./read_add_2_ram.ll");
 
-    Module* m = c.getModule("read_write_ram");
+    Module* m = c.getModule("read_add_2_ram");
     assert(m != nullptr);
 
     cout << "Final module" << endl;

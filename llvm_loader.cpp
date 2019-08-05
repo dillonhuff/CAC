@@ -429,6 +429,17 @@ void loadLLVMFromFile(Context& c,
         
         blkInstrs.push_back(readReg);
 
+      } else if (BinaryOperator::classof(instr)) {
+        auto v0 = instr->getOperand(0);
+        auto c0 = state.getChannel(v0);
+        
+        auto v1 = instr->getOperand(1);
+        auto c1 = state.getChannel(v1);
+
+        auto out = instr;
+        auto outC = state.getChannel(out);
+
+        assert(false);
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);
