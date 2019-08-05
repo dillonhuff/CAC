@@ -90,6 +90,7 @@ module test();
 
       `assert(done, 1'b1)
       `assert(ready, 1'b1)
+      `assert(debug_read_data, 15)      
 
       $display("Passed");
       
