@@ -521,6 +521,12 @@ namespace CAC {
 
       out << "End of submodules" << endl << endl;
 
+      out << "// -- Structural connections" << endl;
+      for (auto sc : structuralConnections) {
+        out << "\tassign " << sc.first << " = " << sc.second << endl;
+      }
+      out << "// -- End structural connections" << endl << endl;
+
       out << "Body:" << endl;
       for (auto instr : body) {
         out << *instr << endl;

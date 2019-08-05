@@ -161,6 +161,8 @@ public:
       CAC::Module* cm = getConstMod(*(m->getContext()), width, iVal);
       return m->freshInstance(cm, "v_const");
     }
+
+    cout << "Getting channel for " << valueString(v) << endl;
     assert(contains_key(v, channelsForValues));
     return map_find(v, channelsForValues);
   }
@@ -195,7 +197,6 @@ void loadLLVMFromFile(Context& c,
 
   read->addInPort(32, "raddr_0");
   read->addOutPort(32, "rdata_0");  
-  read->addOutPort(1, "rdata_en_0");  
 
   CC* setRaddr = read->addStartInstruction(read->ipt("raddr_0"),
                                            read->ipt("ram32_128_raddr_0"));
@@ -204,7 +205,23 @@ void loadLLVMFromFile(Context& c,
   setRaddr->continueTo(read->c(1, 1), readRdata, 1);
   
   CAC::Module* write = c.addModule("ram32_128_write");
-  // Add set ports, add end and delay
+  write->addOutPort(1, "ram32_128_wen_0");
+  write->addInPort(32, "ram32_128_wdata_0");  
+  write->addInPort(32, "ram32_128_waddr_0");
+  
+  write->addInPort(1, "wen_0");
+  write->addOutPort(32, "waddr_0");  
+  write->addOutPort(32, "wdata_0");
+
+  CC* setWen = write->addCC(write->ipt("ram32_128_wen_0"),
+                            write->ipt("wen_0"));
+  setWen->setIsStartAction(true);
+  CC* setWaddr = write->addCC(write->ipt("ram32_128_waddr_0"),
+                              write->ipt("waddr_0"));
+  CC* setWdata = write->addCC(write->ipt("ram32_128_wdata_0"),
+                              write->ipt("wdata_0"));
+  setWen->then(write->c(1, 1), setWaddr, 0);
+  setWen->then(write->c(1, 1), setWdata, 0);  
 
   ram32_128->addAction(read);
   ram32_128->addAction(write);
@@ -231,7 +248,7 @@ void loadLLVMFromFile(Context& c,
   CAC::Module* m = c.addModule(topFunction);
   addRAM32Primitive(c);
 
-  CAC::Module* mCall = c.addModule(topFunction + "_call");
+  // CAC::Module* mCall = c.addModule(topFunction + "_call");
 
   map<Argument*, CAC::Module*> argTypes;
 
@@ -326,10 +343,13 @@ void loadLLVMFromFile(Context& c,
         int width = getTypeBitWidth(getPointedToType(instr->getType()));
         auto chan = m->freshInstance(getRegMod(c, width), "alloca");
         state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
-      } else if (LoadInst::classof(instr)) {
-        int width = getTypeBitWidth(instr->getType());
-        auto chan = m->freshInstance(getRegMod(c, width), "channel");     
-        state.channelsForValues[dyn_cast<Value>(instr)] = chan;
+      } else if (LoadInst::classof(instr) ||
+                 CallInst::classof(instr)) {
+        if (!instr->getType()->isVoidTy()) {
+          int width = getTypeBitWidth(instr->getType());
+          auto chan = m->freshInstance(getChannelMod(c, width), "channel");
+          state.channelsForValues[dyn_cast<Value>(instr)] = chan;
+        }
       }
     }
   }
@@ -362,12 +382,31 @@ void loadLLVMFromFile(Context& c,
 
             Value* addr = instr->getOperand(1);
             auto addrChannel = state.getChannel(addr);
-            Value* targetVal = instr->getOperand(2);
-            auto targetReg = state.getReg(targetVal);
+            auto targetChannel = state.getChannel(instr);
 
             cc->bind("raddr_0", addrChannel->pt("out"));
-            cc->bind("rdata_0", targetReg->pt("in"));
-            cc->bind("rdata_en_0", targetReg->pt("en"));                        
+            cc->bind("rdata_0", targetChannel->pt("in"));
+
+          } else if (funcName == "write") {
+
+            cout << "Creating code for write" << endl;
+            
+            // TODO: Generalize for arbitrary argument
+            cc->bind("ram32_128_waddr_0", m->ipt("ram_waddr_0"));
+            cc->bind("ram32_128_wdata_0", m->ipt("ram_wdata_0"));
+            cc->bind("ram32_128_wen_0", m->ipt("ram_wen_0"));
+
+            Value* addr = instr->getOperand(1);
+            auto addrChannel = state.getChannel(addr);
+
+            Value* targetVal = instr->getOperand(2);
+            auto dataChannel = state.getChannel(targetVal);
+
+            cc->bind("waddr_0", addrChannel->pt("out"));
+            cc->bind("wdata_0", dataChannel->pt("out"));
+            cc->bind("wen_0", m->c(1, 1));
+
+            cout << "Done code for write" << endl;
           }
 
           blkInstrs.push_back(cc);

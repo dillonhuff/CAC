@@ -372,6 +372,9 @@ int main() {
     synthesizeChannels(m);
     synthesizeDelays(m);
     reduceStructures(m);
+
+    cout << "After synthesis" << endl;
+    cout << *m << endl;
     
     emitVerilog(c, m);
     assert(runIVerilogTB(m->getName()));

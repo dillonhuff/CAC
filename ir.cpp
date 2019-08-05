@@ -112,7 +112,7 @@ namespace CAC {
   }
 
   CC* inlineInstrTo(CC* instr, Module* destMod, map<ModuleInstance*, ModuleInstance*>& resourceMap, map<string, Port>& activeBinding) {
-    cout << "Inlining " << *instr << endl;
+    //cout << "Inlining " << *instr << endl;
     
     CC* cpy = nullptr;
     if (instr->isEmpty()) {
@@ -137,7 +137,7 @@ namespace CAC {
   }
   
   void inlineInvoke(CC* invokeInstr, Module* container) {
-    cout << "Inlining invoke " << *invokeInstr << endl;
+    //cout << "Inlining invoke " << *invokeInstr << endl;
     assert(invokeInstr->isInvoke());
     
     CC* invStart = invokeInstr;

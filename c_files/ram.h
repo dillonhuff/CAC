@@ -5,8 +5,8 @@ typedef struct {
 } ram_32_128;
 
 __attribute__((noinline, optnone))
-void read(ram_32_128* ram, int addr, int* data) {
-  *data = ram->data[addr];
+int read(ram_32_128* ram, int addr) {
+  return ram->data[addr];
 }
 
 __attribute__((noinline, optnone))
