@@ -149,6 +149,16 @@ public:
   map<AllocaInst*, ModuleInstance*> registersForAllocas;
   map<Value*, ModuleInstance*> channelsForValues;  
   map<Argument*, vector<Port> > portsForArgs;
+
+  ModuleInstance* getChannel(Value* v) {
+    assert(contains_key(v, channelsForValues));
+    return map_find(v, channelsForValues);
+  }
+  ModuleInstance* getReg(Value* targetReg) {
+    assert(AllocaInst::classof(targetReg));
+    return map_find(dyn_cast<AllocaInst>(targetReg), registersForAllocas);
+  }
+  
 };
 
 // TODO: Add unit test of ready valid controller?
@@ -331,10 +341,19 @@ void loadLLVMFromFile(Context& c,
           CAC::Module* inv = map_find(funcName, builtinModDefs);
           assert(inv->isCallingConvention());
 
-          auto cc = m->addEmpty();
-            //m->addInvokeInstruction(inv);
+          auto cc = m->addInvokeInstruction(inv);
+
+          if (funcName == "read") {
+            // TODO: Generalize for arbitrary argument
+            cc->bind("ram32_128_raddr_0", m->ipt("ram_raddr_0"));
+
+            Value* addr = instr->getOperand(1);
+            auto addrChannel = state.getChannel(addr);
+            Value* targetVal = instr->getOperand(2);
+            auto targetReg = state.getReg(targetVal);
+          }
+
           blkInstrs.push_back(cc);
-          
         }
       } else if (ReturnInst::classof(instr)) {
         auto cc = m->addEmptyInstruction();
@@ -349,9 +368,6 @@ void loadLLVMFromFile(Context& c,
                                         state.channelsForValues);
         CC* readReg = m->addCC(chan->pt("in"), reg->pt("data"));
         
-        //auto cc = m->addInvokeInstruction(reg32Mod->action("ld"));
-        //bindByType(cc, reg);
-
         blkInstrs.push_back(readReg);
 
       } else {
