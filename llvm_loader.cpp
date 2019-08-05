@@ -350,7 +350,9 @@ void loadLLVMFromFile(Context& c,
         state.registersForAllocas[dyn_cast<AllocaInst>(instr)] = chan;
       } else if (LoadInst::classof(instr) ||
                  CallInst::classof(instr) ||
-                 BinaryOperator::classof(instr)) {
+                 BinaryOperator::classof(instr) ||
+                 CmpInst::classof(instr) ||
+                 PHINode::classof(instr)) {
         if (!instr->getType()->isVoidTy()) {
           int width = getTypeBitWidth(instr->getType());
           auto chan = m->freshInstance(getChannelMod(c, width), "channel");
@@ -460,7 +462,18 @@ void loadLLVMFromFile(Context& c,
       } else if (BranchInst::classof(instr)) {
         BranchInst* br = dyn_cast<BranchInst>(instr);
         if (br->isConditional()) {
-          //
+          assert(br->getNumSuccessors());
+          
+          BasicBlock* s0 = br->getSuccessor(0);
+          BasicBlock* s1 = br->getSuccessor(1);
+
+          auto brCond = state.getChannel(br->getOperand(0));
+
+          auto brI = m->addEmpty();
+          brI->continueTo(brCond->pt("out"), map_find(s0, state.blockStarts), 1);
+          brI->continueTo(notVal(brCond->pt("out"), m), map_find(s1, state.blockStarts), 1);
+
+          blkInstrs.push_back(brI);
         } else {
           BasicBlock* s = br->getSuccessor(0);
 
@@ -468,6 +481,11 @@ void loadLLVMFromFile(Context& c,
           brI->continueTo(m->c(1, 1), map_find(s, state.blockStarts), 1);
           blkInstrs.push_back(brI);
         }
+      } else if (PHINode::classof(instr)) {
+        // TODO: Fill in PHI node
+        
+      } else if (CmpInst::classof(instr)) {
+        // TODO: Fill in
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);

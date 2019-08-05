@@ -876,6 +876,10 @@ namespace CAC {
   }
 
   void addBinop(Context& c, const std::string& name, const int cycleLatency) {
+    if (c.hasModule(name)) {
+      return;
+    }
+    
     Module* const_1_1 = getConstMod(c, 1, 1);
 
     Module* add16 = c.addCombModule(name);
