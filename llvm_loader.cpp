@@ -485,7 +485,23 @@ void loadLLVMFromFile(Context& c,
         // TODO: Fill in PHI node
         
       } else if (CmpInst::classof(instr)) {
-        // TODO: Fill in
+        auto in0 = state.getChannel(instr->getOperand(0));
+        auto in1 = state.getChannel(instr->getOperand(1));
+        auto out = state.getChannel(instr);
+
+        // TODO: Support non-equality operator
+        int width = getTypeBitWidth(instr->getOperand(0)->getType());
+        string name = "eq_" + to_string(width);
+        CAC::Module* opMod = c.getModule(name);
+        auto op = m->freshInstance(opMod, "eq");
+        auto opApply = op->action("apply");
+        auto opApplyInv = m->addInvokeInstruction(opApply);
+        bindByType(opApplyInv, op);
+        opApplyInv->bind("in0", in0->pt("out"));
+        opApplyInv->bind("in1", in1->pt("out"));
+        opApplyInv->bind("out", out->pt("in"));
+        blkInstrs.push_back(opApplyInv);
+        
       } else {
         cout << "Error: Unsupported instruction " << valueString(instr) << endl;
         assert(false);
