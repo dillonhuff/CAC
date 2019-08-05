@@ -95,6 +95,12 @@ Port notVal(const Port toNegate, CAC::Module* m) {
 //  1. Create channels for all non-pointer values
 //  2. Create registers for all pointers to non-builtins
 
+class CodeGenState {
+public:
+  map<AllocaInst*, ModuleInstance*> channelsForRegisters;
+  map<Argument*, set<CC*> > portsForArgs;
+};
+
 // TODO: Add unit test of ready valid controller?
 // TODO: Add debug printouts?
 void loadLLVMFromFile(Context& c,
@@ -169,10 +175,6 @@ void loadLLVMFromFile(Context& c,
   auto doneReg = m->freshReg(1, "done");
   m->addSC(m->ipt("done"), doneReg->pt("data"));
 
-  // Entry instruction
-  // auto trueEntry = m->addEmptyInstruction();  
-  // trueEntry->setIsStartAction(true);
-  
   auto entry = m->addEmptyInstruction();
   entry->setIsStartAction(true);
 
@@ -180,7 +182,6 @@ void loadLLVMFromFile(Context& c,
   
   // Register set actions
   auto setReady1 = setReg(readyReg, 1, m);
-  auto setReady1_2 = setReg(readyReg, 1, m);
   
   auto setDone1 = setReg(doneReg, 1, m);
   auto setDone0 = setReg(doneReg, 0, m);
@@ -206,7 +207,6 @@ void loadLLVMFromFile(Context& c,
   // Ready one is not happening...
   auto setReady1ThenWait = m->addEmptyInstruction();
   setReady1ThenWait->then(m->c(1, 1), setDone1, 0);
-  //setReady1ThenWait->then(m->c(1, 1), setReady1_2, 0);
   setReady1ThenWait->then(m->c(1, 1), setReady1, 0);  
   setReady1ThenWait->then(m->c(1, 1), waitForStart, 0);
 
