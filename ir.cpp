@@ -932,5 +932,35 @@ namespace CAC {
     add16->addAction(add16Inv);
   }
 
-  
+  void deleteNoEffectInstructions(Module* m) {
+    set<CC*> noEffect;
+    for (auto instr : m->getBody()) {
+      if (instr->isEmpty() && instr->continuations.size() == 0) {
+        noEffect.insert(instr);
+      }
+    }
+
+    // 28.5k before, 25.7 after
+    for (auto instr : noEffect) {
+      m->deleteInstr(instr);
+    }
+
+    // Now: Delete instructions with one dest?
+    cout << "# of instructions after deleting unused instructions = " << m->getBody().size() << endl;
+    int uselessJumps = 0;
+    for (auto instr : m->getBody()) {
+      if (instr->isEmpty() && instr->continuations.size() == 1) {
+        Activation next = instr->continuations[0];
+        if (next.delay == 0) {
+          Port cond = next.condition;
+          if ((cond.inst != nullptr) && (cond.inst->source->getName() == "const_1_1")) {
+            uselessJumps++;
+          }
+        }
+      }
+    }
+    cout << "# of comb jump instructions = " << uselessJumps << endl;
+
+  }
+
 }

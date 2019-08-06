@@ -258,6 +258,12 @@ namespace CAC {
       assert(contains_key(portName, defaultValues));
       return map_find(portName, defaultValues);
     }
+
+    void deleteInstr(CC* instr) {
+      assert(elem(instr, body));
+      body.erase(instr);
+      delete instr;
+    }
     
     void setDefaultValue(const std::string& ptName, const int value) {
       defaultValues[ptName] = value;
@@ -588,6 +594,7 @@ namespace CAC {
   void synthesizeChannels(Module* pipeAdds);
   void reduceStructures(Module* m);
   void synthesizeDelays(Module* m);
+  void deleteNoEffectInstructions(Module* m);
   
   void bindByType(CC* invocation, ModuleInstance* toBind);
 

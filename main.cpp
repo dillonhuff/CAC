@@ -354,6 +354,7 @@ int main() {
     synthesizeDelays(m);
     synthesizeChannels(m);
     reduceStructures(m);
+    deleteNoEffectInstructions(m);
 
     emitVerilog(c, m);
     assert(runIVerilogTB(m->getName()));
