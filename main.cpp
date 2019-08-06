@@ -359,25 +359,25 @@ int main() {
     assert(runIVerilogTB(m->getName()));
   }
 
-  {
-    runCmd("clang -S -emit-llvm ./c_files/read_add_2_loop.c -c -O3");
+  // {
+  //   runCmd("clang -S -emit-llvm ./c_files/read_add_2_loop.c -c -O3");
 
-    Context c;
-    loadLLVMFromFile(c, "read_add_2_loop", "./read_add_2_loop.ll");
+  //   Context c;
+  //   loadLLVMFromFile(c, "read_add_2_loop", "./read_add_2_loop.ll");
 
-    Module* m = c.getModule("read_add_2_loop");
-    assert(m != nullptr);
+  //   Module* m = c.getModule("read_add_2_loop");
+  //   assert(m != nullptr);
 
-    cout << "Final module" << endl;
-    cout << *m << endl;
+  //   cout << "Final module" << endl;
+  //   cout << *m << endl;
 
-    inlineInvokes(m);
-    synthesizeDelays(m);
-    synthesizeChannels(m);
-    reduceStructures(m);
+  //   inlineInvokes(m);
+  //   synthesizeDelays(m);
+  //   synthesizeChannels(m);
+  //   reduceStructures(m);
 
-    emitVerilog(c, m);
-    assert(runIVerilogTB(m->getName()));
-  }
+  //   emitVerilog(c, m);
+  //   assert(runIVerilogTB(m->getName()));
+  // }
   
 }

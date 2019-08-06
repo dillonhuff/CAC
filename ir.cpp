@@ -459,6 +459,7 @@ namespace CAC {
     }
     
     for (auto instr : m->getBody()) {
+      
       string predString = predHappenedString(instr, m);
       string body = bodyString(instr, m);
 
@@ -511,9 +512,11 @@ namespace CAC {
     }
 
     for (auto instr : m->getBody()) {
-      out << "\talways @(posedge clk) begin " << endl;
-      out << "\t\t" << happenedLastCycleVar(instr, m) << " <= " << happenedVar(instr, m) << ";" << endl;
-      out << "\tend" << endl << endl;
+      if (instr->continuations.size() > 0) {
+        out << "\talways @(posedge clk) begin " << endl;
+        out << "\t\t" << happenedLastCycleVar(instr, m) << " <= " << happenedVar(instr, m) << ";" << endl;
+        out << "\tend" << endl << endl;
+      }
     }
 
     out << "endmodule";
