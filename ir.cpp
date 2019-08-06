@@ -966,7 +966,8 @@ namespace CAC {
     for (auto cj : combJumps) {
       // Find all predecessors
       CC* next = cj->continuations[0].destination;
-      //for (auto pred : predecessors(cj, m)) {
+
+      // TODO: Actually find predecessors instead of using exhaustive search
       for (auto pred : m->getBody()) {
         pred->replaceJumpsToWith(cj, next);
       }
@@ -977,4 +978,27 @@ namespace CAC {
     }
   }
 
+  bool Module::isDead(ModuleInstance* inst) {
+    // TODO: Insert real isDead test code
+    return false;
+  }
+  
+  void deleteDeadResources(Module* m) {
+    // For each resource:
+    //   1. Check if any of its output ports is used by anyone (any sc, any instr
+    //      or any activation
+    //   2. If not continue
+    bool foundDead = true;
+    while (foundDead) {
+      foundDead = false;
+
+      for (auto r : m->getResources()) {
+        if (m->isDead(r)) {
+          foundDead = true;
+          m->erase(r);
+        }
+      }
+    }
+  }
+  
 }

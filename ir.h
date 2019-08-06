@@ -272,6 +272,9 @@ namespace CAC {
       body.erase(instr);
       delete instr;
     }
+
+    bool isDead(ModuleInstance* inst);
+
     
     void setDefaultValue(const std::string& ptName, const int value) {
       defaultValues[ptName] = value;
@@ -603,7 +606,8 @@ namespace CAC {
   void reduceStructures(Module* m);
   void synthesizeDelays(Module* m);
   void deleteNoEffectInstructions(Module* m);
-  
+  void deleteDeadResources(Module* m);  
+
   void bindByType(CC* invocation, ModuleInstance* toBind);
 
   void addBinop(Context& c, const std::string& name, const int cycleLatency);
