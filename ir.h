@@ -138,6 +138,14 @@ namespace CAC {
       return invokeBinding;
     }
 
+    void replaceJumpsToWith(CC* origDest, CC* replacement) {
+      for (Activation& c : continuations) {
+        if (c.destination == origDest) {
+          c.destination = replacement;
+        }
+      }
+    }
+
     void bind(const std::string& invokePortName,
               Port pt);
     

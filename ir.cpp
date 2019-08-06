@@ -948,6 +948,7 @@ namespace CAC {
     // Now: Delete instructions with one dest?
     cout << "# of instructions after deleting unused instructions = " << m->getBody().size() << endl;
     int uselessJumps = 0;
+    set<CC*> combJumps;
     for (auto instr : m->getBody()) {
       if (instr->isEmpty() && instr->continuations.size() == 1) {
         Activation next = instr->continuations[0];
@@ -955,12 +956,25 @@ namespace CAC {
           Port cond = next.condition;
           if ((cond.inst != nullptr) && (cond.inst->source->getName() == "const_1_1")) {
             uselessJumps++;
+            combJumps.insert(instr);
           }
         }
       }
     }
     cout << "# of comb jump instructions = " << uselessJumps << endl;
 
+    for (auto cj : combJumps) {
+      // Find all predecessors
+      CC* next = cj->continuations[0].destination;
+      //for (auto pred : predecessors(cj, m)) {
+      for (auto pred : m->getBody()) {
+        pred->replaceJumpsToWith(cj, next);
+      }
+    }
+
+    for (auto v : combJumps) {
+      m->deleteInstr(v);
+    }
   }
 
 }
