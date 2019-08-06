@@ -513,9 +513,20 @@ namespace CAC {
 
     for (auto instr : m->getBody()) {
       if (instr->continuations.size() > 0) {
-        out << "\talways @(posedge clk) begin " << endl;
-        out << "\t\t" << happenedLastCycleVar(instr, m) << " <= " << happenedVar(instr, m) << ";" << endl;
-        out << "\tend" << endl << endl;
+
+        bool anyDelayOne = false;
+        for (auto act : instr->continuations) {
+          if (act.delay > 0) {
+            anyDelayOne = true;
+            break;
+          }
+        }
+
+        if (anyDelayOne) {
+          out << "\talways @(posedge clk) begin " << endl;
+          out << "\t\t" << happenedLastCycleVar(instr, m) << " <= " << happenedVar(instr, m) << ";" << endl;
+          out << "\tend" << endl << endl;
+        }
       }
     }
 
