@@ -782,6 +782,7 @@ namespace CAC {
   }
   
   void synthesizeChannels(Module* m) {
+    cout << "Number of instructions when synthesizing channels = " << m->getBody().size() << endl;
     for (auto r : m->getResources()) {
       //cout << "Resource has type " << r->source->getName() << endl;
       if (isChannel(r->source)) {
