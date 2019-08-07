@@ -375,6 +375,8 @@ void loadLLVMFromFile(Context& c,
 
   for (auto& bb : *f) {
     vector<CC*> blkInstrs;
+
+    blkInstrs.push_back(state.blockStart(&bb));
     for (auto& instrR : bb) {
       Instruction* instr = &instrR;
       if (AllocaInst::classof(instr)) {

@@ -406,5 +406,8 @@ int main() {
   //   emitVerilog(c, m);
   //   assert(runIVerilogTB(m->getName()));
   // }
+
+  // TODO:
+  //  1. Set reset values of sensitive ports to their defaults
   
 }
