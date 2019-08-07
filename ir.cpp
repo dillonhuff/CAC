@@ -721,7 +721,29 @@ namespace CAC {
   
   void synthesizeChannel(CC* source, ModuleInstance* chan, Module* container) {
     assert(source->isConnect());
+
+    map<CC*, set<ModuleInstance*> > liveIn;
+    map<CC*, set<ModuleInstance*> > liveOut;
+    for (auto instr : container->getBody()) {
+      liveIn[instr] = {};
+      liveOut[instr] = {};      
+    }
+
+    bool changedVals = true;
+    while (changedVals) {
+      changedVals = false;
+
+      auto oldLiveIn = liveIn;
+      auto oldLivOut = liveOut;
+      
+      for (auto instr : container->getBody()) {
+        auto liveInP = liveIn[instr];
+        auto liveOutP = liveOut[instr];
+
+        //set<CC*> use = references(chan
+      }
     
+    }
     // For each path:
     //   for each transition:
     //     create a new register, store to the register
