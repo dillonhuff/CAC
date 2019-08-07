@@ -260,10 +260,10 @@ namespace CAC {
       Port b = instr->connection.second;
       if (a.isInput) {
         assert(!b.isInput);
-        return verilogString(a, m) + " <= " + verilogString(b, m) + ";";          
+        return verilogString(a, m) + " = " + verilogString(b, m) + ";";          
       } else {
         assert(b.isInput);
-        return verilogString(b, m) + " <= " + verilogString(a, m) + ";";
+        return verilogString(b, m) + " = " + verilogString(a, m) + ";";
       }
 
     }
@@ -465,7 +465,7 @@ namespace CAC {
 
       string defaultString = "";
       if (instr->isConnect() && (dest(instr).isSensitive())) {
-        defaultString = verilogString(dest(instr), m) + " <= " + to_string(dest(instr).defaultValue()) + ";\n";
+        defaultString = verilogString(dest(instr), m) + " = " + to_string(dest(instr).defaultValue()) + ";\n";
       }
 
       string rstPredString = rstPredHappenedString(instr, m, onRst);
@@ -476,35 +476,35 @@ namespace CAC {
       if (elem(instr, onRst)) {
         if (instr->isStartAction) {
           out << "\t\t\t" << body << endl;
-          out << "\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl;
+          out << "\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;
         } else {
 
           assert(predString != "");
           out << "\t\t\tif (" << rstPredString << ") begin" << endl;
           out << "\t\t\t\t" << body << endl;
-          out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
+          out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl; 
           out << "\t\t\tend else begin" << endl;
           out << "\t\t\t\t" << defaultString << endl;
-          out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+          out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
           out << "\t\t\tend" << endl;
         }
           
       } else {
-        out << "\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+        out << "\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
       }
       out << "\t\tend else begin" << endl;
 
       if (predString != "") {
         out << "\t\t\tif (" << predString << ") begin" << endl;
         out << "\t\t\t\t" << body << endl;
-        out << "\t\t\t\t" << happenedVar(instr, m) << " <= 1;" << endl; 
+        out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;;
         out << "\t\t\tend else begin" << endl;
         out << "\t\t\t\t" << defaultString << endl;        
-        out << "\t\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;
+        out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
         out << "\t\t\tend" << endl;
 
       } else {
-        out << "\t\t\t" << happenedVar(instr, m) << " <= 0;" << endl;        
+        out << "\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;        
       }
 
       out << "\t\tend" << endl << endl;      
@@ -827,7 +827,7 @@ namespace CAC {
           set<CC*> assignments =
             getAssignmentsToPort(pt, m);
           if (assignments.size() == 1) {
-            //cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
+            cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
             CC* assigner = *begin(assignments);
             Port src = source(assigner);
             assigner->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
