@@ -61,6 +61,17 @@ namespace CAC {
   }
 
   static inline
+  bool operator<(const Port& a, const Port& b) {
+    if (a.inst != b.inst) {
+      return a.inst < b.inst;
+    }
+
+    assert(a.inst == b.inst);
+
+    return a.getName() < b.getName();
+  }
+  
+  static inline
   bool operator==(const Port& a, const Port& b) {
     return (a.inst == b.inst) && (a.getName() == b.getName());
   }
@@ -80,6 +91,7 @@ namespace CAC {
     std::string getName() const { return name; }
 
     std::vector<Port> getPorts();
+    std::vector<Port> getOutPorts();
 
     Module* action(const std::string& actionSuffix);
     
@@ -219,9 +231,39 @@ namespace CAC {
     }
     return false;
   }
+
+  static inline
+  bool referencesOutput(Port pt, ModuleInstance* inst) {
+    for (auto ipt : inst->getOutPorts()) {
+      if (ipt == pt) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static inline
+  bool referencesOutput(CC* instr, ModuleInstance* inst) {
+    //for (auto act 
+    if (instr->isEmpty()) {
+      return false;
+    } else if (instr->isConnect()) {
+      return referencesOutput(instr->connection.first, inst) ||
+        referencesOutput(instr->connection.second, inst);
+    } else {
+      assert(instr->isInvoke());
+      for (auto b : instr->invokedBinding()) {
+        if (referencesOutput(b.second, inst)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
   
   static inline
   bool references(CC* instr, ModuleInstance* inst) {
+    //for (auto act 
     if (instr->isEmpty()) {
       return false;
     } else if (instr->isConnect()) {
@@ -294,6 +336,7 @@ namespace CAC {
       }
       for (auto cc : toEmpty) {
         cc->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
+        //cc->continuations = {};
       }
       resources.erase(inst);
     }

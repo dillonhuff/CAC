@@ -799,6 +799,18 @@ namespace CAC {
     return source->hasPort(name);
   }
     
+
+  std::vector<Port> ModuleInstance::getOutPorts() {
+    vector<Port> pts;
+    for (auto mp : source->getInterfacePorts()) {
+      Port p = this->pt(mp.getName());
+      if (p.isOutput()) {
+        pts.push_back(p);
+      }
+    }
+    return pts;
+
+  }
   
   std::vector<Port> ModuleInstance::getPorts() {
     vector<Port> pts;
@@ -985,8 +997,38 @@ namespace CAC {
   }
 
   bool Module::isDead(ModuleInstance* inst) {
-    // TODO: Insert real isDead test code
-    return false;
+    //cout << "Checking if " << inst->getName() << " is dead" << endl;
+    vector<Port> outPts = inst->getOutPorts();
+    // for (auto pt : outPts) {
+    //   cout << "Output port " << pt << endl;
+    // }
+    // Filter output ports
+    for (auto sc : structuralConnections) {
+      if (elem(sc.first, outPts) ||
+          elem(sc.second, outPts)) {
+        //cout << "Not dead: port referenced in " << sc.first << " <- " << sc.second << endl;
+        return false;
+      }
+    }
+
+    //cout << "Not used in structural connections" << endl;
+
+    for (auto instr : body) {
+      if (references(instr, inst)) {
+        //cout << *instr << " references " << inst->getName() << ", not dead" << endl;
+        return false;
+      }
+      
+      // for (auto pt : outPts) {
+      // }
+
+      for (auto& act : instr->continuations) {
+        if (elem(act.condition, outPts)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
   
   void deleteDeadResources(Module* m) {
@@ -1001,6 +1043,7 @@ namespace CAC {
       for (auto r : m->getResources()) {
         if (m->isDead(r)) {
           foundDead = true;
+          cout << "Erasing dead instance " << r->getName() << endl;
           m->erase(r);
         }
       }
