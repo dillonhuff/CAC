@@ -737,7 +737,12 @@ namespace CAC {
       original.insert(cc);
     }
 
+    cout << "Synthesizing channel" << endl;
+    int i = 0;
     while (valsAndSources.size() > 0) {
+      cout << "\tVisits to sources = " << i << endl;
+      
+      i++;
       pair<CC*, Port> valAndSrc = valsAndSources.front();
       valsAndSources.pop_front();
 

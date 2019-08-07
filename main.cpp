@@ -365,31 +365,31 @@ int main() {
     assert(runIVerilogTB(m->getName()));
   }
 
-  {
-    runCmd("clang -S -emit-llvm ./c_files/read_add_2_or_3.c -c -O3");
+  // {
+  //   runCmd("clang -S -emit-llvm ./c_files/read_add_2_or_3.c -c -O3");
 
-    Context c;
-    loadLLVMFromFile(c, "read_add_2_or_3", "./read_add_2_or_3.ll");
+  //   Context c;
+  //   loadLLVMFromFile(c, "read_add_2_or_3", "./read_add_2_or_3.ll");
 
-    Module* m = c.getModule("read_add_2_or_3");
-    assert(m != nullptr);
+  //   Module* m = c.getModule("read_add_2_or_3");
+  //   assert(m != nullptr);
 
-    cout << "Final module" << endl;
-    cout << *m << endl;
+  //   cout << "Final module" << endl;
+  //   cout << *m << endl;
 
-    inlineInvokes(m);
-    synthesizeDelays(m);
-    deleteNoEffectInstructions(m);    
-    synthesizeChannels(m);
-    reduceStructures(m);
-    deleteNoEffectInstructions(m);
-    deleteDeadResources(m);
-    deleteNoEffectInstructions(m);
+  //   inlineInvokes(m);
+  //   synthesizeDelays(m);
+  //   deleteNoEffectInstructions(m);    
+  //   synthesizeChannels(m);
+  //   reduceStructures(m);
+  //   deleteNoEffectInstructions(m);
+  //   deleteDeadResources(m);
+  //   deleteNoEffectInstructions(m);
     
-    emitVerilog(c, m);
-    assert(runIVerilogTB(m->getName()));
+  //   emitVerilog(c, m);
+  //   assert(runIVerilogTB(m->getName()));
     
-  }
+  // }
 
   // {
   //   runCmd("clang -S -emit-llvm ./c_files/read_add_2_loop.c -c -O3");
