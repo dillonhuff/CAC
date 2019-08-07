@@ -312,7 +312,7 @@ void loadLLVMFromFile(Context& c,
   setReady1ThenWait->then(m->c(1, 1), setReady1, 0);  
   setReady1ThenWait->then(m->c(1, 1), waitForStart, 0);
 
-  progStart->then(m->c(1, 1), progEnd, 2);  
+  //progStart->then(m->c(1, 1), progEnd, 2);  
   progEnd->then(m->c(1, 1), setReady1ThenWait, 0);
 
   CodeGenState state;
