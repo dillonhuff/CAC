@@ -711,6 +711,12 @@ namespace CAC {
       }
       
     }
+
+    for (Activation& a : instr->continuations) {
+      if (a.condition == toReplace) {
+        a.condition = replacement;
+      }
+    }
   }
   
   void synthesizeChannel(CC* source, ModuleInstance* chan, Module* container) {
@@ -1000,5 +1006,53 @@ namespace CAC {
       }
     }
   }
+
+
+  Module* addComparator(Context& c, const std::string& name, const int width) {
+    if (c.hasModule(name)) {
+      return c.getModule(name);
+    }
+    
+    Module* const_1_1 = getConstMod(c, 1, 1);
+
+    Module* cmpM = c.addCombModule(name);
+    cmpM->setPrimitive(true);
+    cmpM->addInPort(width, "in0");
+    cmpM->addInPort(width, "in1");
+    cmpM->addOutPort(1, "out");
+
+    assert(!cmpM->ept("in0").isOutput());  
+    assert(!cmpM->ept("out").isInput);
   
+    Module* cmpMInv = c.addModule(name + "_apply");
+    cmpMInv->addInPort(width, "in0");
+    cmpMInv->addInPort(width, "in1");
+    cmpMInv->addOutPort(1, "out");    
+
+    cmpMInv->addOutPort(width, name + "_in0");
+    cmpMInv->addOutPort(width, name + "_in1");
+    cmpMInv->addInPort(1, name + "_out");
+
+    assert(cmpMInv->ept(name + "_in0").isOutput());  
+    assert(cmpMInv->ept(name + "_out").isInput);
+
+    ModuleInstance* oneInst = cmpMInv->addInstance(const_1_1, "one");
+  
+    CC* in0W =
+      cmpMInv->addStartInstruction(cmpMInv->ipt("in0"), cmpMInv->ipt(name + "_in0"));
+    CC* in1W =
+      cmpMInv->addInstruction(cmpMInv->ipt("in1"), cmpMInv->ipt(name + "_in1"));
+    CC* outW =
+      cmpMInv->addInstruction(cmpMInv->ipt("out"), cmpMInv->ipt(name + "_out"));
+
+    in0W->continueTo(oneInst->pt("out"), in1W, 0);
+    in1W->continueTo(oneInst->pt("out"), outW, 0);
+
+    cmpM->addAction(cmpMInv);
+
+    cmpM->setVerilogDeclString(name + " #(.WIDTH(" + to_string(width) + "))");
+
+    return cmpM;
+
+  }
 }

@@ -152,6 +152,11 @@ public:
   map<Argument*, vector<Port> > portsForArgs;
   map<BasicBlock*, CC*> blockStarts;
 
+  CC* blockStart(BasicBlock* blk) {
+    assert(contains_key(blk, blockStarts));
+    return map_find(blk, blockStarts);
+  }
+
   ModuleInstance* getChannel(Value* v) {
     if (ConstantInt::classof(v)) {
       int width = getTypeBitWidth(v->getType());
@@ -165,10 +170,14 @@ public:
 
     cout << "Getting channel for " << valueString(v) << endl;
     assert(contains_key(v, channelsForValues));
-    return map_find(v, channelsForValues);
+    auto c = map_find(v, channelsForValues);
+    cout << "Got channel" << endl;
+    return c;
   }
   ModuleInstance* getReg(Value* targetReg) {
     assert(AllocaInst::classof(targetReg));
+    assert(contains_key(dyn_cast<AllocaInst>(targetReg), registersForAllocas));
+    
     return map_find(dyn_cast<AllocaInst>(targetReg), registersForAllocas);
   }
   
@@ -378,6 +387,8 @@ void loadLLVMFromFile(Context& c,
           string funcName = calledFuncName(instr);          
           cout << "Creating code for call to " << funcName << "..." << endl;
 
+          assert(contains_key(funcName, builtinModDefs));
+          
           CAC::Module* inv = map_find(funcName, builtinModDefs);
           assert(inv->isCallingConvention());
 
@@ -469,16 +480,17 @@ void loadLLVMFromFile(Context& c,
 
           auto brCond = state.getChannel(br->getOperand(0));
 
+          cout << "Got channel for " << valueString(br->getOperand(0)) << endl;
           auto brI = m->addEmpty();
-          brI->continueTo(brCond->pt("out"), map_find(s0, state.blockStarts), 1);
-          brI->continueTo(notVal(brCond->pt("out"), m), map_find(s1, state.blockStarts), 1);
+          brI->continueTo(brCond->pt("out"), state.blockStart(s0), 1);
+          brI->continueTo(notVal(brCond->pt("out"), m), state.blockStart(s1), 1);
 
           blkInstrs.push_back(brI);
         } else {
           BasicBlock* s = br->getSuccessor(0);
 
           auto brI = m->addEmpty();
-          brI->continueTo(m->c(1, 1), map_find(s, state.blockStarts), 1);
+          brI->continueTo(m->c(1, 1), state.blockStart(s), 1); //map_find(s, state.blockStarts), 1);
           blkInstrs.push_back(brI);
         }
       } else if (PHINode::classof(instr)) {
@@ -489,11 +501,19 @@ void loadLLVMFromFile(Context& c,
         auto in1 = state.getChannel(instr->getOperand(1));
         auto out = state.getChannel(instr);
 
-        // TODO: Support non-equality operator
-        int width = getTypeBitWidth(instr->getOperand(0)->getType());
-        string name = "eq_" + to_string(width);
-        CAC::Module* opMod = c.getModule(name);
-        auto op = m->freshInstance(opMod, "eq");
+        auto cmpI = dyn_cast<CmpInst>(instr);
+        llvm::CmpInst::Predicate p = cmpI->getPredicate();
+        string name = "";
+        if (p == llvm::CmpInst::ICMP_SGT) {
+          name = "sgt";
+        }
+
+        assert(name != "");
+
+        int width = getTypeBitWidth(instr->getOperand(0)->getType());        
+        CAC::Module* opMod = addComparator(c, name, width);
+
+        auto op = m->freshInstance(opMod, "cmp");
         auto opApply = op->action("apply");
         auto opApplyInv = m->addInvokeInstruction(opApply);
         bindByType(opApplyInv, op);

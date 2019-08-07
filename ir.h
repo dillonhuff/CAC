@@ -562,6 +562,10 @@ namespace CAC {
   public:
 
     Module* getModule(const std::string& name) {
+      if (!hasModule(name)) {
+        cout << "Error: No module named " << name << " available" << endl;
+        assert(false);
+      }
       return map_find(name, mods);
     }
 
@@ -610,6 +614,8 @@ namespace CAC {
 
   void bindByType(CC* invocation, ModuleInstance* toBind);
 
+  Module* addComparator(Context& c, const std::string& name, const int width);
+  
   void addBinop(Context& c, const std::string& name, const int cycleLatency);
   
 }
