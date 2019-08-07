@@ -239,7 +239,8 @@ int main() {
 
     inlineInvokes(pipeAdds);
     synthesizeChannels(pipeAdds);
-
+    deleteDeadResources(pipeAdds);
+    
     // cout << "Add wrapper after lowering" << endl;
     // cout << *pipeAdds << endl;
   
@@ -309,7 +310,8 @@ int main() {
     inlineInvokes(pipeAdds);
     synthesizeChannels(pipeAdds);
     reduceStructures(pipeAdds);
-
+    deleteDeadResources(pipeAdds);
+    
     // cout << "Add wrapper after lowering" << endl;
     // cout << *pipeAdds << endl;
   
@@ -333,7 +335,8 @@ int main() {
     synthesizeDelays(m);
     synthesizeChannels(m);
     reduceStructures(m);
-
+    deleteNoEffectInstructions(m);
+    
     emitVerilog(c, m);
     assert(runIVerilogTB(m->getName()));
   }
@@ -354,6 +357,7 @@ int main() {
     synthesizeDelays(m);
     synthesizeChannels(m);
     reduceStructures(m);
+    deleteNoEffectInstructions(m);    
     deleteDeadResources(m);
 
     emitVerilog(c, m);
