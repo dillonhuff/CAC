@@ -243,8 +243,11 @@ int main() {
     
     // cout << "Add wrapper after lowering" << endl;
     // cout << *pipeAdds << endl;
-  
+
+
     emitVerilog(c, pipeAdds);
+
+    cout << "Checking simple channel..." << endl;
     assert(runIVerilogTB(pipeAdds->getName()));
   }
 

@@ -737,9 +737,9 @@ namespace CAC {
   }
   
   bool isChannel(ModuleInstance* const mi) {
-    cout << "Checking if " << mi->getName() << " is a channel" << endl;
+    //cout << "Checking if " << mi->getName() << " is a channel" << endl;
     bool c = hasPrefix(mi->source->getName(), "pipe_channel_");
-    cout << "\tres = " << c << endl;
+    //cout << "\tres = " << c << endl;
     return c;
   }
   
@@ -794,7 +794,7 @@ namespace CAC {
         auto liveOutP = liveOut[instr];
 
         set<ModuleInstance*> use = usedChannels(instr);
-        cout << "Used channels at " << *instr << " = " << use.size() << endl;
+        //cout << "Used channels at " << *instr << " = " << use.size() << endl;
         
         set<ModuleInstance*> def = definedChannels(instr);
         set<ModuleInstance*> in = use;
@@ -886,16 +886,40 @@ namespace CAC {
       // TODO: Replace connections to chan->pt("out") with nextVal?
       for (auto c : val->continuations) {
         CC* dest = c.destination;
+
         if (elem(dest, original) && !elem(dest, visited)) {
           if (c.delay == 1) {
-            valsAndSources.push_back({dest, nextVal});
             replacePort(chan->pt("out"), nextVal, dest);
           } else {
             //cout << "Delay for " << *val << " == " << c.delay << endl;
             assert(c.delay == 0);
-            valsAndSources.push_back({dest, src});
             replacePort(chan->pt("out"), src, dest);
           }
+
+          // if (c.delay == 0) {
+          //   valsAndSources.push_back({dest, src});
+          // } else {
+          //   if (contains_key(dest, liveIn) &&
+          //       elem(chan, map_find(dest, liveIn))) {
+          //     valsAndSources.push_back({dest, nextVal});
+          //   }
+          // }
+          if (c.delay == 0) {
+            valsAndSources.push_back({dest, src});            
+          } else {
+            assert(c.delay == 1);
+            valsAndSources.push_back({dest, nextVal});            
+          }
+          
+          // if (contains_key(dest, liveOut) &&
+          //     elem(chan, map_find(dest, liveOut))) {
+            // if (c.delay == 1) {
+            //   valsAndSources.push_back({dest, nextVal});
+            // } else {
+            //   assert(c.delay == 0);
+            //   valsAndSources.push_back({dest, src});
+            // }
+            //}
         }
       }
 
