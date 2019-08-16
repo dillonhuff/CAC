@@ -748,7 +748,7 @@ namespace CAC {
 
     set<ModuleInstance*> usedChannels;
     for (auto port : pts) {
-      if (port.inst != nullptr && isChannel(port.inst)) {
+      if (port.inst != nullptr && port.isOutput() && isChannel(port.inst)) {
         usedChannels.insert(port.inst);
       }
     }
@@ -783,7 +783,10 @@ namespace CAC {
     }
 
     bool changedVals = true;
+    int iter = 0;
     while (changedVals) {
+      cout << "Iteration #" << iter << endl;
+
       changedVals = false;
 
       auto oldLiveIn = liveIn;
@@ -814,28 +817,33 @@ namespace CAC {
         liveOut[instr] = newOut;
 
         if (liveInP != liveIn[instr]) {
+          cout << "Changed values" << endl;
           changedVals = true;
         }
 
         if (liveOutP != liveOut[instr]) {
+          cout << "Changed values" << endl;
           changedVals = true;
         }
 
-        // in = use \union (out - def)
-        // out = \union of all successors in
       }
-    
+
+      iter++;
     }
 
-    cout << "Liveness results:" << endl;
+    cout << "Stabilized at iteration " << iter << ", Liveness results:" << endl;
     for (auto instr : container->getBody()) {
       auto li = liveIn[instr];
+      auto lo = liveOut[instr];
+      if (li.size() == 0 && lo.size() == 0) {
+        continue;
+      }
+
       cout << "Live in at " << *instr << endl;
       for (auto l : li) {
         cout << "\t" << l->getName() << endl;
       }
 
-      auto lo = liveOut[instr];
       cout << "Live out at " << *instr << endl;
       for (auto l : lo) {
         cout << "\t" << l->getName() << endl;
