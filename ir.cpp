@@ -718,6 +718,59 @@ namespace CAC {
       }
     }
   }
+
+  vector<Port> allReferencedPorts(CC* src) {
+    vector<Port> all;
+    if (src->isConnect()) {
+      all.push_back(dest(src));
+      all.push_back(source(src));
+    } else if (src->isInvoke()) {
+      for (auto pt : src->invokedBinding()) {
+        all.push_back(pt.second);
+      }
+    }
+    
+    for (auto act : src->continuations) {
+      all.push_back(act.condition);
+    }
+    return all;
+  }
+  
+  bool isChannel(ModuleInstance* const mi) {
+    cout << "Checking if " << mi->getName() << " is a channel" << endl;
+    bool c = hasPrefix(mi->source->getName(), "pipe_channel_");
+    cout << "\tres = " << c << endl;
+    return c;
+  }
+  
+  set<ModuleInstance*> usedChannels(CC* src) {
+    vector<Port> pts = allReferencedPorts(src);
+
+    set<ModuleInstance*> usedChannels;
+    for (auto port : pts) {
+      if (port.inst != nullptr && isChannel(port.inst)) {
+        usedChannels.insert(port.inst);
+      }
+    }
+
+    return usedChannels;
+  }
+
+  set<ModuleInstance*> definedChannels(CC* src) {
+    if (src->isEmpty()) {
+      return {};
+    } else if (src->isConnect()) {
+      Port d = dest(src);
+      if (d.inst != nullptr && isChannel(d.inst)) {
+        return {d.inst};
+      } else {
+        return {};
+      }
+    } else {
+      // TODO: Fix?
+      return {};
+    }
+  }
   
   void synthesizeChannel(CC* source, ModuleInstance* chan, Module* container) {
     assert(source->isConnect());
@@ -726,7 +779,7 @@ namespace CAC {
     map<CC*, set<ModuleInstance*> > liveOut;
     for (auto instr : container->getBody()) {
       liveIn[instr] = {};
-      liveOut[instr] = {};      
+      liveOut[instr] = {};
     }
 
     bool changedVals = true;
@@ -740,10 +793,56 @@ namespace CAC {
         auto liveInP = liveIn[instr];
         auto liveOutP = liveOut[instr];
 
-        //set<CC*> use = references(chan
+        set<ModuleInstance*> use = usedChannels(instr);
+        cout << "Used channels at " << *instr << " = " << use.size() << endl;
+        
+        set<ModuleInstance*> def = definedChannels(instr);
+        set<ModuleInstance*> in = use;
+        for (auto d : difference(liveOut[instr], def)) {
+          in.insert(d);
+        }
+
+        liveIn[instr] = in;
+
+        set<ModuleInstance*> newOut;
+        for (auto act : instr->continuations) {
+          for (auto c : map_find(instr, liveIn)) {
+            newOut.insert(c);
+          }
+        }
+
+        liveOut[instr] = newOut;
+
+        if (liveInP != liveIn[instr]) {
+          changedVals = true;
+        }
+
+        if (liveOutP != liveOut[instr]) {
+          changedVals = true;
+        }
+
+        // in = use \union (out - def)
+        // out = \union of all successors in
       }
     
     }
+
+    cout << "Liveness results:" << endl;
+    for (auto instr : container->getBody()) {
+      auto li = liveIn[instr];
+      cout << "Live in at " << *instr << endl;
+      for (auto l : li) {
+        cout << "\t" << l->getName() << endl;
+      }
+
+      auto lo = liveOut[instr];
+      cout << "Live out at " << *instr << endl;
+      for (auto l : lo) {
+        cout << "\t" << l->getName() << endl;
+      }
+
+    }
+    
     // For each path:
     //   for each transition:
     //     create a new register, store to the register
