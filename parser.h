@@ -154,7 +154,8 @@ namespace CAC {
   class StmtAST {
   public:
     LabelAST* label;
-    
+
+    StmtAST() : label(nullptr) {}
     virtual StmtKind getKind() const = 0;
   };
 

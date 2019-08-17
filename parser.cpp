@@ -610,7 +610,7 @@ namespace CAC {
   
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
     cout << "Generating code" << endl;
-    
+
     bool startOfSeq = c.lastInstr == nullptr;
     CC* lastStmtEnd = c.lastInstr;
     StmtAST* lastStmt = c.lastStmt;
