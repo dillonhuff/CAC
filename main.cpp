@@ -66,7 +66,7 @@ int main() {
     auto m = c.getModule("rvc");
     inlineInvokes(m);
     synthesizeDelays(m);
-    deleteNoEffectInstructions(m);        
+    deleteNoEffectInstructions(m);
     synthesizeChannels(m);
     reduceStructures(m);
     deleteNoEffectInstructions(m);    

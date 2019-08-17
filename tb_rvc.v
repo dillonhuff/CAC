@@ -41,7 +41,7 @@ module tb_rvc();
       #1 clk = 1;
       #1 clk = 0;
 
-      //`assert(rdy.data, 1'b0)
+      `assert(rdy.data, 1'b0)
       $display("Passed");
       
    end // initial begin
