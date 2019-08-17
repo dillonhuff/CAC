@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "parser.h"
+
 // Example: An adder module has one action, which takes
 // an adder as its first argument, and which
 
@@ -56,6 +58,12 @@ bool runIVerilogTB(const std::string& moduleName) {
 
 int main() {
 
+  {
+    TLU t = parseTLU("./rv.iv");
+    
+    assert(false);
+  }
+  
   {
     Context c;
 
