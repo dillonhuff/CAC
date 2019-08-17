@@ -1,0 +1,45 @@
+module reg_1(input [0:0] clk,
+       input [0:0] rst,
+       output [0:0] data,
+       input [0:0] en,
+       input [0:0] in);
+
+       // external;
+
+       // default en = 0;
+
+       // module set(input [0:0] value); begin
+       //        sequential @(posedge clk, synch rst) begin
+       //                   en = 1;
+       //                   data = value;
+       //        end
+       // end
+
+       // module read(output [0:0] out); begin
+       //        sequential @(posedge clk, synch rst) begin
+       //                   out = data;
+       //        end
+       // end
+       
+endmodule
+
+module rvc(input [0:0] clk,
+       input [0:0] rst,
+       output [31:0] ready_reg,
+       output [31:0] ready_en,
+       input [0:0] valid);
+
+       //default ready_en = 0;
+       
+       sequence @(posedge clk, synch rst) begin
+                ready_reg = 1;
+                ready_en = 1;
+                goto (1, wait, 1);
+
+                wait: goto (valid == 0, wait, 1), (valid, end, 0);
+
+                end: ready_reg = 0;
+                     ready_en = 1;
+       end
+       
+endmodule
