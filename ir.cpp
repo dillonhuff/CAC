@@ -1127,7 +1127,7 @@ namespace CAC {
     int uselessJumps = 0;
     set<CC*> combJumps;
     for (auto instr : m->getBody()) {
-      if (instr->isEmpty() && instr->continuations.size() == 1) {
+      if (instr->isEmpty() && !(instr->isStartAction) && instr->continuations.size() == 1) {
         Activation next = instr->continuations[0];
         if (next.delay == 0) {
           Port cond = next.condition;
