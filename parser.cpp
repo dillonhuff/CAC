@@ -561,9 +561,15 @@ namespace CAC {
   class CodeGenState {
   public:
     Context* c;
+    Module* activeMod;
+    CC* lastInstr;
+
+    CodeGenState() : activeMod(nullptr), lastInstr(nullptr) {}
   };
   
-  void genCode(StmtAST* body, Context& c, TLU& t) {
+  void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
+    bool startOfSeq = c.lastInstr == nullptr;
+
     if (BeginAST::classof(body)) {
       // Get body and generate each statement in it
       auto bst = sc<BeginAST>(body);
@@ -571,10 +577,10 @@ namespace CAC {
         genCode(stmt, c, t);
       }
     } else if (GotoAST::classof(body)) {
-      //c->addEmpty();
+      c.activeMod->addEmpty();
     } else {
       assert(ImpConnectAST::classof(body));
-      //c->addEmpty();      
+      c.activeMod->addEmpty();      
     }
   }
 
@@ -583,6 +589,7 @@ namespace CAC {
     cgo.c = &c;
     for (auto mAST : t.modules) {
       auto m = c.addCombModule(mAST->getName().getStr());
+      cgo.activeMod = m;
       for (auto pAST : mAST->ports) {
         if (pAST->isInput) {
           m->addInPort(pAST->width, pAST->getName());
@@ -596,9 +603,10 @@ namespace CAC {
         if (SequenceBlockAST::classof(blk)) {
           auto sblk = sc<SequenceBlockAST>(blk);
           StmtAST* body = sblk->body;
-          genCode(body, c, t);
+          genCode(body, cgo, t);
         }
       }
+      cgo.activeMod = nullptr;
     }
   }
 
