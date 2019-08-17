@@ -182,6 +182,7 @@ namespace CAC {
     return tokens;
   }
 
+#define exit_failed(res) if (!res.has_value()) { return {}; }
 #define exit_end(tokens) if (tokens.atEnd()) { return {}; }
 #define try_consume(name, tokens) if (tokens.atEnd()) { return {}; } else if (tokens.peekChar() == Token(name)) { tokens.parseChar(); } else { return {}; }
 
@@ -452,12 +453,15 @@ namespace CAC {
     cout << "Parsing instr at " << tokens.remainder() << endl;
 
     exit_end(tokens);
-    Token lhs = tokens.parseChar();
+    auto lhsM = tryParse<ExpressionAST*>(parseExpression, tokens);
+    exit_failed(lhsM);
+
     try_consume("=", tokens);
-    // TODO: Change to parse expression
-    Token rhs = tokens.parseChar();
+    auto rhsM = tryParse<ExpressionAST*>(parseExpression, tokens);
+    exit_failed(rhsM);
+    
     try_consume(";", tokens);
-    return new ImpConnectAST();
+    return new ImpConnectAST(lhsM.get_value(), rhsM.get_value());
   }
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
@@ -576,6 +580,23 @@ namespace CAC {
 
     CodeGenState() : activeMod(nullptr), lastInstr(nullptr) {}
   };
+
+  Port genExpression(ExpressionAST* l,
+                     CodeGenState& c,
+                     TLU& t) {
+    if (IdentifierAST::classof(l)) {
+      auto id = sc<IdentifierAST>(l);
+      string name = id->getName();
+      return c.activeMod->ipt(name);
+    } else if (IntegerAST::classof(l)) {
+      auto id = sc<IntegerAST>(l);
+      int value = stoi(id->getName());
+      return c.activeMod->c(1, value);
+    } else {
+      cout << "Error: Unsupported expression kind" << endl;
+      assert(false);
+    }
+  }
   
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
     bool startOfSeq = c.lastInstr == nullptr;
@@ -600,9 +621,16 @@ namespace CAC {
       c.lastInstr = gt;
     } else {
       assert(ImpConnectAST::classof(body));
-      auto ic = c.activeMod->addEmpty();
-      fst = ic;
+      // Get expressions out and generate code for them?
+      auto icSt = sc<ImpConnectAST>(body);
+      auto l = icSt->lhs;
+      Port lPt = genExpression(l, c, t);      
 
+      auto r = icSt->rhs;
+      Port rPt = genExpression(r, c, t);      
+
+      auto ic = c.activeMod->addInstruction(lPt, rPt);
+      fst = ic;
       c.lastInstr = ic;
     }
 

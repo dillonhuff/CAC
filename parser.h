@@ -115,6 +115,7 @@ namespace CAC {
   public:
     IntegerAST(Token t) : name(t) {}
 
+    string getName() const { return name.getStr(); }
     static
     bool classof(const ExpressionAST* const expr) {
       return expr->getKind() == EXPR_KIND_INT;
@@ -167,6 +168,11 @@ namespace CAC {
 
   class ImpConnectAST : public InstrAST {
   public:
+
+    ExpressionAST* lhs;
+    ExpressionAST* rhs;
+    ImpConnectAST(ExpressionAST* lhs_, ExpressionAST* rhs_) :
+      lhs(lhs_), rhs(rhs_) {}
     virtual StmtKind getKind() const { return STMT_KIND_ICONNECT; }
     static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_ICONNECT; }    
   };
