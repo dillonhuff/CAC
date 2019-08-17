@@ -6,6 +6,20 @@ using namespace dbhc;
 
 namespace CAC {
 
+  template<typename ResultType, typename InputType>
+  ResultType* sc(InputType* tp) {
+    return static_cast<ResultType*>(tp);
+  }
+  
+  template<typename ResultType, typename InputType>
+  dbhc::maybe<ResultType*> extractM(InputType* tp) {
+    if (ResultType::classof(tp)) {
+      return sc<ResultType>(tp);
+    }
+
+    return dbhc::maybe<ResultType*>();
+  }
+  
   int precedence(Token op) {
     map<string, int> prec{{"+", 100}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
     assert(contains_key(op.getStr(), prec));
@@ -294,15 +308,15 @@ namespace CAC {
     ExpressionAST* top = postfixString.back();
     postfixString.pop_back();
   
-    // auto idM = extractM<IdentifierAST>(top);
-    // if (idM.has_value() && isBinop(idM.get_value()->getName())) {
+    auto idM = extractM<IdentifierAST>(top);
+    if (idM.has_value() && isBinop(idM.get_value()->getName())) {
       auto rhs = popOperand(postfixString);
       auto lhs = popOperand(postfixString);
       return new BinopAST(lhs, rhs);
       //return new BinopAST(lhs, idM.get_value()->getName(), rhs);
-      //}
+    }
 
-      //return top;
+    return top;
   }
   
   maybe<ExpressionAST*> parseExpression(ParseState<Token>& tokens) {
@@ -426,14 +440,14 @@ namespace CAC {
         sepBtwn0<ActivationAST*, Token>(parseActivation, parseComma, tokens);
 
       try_consume(";", tokens);
-      return new InstrAST();
+      return new GotoAST();
     }
 
     try_consume("=", tokens);
     // TODO: Change to parse expression
     Token rhs = tokens.parseChar();
     try_consume(";", tokens);    
-    return new InstrAST();
+    return new ImpConnectAST();
   }
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
@@ -443,7 +457,7 @@ namespace CAC {
     auto stmts = many<StmtAST*>(parseStmt, tokens);
     try_consume("end", tokens);
 
-    return new BeginAST();
+    return new BeginAST(stmts);
   }
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
@@ -502,7 +516,7 @@ namespace CAC {
     auto body = many<BlockAST*, Token>(parseBlock, tokens);
     try_consume("endmodule", tokens);
     
-    return new ModuleAST(modName, ports);
+    return new ModuleAST(modName, ports, body);
   }
 
   void parseTokens(TLU& t, vector<Token>& tokens) {
@@ -542,8 +556,12 @@ namespace CAC {
         if (pAST->isInput) {
           m->addInPort(pAST->width, pAST->getName());
         } else {
-          m->addOutPort(pAST->width, pAST->getName());          
+          m->addOutPort(pAST->width, pAST->getName());
         }
+      }
+
+      for (auto blk : mAST->blocks) {
+        m->addEmpty();
       }
     }
   }

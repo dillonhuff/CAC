@@ -998,7 +998,7 @@ namespace CAC {
           set<CC*> assignments =
             getAssignmentsToPort(pt, m);
           if (assignments.size() == 1) {
-            cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
+            //cout << "Found insensitive port " << pt << " that is assigned to in one place" << endl;
             CC* assigner = *begin(assignments);
             Port src = source(assigner);
             assigner->tp = CONNECT_AND_CONTINUE_TYPE_EMPTY;
@@ -1202,7 +1202,7 @@ namespace CAC {
       for (auto r : m->getResources()) {
         if (m->isDead(r)) {
           foundDead = true;
-          cout << "Erasing dead instance " << r->getName() << endl;
+          //cout << "Erasing dead instance " << r->getName() << endl;
           m->erase(r);
         }
       }

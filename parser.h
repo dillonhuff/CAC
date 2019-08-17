@@ -79,13 +79,34 @@ namespace CAC {
   class LabelAST {
   };
 
+  enum ExprKind{
+    EXPR_KIND_ID,
+    EXPR_KIND_INT,
+    EXPR_KIND_BINOP
+  };
+
   class ExpressionAST {
+
+  public:
+
+    virtual ExprKind getKind() const = 0;
   };
 
   class IdentifierAST : public ExpressionAST {
     Token name;
   public:
     IdentifierAST(Token t) : name(t) {}
+
+    string getName() const { return name.getStr(); }
+    
+    static
+    bool classof(const ExpressionAST* const expr) {
+      return expr->getKind() == EXPR_KIND_ID;
+    }
+
+    virtual ExprKind getKind() const override {
+      return EXPR_KIND_ID;
+    }
     
   };
 
@@ -93,24 +114,68 @@ namespace CAC {
     Token name;
   public:
     IntegerAST(Token t) : name(t) {}
+
+    static
+    bool classof(const ExpressionAST* const expr) {
+      return expr->getKind() == EXPR_KIND_INT;
+    }
+
+    ExprKind getKind() const {
+      return EXPR_KIND_INT;
+    }
     
   };
 
   class BinopAST : public ExpressionAST {
   public:
     BinopAST(ExpressionAST* a, ExpressionAST* b) {}
-  };
-  
-  class StmtAST {
-  };
 
-  class InstrAST : public StmtAST{
+    static
+    bool classof(const ExpressionAST* const expr) {
+      return expr->getKind() == EXPR_KIND_BINOP;
+    }
+
+    ExprKind getKind() const {
+      return EXPR_KIND_BINOP;
+    }
+    
   };
 
   class ActivationAST {
   };
   
+  enum StmtKind {
+    STMT_KIND_GOTO,
+    STMT_KIND_ICONNECT,    
+    STMT_KIND_BEGIN    
+  };
+
+  class StmtAST {
+  public:
+    virtual StmtKind getKind() const = 0;
+  };
+
+  class InstrAST : public StmtAST {
+  public:
+  };
+
+  class GotoAST : public InstrAST {
+  public:
+    virtual StmtKind getKind() const { return STMT_KIND_GOTO; }    
+    
+  };
+
+  class ImpConnectAST : public InstrAST {
+  public:
+    virtual StmtKind getKind() const { return STMT_KIND_ICONNECT; }    
+  };
+  
   class BeginAST : public StmtAST {
+  public:
+    vector<StmtAST*> stmts;
+
+    BeginAST(vector<StmtAST*> stmts_) : stmts(stmts_) {}
+    virtual StmtKind getKind() const { return STMT_KIND_BEGIN; }
   };
   
   class PortAST {
@@ -136,8 +201,11 @@ namespace CAC {
 
   public:
     vector<PortAST*> ports;
+    vector<BlockAST*> blocks;
 
-    ModuleAST(Token n, vector<PortAST*>& pts) : name(n), ports(pts) {}
+    ModuleAST(Token n,
+              vector<PortAST*>& pts,
+              vector<BlockAST*>& blks) : name(n), ports(pts), blocks(blks) {}
 
     Token getName() const { return name; }
   };
