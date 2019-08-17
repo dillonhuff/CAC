@@ -408,25 +408,25 @@ namespace CAC {
     // TODO: Change to expression parsing
     //Token cond = tokens.parseChar();
     auto condM = parseExpression(tokens);
-    if (!condM.has_value()) {
-      return {};
-    }
+    exit_failed(condM);    
     try_consume(",", tokens);
 
     Token dest = tokens.parseChar();
     try_consume(",", tokens);
 
-    Token delay = tokens.parseChar();
+    //Token delay = tokens.parseChar();
+    auto delayM = parseExpression(tokens);
+    exit_failed(delayM);
     try_consume(")", tokens);    
 
-    return new ActivationAST();
+    return new ActivationAST(condM.get_value(), dest, delayM.get_value());
   }
 
   maybe<LabelAST*> parseLabel(ParseState<Token>& tokens) {
     exit_end(tokens);
     Token name = tokens.parseChar();
     try_consume(":", tokens);
-    return new LabelAST();
+    return new LabelAST(name);
   }
 
   maybe<GotoAST*> parseGoto(ParseState<Token>& tokens) {
@@ -587,9 +587,29 @@ namespace CAC {
     CC* lastInstr;
     StmtAST* lastStmt;
 
+    map<string, StmtAST*> labelMap;
+    map<StmtAST*, CC*> stmtStarts;
+
     CodeGenState() : activeMod(nullptr), lastInstr(nullptr), lastStmt(nullptr) {}
+
+    CC* getStartForLabel(const std::string& name) {
+      cout << "Finding label " << name << endl;
+      assert(contains_key(name, labelMap));      
+      StmtAST* stmt = map_find(name, labelMap);
+      assert(contains_key(stmt, stmtStarts));
+      return map_find(stmt, stmtStarts);
+    }
   };
 
+  int genConstExpression(ExpressionAST* l,
+                     CodeGenState& c,
+                     TLU& t) {
+    assert(IntegerAST::classof(l));
+    auto id = sc<IntegerAST>(l);
+    int value = stoi(id->getName());
+    return value;
+  }
+  
   Port genExpression(ExpressionAST* l,
                      CodeGenState& c,
                      TLU& t) {
@@ -631,11 +651,17 @@ namespace CAC {
       auto endB = c.activeMod->addEmpty();
       c.lastInstr = endB;
     } else if (GotoAST::classof(body)) {
+      auto gts = sc<GotoAST>(body);
       auto gt = c.activeMod->addEmpty();
       fst = gt;
       c.lastInstr = gt;
-      
-      //for (auto 
+
+      for (auto act : gts->continuations) {
+        Port cond = genExpression(act->cond, c, t);
+        int delay = genConstExpression(act->delay, c, t);
+        CC* dest = c.getStartForLabel(act->destLabel.getStr());
+        gt->continueTo(cond, dest, delay);
+      }
 
     } else {
       assert(ImpConnectAST::classof(body));
@@ -677,6 +703,11 @@ namespace CAC {
       cout << "Finished adding continuation" << endl;
     }
     c.lastStmt = body;
+
+    if (body->label != nullptr) {
+      assert(!contains_key(body->label->getName(), c.labelMap));
+      c.labelMap[body->label->getName()] = body;
+    }
 
     cout << "Done generating" << endl;
   }

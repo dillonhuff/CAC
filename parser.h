@@ -77,6 +77,11 @@ namespace CAC {
   }
 
   class LabelAST {
+    Token name;
+  public:
+    LabelAST(Token n) : name(n) {}
+
+    string getName() { return name.getStr(); }
   };
 
   enum ExprKind{
@@ -143,6 +148,15 @@ namespace CAC {
   };
 
   class ActivationAST {
+  public:
+    ExpressionAST* cond;
+    Token destLabel;
+    ExpressionAST* delay;
+
+    ActivationAST(ExpressionAST* cond_,
+                  Token destLabel_,
+                  ExpressionAST* delay_) : cond(cond_), destLabel(destLabel_), delay(delay_) {}
+    
   };
   
   enum StmtKind {
