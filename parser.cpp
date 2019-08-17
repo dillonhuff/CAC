@@ -464,6 +464,10 @@ namespace CAC {
   }
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
+
+  maybe<DefaultAST*> parseDefault(ParseState<Token>& tokens) {
+    return {};
+  }
   
   maybe<BeginAST*> parseBegin(ParseState<Token>& tokens) {
     try_consume("begin", tokens);
@@ -486,6 +490,14 @@ namespace CAC {
       return s;
     }
 
+    auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
+    if (dM.has_value()) {
+      auto s = dM.get_value();
+      if (lblM.has_value()) {
+        s->label = lblM.get_value();
+      }
+      return s;
+    }
 
     auto instrM = tryParse<InstrAST*>(parseInstr, tokens);
     if (instrM.has_value()) {

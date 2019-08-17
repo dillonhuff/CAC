@@ -167,7 +167,8 @@ namespace CAC {
   enum StmtKind {
     STMT_KIND_GOTO,
     STMT_KIND_ICONNECT,    
-    STMT_KIND_BEGIN    
+    STMT_KIND_BEGIN,
+    STMT_KIND_DEFAULT    
   };
 
   class StmtAST {
@@ -177,6 +178,20 @@ namespace CAC {
     StmtAST() : label(nullptr) {}
     virtual StmtKind getKind() const = 0;
   };
+
+
+  class DefaultAST : public StmtAST {
+  public:
+    ExpressionAST* pt;
+    ExpressionAST* val;
+    
+    DefaultAST(ExpressionAST* pt_, ExpressionAST* val_) : pt(pt_), val(val_) {}
+
+    virtual StmtKind getKind() const { return STMT_KIND_DEFAULT; }    
+    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_DEFAULT; }        
+
+  };
+    
 
   class InstrAST : public StmtAST {
   public:
