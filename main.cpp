@@ -64,6 +64,7 @@ int main() {
     lowerTLU(c, t);
 
     emitVerilog(c, c.getModule("rvc"));
+    assert(runIVerilogTB("rvc"));
   }
   
   {

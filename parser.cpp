@@ -626,6 +626,7 @@ namespace CAC {
       auto gt = c.activeMod->addEmpty();
       fst = gt;
       c.lastInstr = gt;
+      
       //for (auto 
 
     } else {
