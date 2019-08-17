@@ -6,6 +6,26 @@ using namespace dbhc;
 
 namespace CAC {
 
+  // template<typename ResultType, typename InputType>
+  // dbhc::maybe<ResultType*> extractM(InputType* tp) {
+  //   if (ResultType::classof(tp)) {
+  //     return sc<ResultType>(tp);
+  //   }
+
+  //   return dbhc::maybe<ResultType*>();
+  // }
+
+  int precedence(Token op) {
+    map<string, int> prec{{"+", 100}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
+    assert(contains_key(op.getStr(), prec));
+    return map_find(op.getStr(), prec);
+  }
+  
+  bool isBinop(const Token t) {
+    vector<string> binopStrings{"==", "+", "&", "-", "/", "^", "%", "&&", "||", "<=", ">=", "<", ">", "*", "%"};
+    return elem(t.getStr(), binopStrings);
+  }
+  
   bool isUnderscore(const char c) { return c == '_'; }
 
   bool isAlphaNum(const char c) { return isalnum(c); }
@@ -159,6 +179,28 @@ namespace CAC {
 
   class LabelAST {
   };
+
+  class ExpressionAST {
+  };
+
+  class IdentifierAST : public ExpressionAST {
+    Token name;
+  public:
+    IdentifierAST(Token t) : name(t) {}
+    
+  };
+
+  class IntegerAST : public ExpressionAST {
+    Token name;
+  public:
+    IntegerAST(Token t) : name(t) {}
+    
+  };
+
+  class BinopAST : public ExpressionAST {
+  public:
+    BinopAST(ExpressionAST* a, ExpressionAST* b) {}
+  };
   
   class StmtAST {
   };
@@ -190,6 +232,15 @@ namespace CAC {
 #define exit_end(tokens) if (tokens.atEnd()) { return {}; }
 #define try_consume(name, tokens) if (tokens.atEnd()) { return {}; } else if (tokens.peekChar() == Token(name)) { tokens.parseChar(); } else { return {}; }
 
+  maybe<IdentifierAST*> parseId(ParseState<Token>& tokens) {
+    Token t = tokens.parseChar();
+    if (t.isId()) {
+      return new IdentifierAST(t);
+    }
+
+    return maybe<IdentifierAST*>();
+  }
+  
   maybe<PortAST*> parsePortDecl(ParseState<Token>& tokens) {
     Token p = tokens.peekChar();
     if (p == Token("input") ||
@@ -244,10 +295,168 @@ namespace CAC {
     return {};
   }
 
+  maybe<ExpressionAST*>
+  parsePrimitiveExpressionMaybe(ParseState<Token>& tokens) {
+    exit_end(tokens);
+    // //cout << "-- Parsing primitive expression " << tokens.remainder() << endl;
+
+    // if (tokens.nextCharIs(Token("("))) {
+    //   tokens.parseChar();
+
+    //   //cout << "Inside parens " << tokens.remainder() << endl;
+    //   auto inner = parseExpressionMaybe(tokens);
+    //   if (inner.has_value()) {
+    //     if (tokens.nextCharIs(Token(")"))) {
+    //       tokens.parseChar();
+    //       return inner;
+    //     }
+    //   }
+    //   return maybe<Expression*>();
+    // }
+
+  
+    // auto fCall = tryParse<FunctionCall*>(parseFunctionCall, tokens);
+    // if (fCall.has_value()) {
+    //   return fCall.get_value();
+    // }
+
+    // //cout << "---- Trying to parse method call " << tokens.remainder() << endl;
+    // auto mCall = tryParse<Expression*>(parseMethodCall, tokens);
+    // if (mCall.has_value()) {
+    //   return mCall;
+    // }
+
+    // auto faccess = tryParse<Expression*>(parseFieldAccess, tokens);
+    // if (faccess.has_value()) {
+    //   return faccess;
+    // }
+    
+    // Try parsing a function call
+    // If that does not work try to parse an identifier
+    // If that does not work try parsing a parenthesis
+    auto id = tryParse<IdentifierAST*>(parseId, tokens);
+    if (id.has_value()) {
+      cout << "Getting id" << endl;
+      return id.get_value();
+    }
+
+    // //cout << "Expressions = " << tokens.remainder() << endl;
+    if (!tokens.atEnd() && tokens.peekChar().isNum()) {
+      cout << "Getting integer" << endl;
+      return new IntegerAST(tokens.parseChar().getStr());
+    }
+
+    return maybe<ExpressionAST*>();
+  }
+
+  ExpressionAST* popOperand(vector<ExpressionAST*>& postfixString) {
+    assert(postfixString.size() > 0);
+
+    ExpressionAST* top = postfixString.back();
+    postfixString.pop_back();
+  
+    // auto idM = extractM<IdentifierAST>(top);
+    // if (idM.has_value() && isBinop(idM.get_value()->getName())) {
+      auto rhs = popOperand(postfixString);
+      auto lhs = popOperand(postfixString);
+      return new BinopAST(lhs, rhs);
+      //return new BinopAST(lhs, idM.get_value()->getName(), rhs);
+      //}
+
+      //return top;
+  }
+  
+  maybe<ExpressionAST*> parseExpression(ParseState<Token>& tokens) {
+    cout << "-- Parsing expression " << tokens.remainder() << endl;
+
+    vector<Token> operatorStack;
+    vector<ExpressionAST*> postfixString;
+  
+    while (true) {
+      auto pExpr = parsePrimitiveExpressionMaybe(tokens);
+      cout << "After primitive expr = " << tokens.remainder() << endl;
+      if (!pExpr.has_value()) {
+        break;
+      }
+
+      cout << "Found expr: "  << pExpr.get_value() << endl;
+
+      postfixString.push_back(pExpr.get_value());
+    
+      if (tokens.atEnd() || !isBinop(tokens.peekChar())) {
+        break;
+      }
+
+      Token binop = tokens.parseChar();
+      cout << "Binop = " << binop << endl;
+      if (!isBinop(binop)) {
+        break;
+      }
+
+      //cout << "Adding binop " << binop << endl;
+      if (operatorStack.size() == 0) {
+        //cout << tab(1) << "Op stack empty " << binop << endl;      
+        operatorStack.push_back(binop);
+      } else if (precedence(binop) > precedence(operatorStack.back())) {
+        //cout << tab(1) << "Op has higher precedence " << binop << endl;      
+        operatorStack.push_back(binop);
+      } else {
+        while (true) {
+          Token topOp = operatorStack.back();
+          operatorStack.pop_back();
+
+          //cout << "Popping " << topOp << " from op stack" << endl;
+
+          postfixString.push_back(new IdentifierAST(topOp));
+        
+          if ((operatorStack.size() == 0) ||
+              (precedence(binop) > precedence(operatorStack.back()))) {
+            break;
+          }
+        }
+
+        operatorStack.push_back(binop);
+      }
+    }
+
+    if (operatorStack.size() == 0) {
+      assert(postfixString.size() == 1);
+      return postfixString[0];
+    }
+    // Pop and print all operators on the stack
+    //cout << "Adding ops" << endl;
+    // Reverse order of this?
+    for (auto op : operatorStack) {
+      //cout << tab(1) << "Popping operator " << op << endl;
+      postfixString.push_back(new IdentifierAST(op));
+    }
+
+    if (postfixString.size() == 0) {
+      return maybe<ExpressionAST*>();
+    }
+
+    //cout << "Building final value" << endl;
+    //cout << "Postfix string" << endl;
+    // for (auto s : postfixString) {
+    //   cout << tab(1) << *s << endl;
+    // }
+
+    ExpressionAST* final = popOperand(postfixString);
+    assert(postfixString.size() == 0);
+    assert(final != nullptr);
+
+    //cout << "Returning expression " << *final << endl;
+    return final;
+  }
+  
   maybe<ActivationAST*> parseActivation(ParseState<Token>& tokens) {
     try_consume("(", tokens);
     // TODO: Change to expression parsing
-    Token cond = tokens.parseChar();
+    //Token cond = tokens.parseChar();
+    auto condM = parseExpression(tokens);
+    if (!condM.has_value()) {
+      return {};
+    }
     try_consume(",", tokens);
 
     Token dest = tokens.parseChar();
