@@ -157,6 +157,9 @@ namespace CAC {
     return tokens;
   }
 
+  class LabelAST {
+  };
+  
   class StmtAST {
   };
 
@@ -255,8 +258,17 @@ namespace CAC {
 
     return new ActivationAST();
   }
+
+  maybe<LabelAST*> parseLabel(ParseState<Token>& tokens) {
+    exit_end(tokens);
+    Token name = tokens.parseChar();
+    try_consume(":", tokens);
+    return new LabelAST();
+  }
   
   maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
+    auto lbl = tryParse<LabelAST*>(parseLabel, tokens);
+
     cout << "Parsing instr at " << tokens.remainder() << endl;
     exit_end(tokens);
     Token lhs = tokens.parseChar();
