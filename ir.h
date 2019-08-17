@@ -305,7 +305,6 @@ namespace CAC {
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
     int defaultValue(const std::string& portName) {
-      cout << "Getting default for " << portName << endl;
       assert(contains_key(portName, defaultValues));
       return map_find(portName, defaultValues);
     }
@@ -318,7 +317,6 @@ namespace CAC {
 
     bool isDead(ModuleInstance* inst);
 
-    
     void setDefaultValue(const std::string& ptName, const int value) {
       defaultValues[ptName] = value;
     }
@@ -345,6 +343,7 @@ namespace CAC {
     void setVerilogDeclString(const std::string& other) {
       verilogDeclString = other;
     }
+
 
     std::map<string, int> getDefaultValues() const {
       return defaultValues;

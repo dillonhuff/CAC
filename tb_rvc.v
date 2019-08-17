@@ -8,7 +8,6 @@ module tb_rvc();
    reg valid;
    
    wire ready;
-   wire ready_en;
    
    initial begin
       #1 clk = 0;
@@ -47,7 +46,7 @@ module tb_rvc();
    end // initial begin
 
    always @(posedge clk) begin
-      $display("ready_en = %d", ready_en);
+      $display("ready_en = %d", rdy.en);
       
    end
 
