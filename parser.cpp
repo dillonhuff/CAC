@@ -577,8 +577,9 @@ namespace CAC {
     Context* c;
     Module* activeMod;
     CC* lastInstr;
+    StmtAST* lastStmt;
 
-    CodeGenState() : activeMod(nullptr), lastInstr(nullptr) {}
+    CodeGenState() : activeMod(nullptr), lastInstr(nullptr), lastStmt(nullptr) {}
   };
 
   Port genExpression(ExpressionAST* l,
@@ -591,6 +592,7 @@ namespace CAC {
     } else if (IntegerAST::classof(l)) {
       auto id = sc<IntegerAST>(l);
       int value = stoi(id->getName());
+      // TODO: Figure out widths via type inference?
       return c.activeMod->c(1, value);
     } else {
       cout << "Error: Unsupported expression kind" << endl;
@@ -599,7 +601,11 @@ namespace CAC {
   }
   
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
+    cout << "Generating code" << endl;
+    
     bool startOfSeq = c.lastInstr == nullptr;
+    CC* lastStmtEnd = c.lastInstr;
+    StmtAST* lastStmt = c.lastStmt;
 
     CC* fst;
     if (BeginAST::classof(body)) {
@@ -608,19 +614,21 @@ namespace CAC {
 
       fst = c.activeMod->addEmpty();
       c.lastInstr = fst;
+      c.lastStmt = body;
       
       for (auto stmt : bst->stmts) {
         genCode(stmt, c, t);
       }
 
       auto endB = c.activeMod->addEmpty();
-      c.lastInstr = endB;      
+      c.lastInstr = endB;
     } else if (GotoAST::classof(body)) {
       auto gt = c.activeMod->addEmpty();
       fst = gt;
       c.lastInstr = gt;
     } else {
       assert(ImpConnectAST::classof(body));
+      cout << "Generating codde for imp connect" << endl;
       // Get expressions out and generate code for them?
       auto icSt = sc<ImpConnectAST>(body);
       auto l = icSt->lhs;
@@ -632,11 +640,34 @@ namespace CAC {
       auto ic = c.activeMod->addInstruction(lPt, rPt);
       fst = ic;
       c.lastInstr = ic;
+      cout << "Done imp connect" << endl;      
     }
 
     if (startOfSeq) {
+      cout << "Is start of sequence" << endl;
       fst->setIsStartAction(true);
+    } else {
+      assert(lastStmtEnd != nullptr);
+      assert(lastStmt != nullptr);
+      assert(fst != nullptr);
+      assert(c.activeMod != nullptr);
+
+      cout << "Not start of sequence" << endl;
+      cout << "Kind of lastStmt = " << endl;
+      bool k = lastStmt->getKind();
+      cout << k << endl;
+      // If last statement was not a goto, then
+      if (!GotoAST::classof(lastStmt)) {
+        cout << "Last stmt not goto" << endl;      
+        cout << "Adding continuation..." << endl;
+        lastStmtEnd->continueTo(c.activeMod->c(1, 1), fst, 0);
+        cout << "Added continuation..." << endl;        
+      }
+      cout << "Finished adding continuation" << endl;
     }
+    c.lastStmt = body;
+
+    cout << "Done generating" << endl;
   }
 
   void lowerTLU(Context& c, TLU& t) {
