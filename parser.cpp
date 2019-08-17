@@ -445,7 +445,6 @@ namespace CAC {
   }
   
   maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
-    auto lbl = tryParse<LabelAST*>(parseLabel, tokens);
     auto gt = tryParse<GotoAST*>(parseGoto, tokens);
     if (gt.has_value()) {
       return gt.get_value();
@@ -476,16 +475,25 @@ namespace CAC {
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     cout << "Parsing stmt at " << tokens.remainder() << endl;
-    
+    auto lblM = tryParse<LabelAST*>(parseLabel, tokens);
+
     auto bM = tryParse<BeginAST*>(parseBegin, tokens);
     if (bM.has_value()) {
-      return bM.get_value();
+      auto s = bM.get_value();
+      if (lblM.has_value()) {
+        s->label = lblM.get_value();
+      }
+      return s;
     }
 
 
     auto instrM = tryParse<InstrAST*>(parseInstr, tokens);
     if (instrM.has_value()) {
-      return instrM.get_value();
+      auto s = instrM.get_value();
+      if (lblM.has_value()) {
+        s->label = lblM.get_value();
+      }
+      return s;
     }
 
     return {};

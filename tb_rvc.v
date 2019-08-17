@@ -45,7 +45,6 @@ module tb_rvc();
    end
 
    mod_register #(.WIDTH(1)) rdy(.clk(clk), .rst(rst));
-   
 
    rvc dut(.clk(clk), .rst(rst), .ready_reg(rdy.in), .ready_en(rdy.en), .valid(valid));
    
