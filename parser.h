@@ -180,19 +180,6 @@ namespace CAC {
   };
 
 
-  class DefaultAST : public StmtAST {
-  public:
-    ExpressionAST* pt;
-    ExpressionAST* val;
-    
-    DefaultAST(ExpressionAST* pt_, ExpressionAST* val_) : pt(pt_), val(val_) {}
-
-    virtual StmtKind getKind() const { return STMT_KIND_DEFAULT; }    
-    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_DEFAULT; }        
-
-  };
-    
-
   class InstrAST : public StmtAST {
   public:
   };
@@ -244,6 +231,7 @@ namespace CAC {
   
   enum BlockKind {
     BLOCK_KIND_SEQUENTIAL,
+    BLOCK_KIND_DEFAULT
   };
   
   class BlockAST {
@@ -251,6 +239,18 @@ namespace CAC {
     virtual BlockKind getKind() const = 0;
   };
 
+  class DefaultAST : public BlockAST {
+  public:
+    ExpressionAST* pt;
+    ExpressionAST* val;
+    
+    DefaultAST(ExpressionAST* pt_, ExpressionAST* val_) : pt(pt_), val(val_) {}
+
+    virtual BlockKind getKind() const { return BLOCK_KIND_DEFAULT; }    
+    static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_DEFAULT; }        
+
+  };
+    
   class SequenceBlockAST : public BlockAST{
   public:
 

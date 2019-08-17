@@ -29,7 +29,7 @@ module rvc(input [0:0] clk,
        output [31:0] ready_en,
        input [0:0] valid);
 
-       //default ready_en = 0;
+       default ready_en = 0;
        
        sequence @(posedge clk, synch rst) begin
                 ready_reg = 1;

@@ -466,7 +466,17 @@ namespace CAC {
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
 
   maybe<DefaultAST*> parseDefault(ParseState<Token>& tokens) {
-    return {};
+    exit_end(tokens);
+    try_consume("default", tokens);
+    auto lhs = parseExpression(tokens);
+    exit_failed(lhs);
+    try_consume("=", tokens);
+    auto rhs = parseExpression(tokens);
+    exit_failed(rhs);
+
+    try_consume(";", tokens);
+    
+    return new DefaultAST(lhs.get_value(), rhs.get_value());
   }
   
   maybe<BeginAST*> parseBegin(ParseState<Token>& tokens) {
@@ -484,15 +494,6 @@ namespace CAC {
     auto bM = tryParse<BeginAST*>(parseBegin, tokens);
     if (bM.has_value()) {
       auto s = bM.get_value();
-      if (lblM.has_value()) {
-        s->label = lblM.get_value();
-      }
-      return s;
-    }
-
-    auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
-    if (dM.has_value()) {
-      auto s = dM.get_value();
       if (lblM.has_value()) {
         s->label = lblM.get_value();
       }
@@ -539,6 +540,11 @@ namespace CAC {
   }
   
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
+    auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
+    if (dM.has_value()) {
+      return dM.get_value();
+    }
+    
     auto sBlockM = tryParse<SequenceBlockAST*>(parseSequence, tokens);
     if (sBlockM.has_value()) {
       return sBlockM.get_value();
@@ -785,6 +791,12 @@ namespace CAC {
           StmtAST* body = sblk->body;
           genCode(body, cgo, t);
           addGotos(body, cgo, t);
+        } else if (DefaultAST::classof(blk)) {
+          auto db = sc<DefaultAST>(blk);
+          auto id = db->pt;
+          int val = genConstExpression(db->val, cgo, t);
+        } else {
+          assert(false);
         }
       }
       cgo.activeMod = nullptr;
