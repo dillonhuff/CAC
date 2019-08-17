@@ -6,15 +6,6 @@ using namespace dbhc;
 
 namespace CAC {
 
-  // template<typename ResultType, typename InputType>
-  // dbhc::maybe<ResultType*> extractM(InputType* tp) {
-  //   if (ResultType::classof(tp)) {
-  //     return sc<ResultType>(tp);
-  //   }
-
-  //   return dbhc::maybe<ResultType*>();
-  // }
-
   int precedence(Token op) {
     map<string, int> prec{{"+", 100}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
     assert(contains_key(op.getStr(), prec));
@@ -176,58 +167,6 @@ namespace CAC {
 
     return tokens;
   }
-
-  class LabelAST {
-  };
-
-  class ExpressionAST {
-  };
-
-  class IdentifierAST : public ExpressionAST {
-    Token name;
-  public:
-    IdentifierAST(Token t) : name(t) {}
-    
-  };
-
-  class IntegerAST : public ExpressionAST {
-    Token name;
-  public:
-    IntegerAST(Token t) : name(t) {}
-    
-  };
-
-  class BinopAST : public ExpressionAST {
-  public:
-    BinopAST(ExpressionAST* a, ExpressionAST* b) {}
-  };
-  
-  class StmtAST {
-  };
-
-  class InstrAST : public StmtAST{
-  };
-
-  class ActivationAST {
-  };
-  
-  class BeginAST : public StmtAST {
-  };
-  
-  class PortAST {
-  public:
-  };
-
-  class BlockAST {
-  };
-
-  class EventAST {
-  };
-  
-  class ModuleAST {
-  public:
-    
-  };
 
 #define exit_end(tokens) if (tokens.atEnd()) { return {}; }
 #define try_consume(name, tokens) if (tokens.atEnd()) { return {}; } else if (tokens.peekChar() == Token(name)) { tokens.parseChar(); } else { return {}; }
@@ -562,7 +501,7 @@ namespace CAC {
     auto body = many<BlockAST*, Token>(parseBlock, tokens);
     try_consume("endmodule", tokens);
     
-    return new ModuleAST();
+    return new ModuleAST(modName);
   }
 
   void parseTokens(TLU& t, vector<Token>& tokens) {
@@ -571,6 +510,9 @@ namespace CAC {
     vector<ModuleAST*> mods =
       many<ModuleAST*>(parseModule, ps);
 
+    for (auto m : mods) {
+      t.modules.push_back(m);
+    }
     cout << "After parsing..." << endl;
     cout << ps.remainder() << endl;
     assert(ps.atEnd());
@@ -592,5 +534,10 @@ namespace CAC {
     return t;
   }
 
+  void lowerTLU(Context& c, TLU& t) {
+    for (auto mAST : t.modules) {
+      c.addCombModule(mAST->getName().getStr());
+    }
+  }
 
 }

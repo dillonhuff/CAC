@@ -2,14 +2,14 @@
 
 #include <sstream>
 
-#include "algorithm.h"
+#include "ir.h"
 
 using namespace dbhc;
 using namespace std;
 
 namespace CAC {
 
-    enum TokenType {
+  enum TokenType {
     TOKEN_TYPE_ID,
     TOKEN_TYPE_NUM,
     TOKEN_TYPE_SYMBOL,
@@ -75,7 +75,63 @@ namespace CAC {
   bool operator!=(const Token& a, const Token& b) {
     return !(a == b);
   }
+
+  class LabelAST {
+  };
+
+  class ExpressionAST {
+  };
+
+  class IdentifierAST : public ExpressionAST {
+    Token name;
+  public:
+    IdentifierAST(Token t) : name(t) {}
+    
+  };
+
+  class IntegerAST : public ExpressionAST {
+    Token name;
+  public:
+    IntegerAST(Token t) : name(t) {}
+    
+  };
+
+  class BinopAST : public ExpressionAST {
+  public:
+    BinopAST(ExpressionAST* a, ExpressionAST* b) {}
+  };
   
+  class StmtAST {
+  };
+
+  class InstrAST : public StmtAST{
+  };
+
+  class ActivationAST {
+  };
+  
+  class BeginAST : public StmtAST {
+  };
+  
+  class PortAST {
+  public:
+  };
+
+  class BlockAST {
+  };
+
+  class EventAST {
+  };
+  
+  class ModuleAST {
+    Token name;
+  public:
+
+    ModuleAST(Token n) : name(n) {}
+
+    Token getName() const { return name; }
+  };
+
   static inline
   bool oneCharToken(const char c) {
     vector<char> chars = {'{', '}', ';', ')', '(', ',', '[', ']', ':', '-', '&', '+', '=', '>', '<', '*', '.', '%', '@', '!'};
@@ -136,6 +192,8 @@ namespace CAC {
   typedef ParseState<char> TokenState;
 
   class TranslationUnit {
+  public:
+    vector<ModuleAST*> modules;
   };
 
   typedef TranslationUnit TLU;
@@ -203,4 +261,6 @@ namespace CAC {
   }
   
   TLU parseTLU(const std::string& str);
+
+  void lowerTLU(Context& c, TLU& t);
 }

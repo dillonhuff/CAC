@@ -60,8 +60,10 @@ int main() {
 
   {
     TLU t = parseTLU("./rv.iv");
-    
-    assert(false);
+    Context c;
+    lowerTLU(c, t);
+
+    emitVerilog(c, c.getModule("rvc"));
   }
   
   {
