@@ -570,17 +570,29 @@ namespace CAC {
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
     bool startOfSeq = c.lastInstr == nullptr;
 
+    CC* fst;
     if (BeginAST::classof(body)) {
       // Get body and generate each statement in it
       auto bst = sc<BeginAST>(body);
+
+      fst = c.activeMod->addEmpty();
       for (auto stmt : bst->stmts) {
         genCode(stmt, c, t);
       }
+
+      auto endB = c.activeMod->addEmpty();
+      c.lastInstr = endB;
     } else if (GotoAST::classof(body)) {
-      c.activeMod->addEmpty();
+      auto gt = c.activeMod->addEmpty();
+      fst = gt;
     } else {
       assert(ImpConnectAST::classof(body));
-      c.activeMod->addEmpty();      
+      auto ic = c.activeMod->addEmpty();
+      fst = ic;
+    }
+
+    if (startOfSeq) {
+      fst->setIsStartAction(true);
     }
   }
 
