@@ -558,7 +558,29 @@ namespace CAC {
     return t;
   }
 
+  class CodeGenState {
+  public:
+    Context* c;
+  };
+  
+  void genCode(StmtAST* body, Context& c, TLU& t) {
+    if (BeginAST::classof(body)) {
+      // Get body and generate each statement in it
+      auto bst = sc<BeginAST>(body);
+      for (auto stmt : bst->stmts) {
+        genCode(stmt, c, t);
+      }
+    } else if (GotoAST::classof(body)) {
+      //c->addEmpty();
+    } else {
+      assert(ImpConnectAST::classof(body));
+      //c->addEmpty();      
+    }
+  }
+
   void lowerTLU(Context& c, TLU& t) {
+    CodeGenState cgo;
+    cgo.c = &c;
     for (auto mAST : t.modules) {
       auto m = c.addCombModule(mAST->getName().getStr());
       for (auto pAST : mAST->ports) {
@@ -574,7 +596,7 @@ namespace CAC {
         if (SequenceBlockAST::classof(blk)) {
           auto sblk = sc<SequenceBlockAST>(blk);
           StmtAST* body = sblk->body;
-          
+          genCode(body, c, t);
         }
       }
     }

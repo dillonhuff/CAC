@@ -162,12 +162,13 @@ namespace CAC {
   class GotoAST : public InstrAST {
   public:
     virtual StmtKind getKind() const { return STMT_KIND_GOTO; }    
-    
+    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_GOTO; }        
   };
 
   class ImpConnectAST : public InstrAST {
   public:
-    virtual StmtKind getKind() const { return STMT_KIND_ICONNECT; }    
+    virtual StmtKind getKind() const { return STMT_KIND_ICONNECT; }
+    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_ICONNECT; }    
   };
   
   class BeginAST : public StmtAST {
@@ -176,6 +177,7 @@ namespace CAC {
 
     BeginAST(vector<StmtAST*> stmts_) : stmts(stmts_) {}
     virtual StmtKind getKind() const { return STMT_KIND_BEGIN; }
+    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_BEGIN; }
   };
   
   class PortAST {
