@@ -541,6 +541,8 @@ namespace CAC {
       for (auto pAST : mAST->ports) {
         if (pAST->isInput) {
           m->addInPort(pAST->width, pAST->getName());
+        } else {
+          m->addOutPort(pAST->width, pAST->getName());          
         }
       }
     }
