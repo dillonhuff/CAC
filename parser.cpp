@@ -427,11 +427,8 @@ namespace CAC {
     try_consume(":", tokens);
     return new LabelAST();
   }
-  
-  maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
-    auto lbl = tryParse<LabelAST*>(parseLabel, tokens);
 
-    cout << "Parsing instr at " << tokens.remainder() << endl;
+  maybe<GotoAST*> parseGoto(ParseState<Token>& tokens) {
     exit_end(tokens);
     Token lhs = tokens.parseChar();
     if (lhs == Token("goto")) {
@@ -443,10 +440,23 @@ namespace CAC {
       return new GotoAST();
     }
 
+    return {};
+  }
+  
+  maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
+    auto lbl = tryParse<LabelAST*>(parseLabel, tokens);
+    auto gt = tryParse<GotoAST*>(parseGoto, tokens);
+    if (gt.has_value()) {
+      return gt.get_value();
+    }
+    cout << "Parsing instr at " << tokens.remainder() << endl;
+
+    exit_end(tokens);
+    Token lhs = tokens.parseChar();
     try_consume("=", tokens);
     // TODO: Change to parse expression
     Token rhs = tokens.parseChar();
-    try_consume(";", tokens);    
+    try_consume(";", tokens);
     return new ImpConnectAST();
   }
   
@@ -587,7 +597,7 @@ namespace CAC {
     } else if (GotoAST::classof(body)) {
       auto gt = c.activeMod->addEmpty();
       fst = gt;
-      c.lastInstr = gt;      
+      c.lastInstr = gt;
     } else {
       assert(ImpConnectAST::classof(body));
       auto ic = c.activeMod->addEmpty();
