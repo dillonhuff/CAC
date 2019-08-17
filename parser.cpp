@@ -157,6 +157,15 @@ namespace CAC {
     return tokens;
   }
 
+  class StmtAST {
+  };
+
+  class InstrAST : public StmtAST{
+  };
+  
+  class BeginAST : public StmtAST {
+  };
+  
   class PortAST {
   public:
   };
@@ -172,6 +181,7 @@ namespace CAC {
     
   };
 
+#define exit_end(tokens) if (tokens.atEnd()) { return {}; }
 #define try_consume(name, tokens) if (tokens.atEnd()) { return {}; } else if (tokens.peekChar() == Token(name)) { tokens.parseChar(); } else { return {}; }
 
   maybe<PortAST*> parsePortDecl(ParseState<Token>& tokens) {
@@ -227,7 +237,45 @@ namespace CAC {
 
     return {};
   }
+
+  maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
+    cout << "Parsing instr at " << tokens.remainder() << endl;
+    exit_end(tokens);
+    Token lhs = tokens.parseChar();
+    try_consume("=", tokens);
+    // TODO: Change to parse expression
+    Token rhs = tokens.parseChar();
+    try_consume(";", tokens);    
+    return new InstrAST();
+  }
   
+  maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
+  
+  maybe<BeginAST*> parseBegin(ParseState<Token>& tokens) {
+    try_consume("begin", tokens);
+    auto stmts = many<StmtAST*>(parseStmt, tokens);
+    try_consume("end", tokens);
+
+    return new BeginAST();
+  }
+  
+  maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
+    cout << "Parsing stmt at " << tokens.remainder() << endl;
+    
+    auto bM = tryParse<BeginAST*>(parseBegin, tokens);
+    if (bM.has_value()) {
+      return bM.get_value();
+    }
+
+
+    auto instrM = tryParse<InstrAST*>(parseInstr, tokens);
+    if (instrM.has_value()) {
+      return instrM.get_value();
+    }
+
+    return {};
+  }
+    
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
     // Sequence block or declaration
     try_consume("sequence", tokens);
@@ -247,8 +295,11 @@ namespace CAC {
     try_consume(")", tokens);
 
     // Turn in to parsing a statement
-    try_consume("begin", tokens);
-    try_consume("end", tokens);            
+    auto stmtM = tryParse<StmtAST*>(parseStmt, tokens);
+    if (!stmtM.has_value()) {
+      return {};
+    }
+
     return new BlockAST();
   }
   
