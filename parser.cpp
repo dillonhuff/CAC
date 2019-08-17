@@ -589,7 +589,8 @@ namespace CAC {
 
     map<string, StmtAST*> labelMap;
     map<StmtAST*, CC*> stmtStarts;
-
+    map<StmtAST*, CC*> stmtEnds;
+    
     CodeGenState() : activeMod(nullptr), lastInstr(nullptr), lastStmt(nullptr) {}
 
     CC* getStartForLabel(const std::string& name) {
@@ -622,10 +623,33 @@ namespace CAC {
       int value = stoi(id->getName());
       // TODO: Figure out widths via type inference?
       return c.activeMod->c(1, value);
+    } else if (BinopAST::classof(l)) {
+      assert(false);
     } else {
       cout << "Error: Unsupported expression kind" << endl;
       assert(false);
     }
+  }
+
+  void addGotos(StmtAST* body, CodeGenState& c, TLU& t) {
+    if (BeginAST::classof(body)) {
+      auto bst = sc<BeginAST>(body);
+      for (auto stmt : bst->stmts) {
+        addGotos(stmt, c, t);
+      }
+    } else if (GotoAST::classof(body)) {
+      auto gts = sc<GotoAST>(body);
+      auto gt = map_find(body, c.stmtStarts);
+      for (auto act : gts->continuations) {
+        Port cond = genExpression(act->cond, c, t);
+        int delay = genConstExpression(act->delay, c, t);
+        CC* dest = c.getStartForLabel(act->destLabel.getStr());
+        gt->continueTo(cond, dest, delay);
+      }
+
+    } else {
+    }
+
   }
   
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
@@ -641,6 +665,8 @@ namespace CAC {
       auto bst = sc<BeginAST>(body);
 
       fst = c.activeMod->addEmpty();
+      c.stmtStarts[body] = fst;
+
       c.lastInstr = fst;
       c.lastStmt = body;
       
@@ -653,15 +679,11 @@ namespace CAC {
     } else if (GotoAST::classof(body)) {
       auto gts = sc<GotoAST>(body);
       auto gt = c.activeMod->addEmpty();
+      c.stmtStarts[body] = gt;      
       fst = gt;
       c.lastInstr = gt;
 
-      for (auto act : gts->continuations) {
-        Port cond = genExpression(act->cond, c, t);
-        int delay = genConstExpression(act->delay, c, t);
-        CC* dest = c.getStartForLabel(act->destLabel.getStr());
-        gt->continueTo(cond, dest, delay);
-      }
+      // Continuations are added after all code has been generated
 
     } else {
       assert(ImpConnectAST::classof(body));
@@ -675,6 +697,7 @@ namespace CAC {
       Port rPt = genExpression(r, c, t);      
 
       auto ic = c.activeMod->addInstruction(lPt, rPt);
+      c.stmtStarts[body] = ic;      
       fst = ic;
       c.lastInstr = ic;
       cout << "Done imp connect" << endl;      
@@ -689,27 +712,18 @@ namespace CAC {
       assert(fst != nullptr);
       assert(c.activeMod != nullptr);
 
-      cout << "Not start of sequence" << endl;
-      cout << "Kind of lastStmt = " << endl;
-      bool k = lastStmt->getKind();
-      cout << k << endl;
-      // If last statement was not a goto, then
       if (!GotoAST::classof(lastStmt)) {
-        cout << "Last stmt not goto" << endl;      
-        cout << "Adding continuation..." << endl;
         lastStmtEnd->continueTo(c.activeMod->c(1, 1), fst, 0);
-        cout << "Added continuation..." << endl;        
       }
-      cout << "Finished adding continuation" << endl;
     }
     c.lastStmt = body;
 
     if (body->label != nullptr) {
+      cout << "Adding label " << body->label->getName() << " to map" << endl;
       assert(!contains_key(body->label->getName(), c.labelMap));
       c.labelMap[body->label->getName()] = body;
     }
 
-    cout << "Done generating" << endl;
   }
 
   void lowerTLU(Context& c, TLU& t) {
@@ -732,6 +746,7 @@ namespace CAC {
           auto sblk = sc<SequenceBlockAST>(blk);
           StmtAST* body = sblk->body;
           genCode(body, cgo, t);
+          addGotos(body, cgo, t);
         }
       }
       cgo.activeMod = nullptr;
