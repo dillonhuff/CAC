@@ -438,7 +438,7 @@ namespace CAC {
         sepBtwn0<ActivationAST*, Token>(parseActivation, parseComma, tokens);
 
       try_consume(";", tokens);
-      return new GotoAST();
+      return new GotoAST(activations);
     }
 
     return {};
@@ -626,6 +626,8 @@ namespace CAC {
       auto gt = c.activeMod->addEmpty();
       fst = gt;
       c.lastInstr = gt;
+      //for (auto 
+
     } else {
       assert(ImpConnectAST::classof(body));
       cout << "Generating codde for imp connect" << endl;

@@ -162,6 +162,10 @@ namespace CAC {
 
   class GotoAST : public InstrAST {
   public:
+
+    vector<ActivationAST*> continuations;
+    GotoAST(vector<ActivationAST*>& conts_) : continuations(conts_) {}
+    
     virtual StmtKind getKind() const { return STMT_KIND_GOTO; }    
     static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_GOTO; }        
   };
