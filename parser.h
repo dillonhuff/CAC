@@ -190,10 +190,34 @@ namespace CAC {
     string getName() const { return id.getStr(); }
   };
 
+  class EventAST {
+  };
+  
+  enum BlockKind {
+    BLOCK_KIND_SEQUENTIAL,
+  };
+  
   class BlockAST {
+  public:
+    virtual BlockKind getKind() const = 0;
   };
 
-  class EventAST {
+  class SequenceBlockAST : public BlockAST{
+  public:
+
+    EventAST* clk;
+    EventAST* rst;
+    StmtAST* body;
+    
+    SequenceBlockAST(EventAST* syn_, EventAST* rst_, StmtAST* body_) :
+      clk(syn_), rst(rst_), body(body_) {}
+    
+    virtual BlockKind getKind() const { return BLOCK_KIND_SEQUENTIAL; }
+
+
+    static bool classof(const BlockAST* const blk) {
+      return blk->getKind() == BLOCK_KIND_SEQUENTIAL;
+    }
   };
   
   class ModuleAST {

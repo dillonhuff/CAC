@@ -476,8 +476,8 @@ namespace CAC {
 
     return {};
   }
-    
-  maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
+
+  maybe<SequenceBlockAST*> parseSequence(ParseState<Token>& tokens) {
     // Sequence block or declaration
     try_consume("sequence", tokens);
     try_consume("@", tokens);
@@ -501,7 +501,16 @@ namespace CAC {
       return {};
     }
 
-    return new BlockAST();
+    return new SequenceBlockAST(synchM.get_value(), rstM.get_value(), stmtM.get_value());
+  }
+  
+  maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
+    auto sBlockM = tryParse<SequenceBlockAST*>(parseSequence, tokens);
+    if (sBlockM.has_value()) {
+      return sBlockM.get_value();
+    }
+
+    return {};
   }
   
   maybe<ModuleAST*> parseModule(ParseState<Token>& tokens) {
@@ -561,7 +570,12 @@ namespace CAC {
       }
 
       for (auto blk : mAST->blocks) {
-        m->addEmpty();
+        
+        if (SequenceBlockAST::classof(blk)) {
+          auto sblk = sc<SequenceBlockAST>(blk);
+          StmtAST* body = sblk->body;
+          
+        }
       }
     }
   }
