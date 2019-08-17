@@ -576,19 +576,24 @@ namespace CAC {
       auto bst = sc<BeginAST>(body);
 
       fst = c.activeMod->addEmpty();
+      c.lastInstr = fst;
+      
       for (auto stmt : bst->stmts) {
         genCode(stmt, c, t);
       }
 
       auto endB = c.activeMod->addEmpty();
-      c.lastInstr = endB;
+      c.lastInstr = endB;      
     } else if (GotoAST::classof(body)) {
       auto gt = c.activeMod->addEmpty();
       fst = gt;
+      c.lastInstr = gt;      
     } else {
       assert(ImpConnectAST::classof(body));
       auto ic = c.activeMod->addEmpty();
       fst = ic;
+
+      c.lastInstr = ic;
     }
 
     if (startOfSeq) {
