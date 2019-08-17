@@ -305,6 +305,7 @@ namespace CAC {
     Module(const std::string name_) : isPrimitive(false), name(name_), uniqueNum(0) {}
 
     int defaultValue(const std::string& portName) {
+      cout << "Getting default for " << portName << endl;
       assert(contains_key(portName, defaultValues));
       return map_find(portName, defaultValues);
     }

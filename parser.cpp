@@ -794,7 +794,12 @@ namespace CAC {
         } else if (DefaultAST::classof(blk)) {
           auto db = sc<DefaultAST>(blk);
           auto id = db->pt;
+          assert(IdentifierAST::classof(id));
+          auto ids = sc<IdentifierAST>(id)->getName();
+          Port pt = cgo.activeMod->ipt(ids);
           int val = genConstExpression(db->val, cgo, t);
+          cout << "Setting default value of " << pt << " to " << val << endl;
+          cgo.activeMod->setDefaultValue(pt.getName(), val);
         } else {
           assert(false);
         }

@@ -1,28 +1,3 @@
-module reg_1(input [0:0] clk,
-       input [0:0] rst,
-       output [0:0] data,
-       input [0:0] en,
-       input [0:0] in);
-
-       // external;
-
-       // default en = 0;
-
-       // module set(input [0:0] value); begin
-       //        sequential @(posedge clk, synch rst) begin
-       //                   en = 1;
-       //                   data = value;
-       //        end
-       // end
-
-       // module read(output [0:0] out); begin
-       //        sequential @(posedge clk, synch rst) begin
-       //                   out = data;
-       //        end
-       // end
-       
-endmodule
-
 module rvc(input [0:0] clk,
        input [0:0] rst,
        output [31:0] ready_reg,

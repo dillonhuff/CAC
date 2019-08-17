@@ -24,7 +24,14 @@ namespace CAC {
   }
   
   int Port::defaultValue() {
-    Module* src = inst->source == nullptr ? selfType : inst->source;
+    cout << "Getting default for " << portName << endl;
+    Module* src = (inst == nullptr || inst->source == nullptr) ?
+      selfType : inst->source;
+    cout << "Found src" << endl;
+    
+    assert(src != nullptr);
+    cout << "Getting default value for " << endl;
+    cout << *this << endl;
     return src->defaultValue(getName());
   }
 
