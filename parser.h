@@ -115,6 +115,14 @@ namespace CAC {
   
   class PortAST {
   public:
+    bool isInput;
+    int width;
+    Token id;
+
+    PortAST(bool isInput_, const int width_, const Token id_) :
+      isInput(isInput_), width(width_), id(id_) {}
+
+    string getName() const { return id.getStr(); }
   };
 
   class BlockAST {
@@ -125,9 +133,11 @@ namespace CAC {
   
   class ModuleAST {
     Token name;
-  public:
 
-    ModuleAST(Token n) : name(n) {}
+  public:
+    vector<PortAST*> ports;
+
+    ModuleAST(Token n, vector<PortAST*>& pts) : name(n), ports(pts) {}
 
     Token getName() const { return name; }
   };

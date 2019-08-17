@@ -194,7 +194,7 @@ namespace CAC {
       try_consume("]", tokens);
 
       Token name = tokens.parseChar();
-      return new PortAST();
+      return new PortAST(isInput, 1, name);
     }
 
     return {};
@@ -495,13 +495,14 @@ namespace CAC {
     Token modName = tokens.parseChar();
     try_consume("(", tokens);
     auto ports = sepBtwn0<PortAST*, Token>(parsePortDecl, parseComma, tokens);
+    cout << "# of ports = " << ports.size() << endl;
     try_consume(")", tokens);
     try_consume(";", tokens);
 
     auto body = many<BlockAST*, Token>(parseBlock, tokens);
     try_consume("endmodule", tokens);
     
-    return new ModuleAST(modName);
+    return new ModuleAST(modName, ports);
   }
 
   void parseTokens(TLU& t, vector<Token>& tokens) {
@@ -536,7 +537,12 @@ namespace CAC {
 
   void lowerTLU(Context& c, TLU& t) {
     for (auto mAST : t.modules) {
-      c.addCombModule(mAST->getName().getStr());
+      auto m = c.addCombModule(mAST->getName().getStr());
+      for (auto pAST : mAST->ports) {
+        if (pAST->isInput) {
+          m->addInPort(pAST->width, pAST->getName());
+        }
+      }
     }
   }
 
