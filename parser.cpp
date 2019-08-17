@@ -160,6 +160,12 @@ namespace CAC {
   class PortAST {
   public:
   };
+
+  class BlockAST {
+  };
+
+  class EventAST {
+  };
   
   class ModuleAST {
   public:
@@ -187,6 +193,64 @@ namespace CAC {
 
     return {};
   }
+
+  maybe<EventAST*> parseReset(ParseState<Token>& tokens) {
+    if (tokens.atEnd()) {
+      return {};
+    }
+
+    Token n = tokens.peekChar();
+    if (n == Token("posedge") ||
+        n == Token("negedge") ||
+        n == Token("synch")) {
+      tokens.parseChar();
+      Token sig = tokens.parseChar();
+      return new EventAST();
+    }
+
+    return {};
+
+  }
+  
+  maybe<EventAST*> parseEvent(ParseState<Token>& tokens) {
+    if (tokens.atEnd()) {
+      return {};
+    }
+
+    Token n = tokens.peekChar();
+    if (n == Token("posedge") ||
+        n == Token("negedge")) {
+      tokens.parseChar();
+      Token sig = tokens.parseChar();
+      return new EventAST();
+    }
+
+    return {};
+  }
+  
+  maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
+    // Sequence block or declaration
+    try_consume("sequence", tokens);
+    try_consume("@", tokens);
+    try_consume("(", tokens);
+    auto synchM = parseEvent(tokens);
+    if (!synchM.has_value()) {
+      return {};
+    }
+
+    try_consume(",", tokens);
+    
+    auto rstM = parseReset(tokens);
+    if (!rstM.has_value()) {
+      return {};
+    }
+    try_consume(")", tokens);
+
+    // Turn in to parsing a statement
+    try_consume("begin", tokens);
+    try_consume("end", tokens);            
+    return new BlockAST();
+  }
   
   maybe<ModuleAST*> parseModule(ParseState<Token>& tokens) {
     try_consume("module", tokens);
@@ -195,6 +259,8 @@ namespace CAC {
     auto ports = sepBtwn0<PortAST*, Token>(parsePortDecl, parseComma, tokens);
     try_consume(")", tokens);
     try_consume(";", tokens);
+
+    auto body = many<BlockAST*, Token>(parseBlock, tokens);
     try_consume("endmodule", tokens);
     
     return new ModuleAST();
@@ -206,6 +272,8 @@ namespace CAC {
     vector<ModuleAST*> mods =
       many<ModuleAST*>(parseModule, ps);
 
+    cout << "After parsing..." << endl;
+    cout << ps.remainder() << endl;
     assert(ps.atEnd());
   }
   
