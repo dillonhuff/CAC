@@ -63,7 +63,16 @@ int main() {
     Context c;
     lowerTLU(c, t);
 
-    emitVerilog(c, c.getModule("rvc"));
+    auto m = c.getModule("rvc");
+    inlineInvokes(m);
+    synthesizeDelays(m);
+    deleteNoEffectInstructions(m);        
+    synthesizeChannels(m);
+    reduceStructures(m);
+    deleteNoEffectInstructions(m);    
+    deleteDeadResources(m);
+    
+    emitVerilog(c, m);
     assert(runIVerilogTB("rvc"));
   }
   

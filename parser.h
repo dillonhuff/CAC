@@ -134,7 +134,12 @@ namespace CAC {
 
   class BinopAST : public ExpressionAST {
   public:
-    BinopAST(ExpressionAST* a, ExpressionAST* b) {}
+    ExpressionAST* a;
+    string op;
+    ExpressionAST* b;
+    
+    BinopAST(ExpressionAST* a_, string op_, ExpressionAST* b_) :
+      a(a_), op(op_), b(b_) {}
 
     static
     bool classof(const ExpressionAST* const expr) {

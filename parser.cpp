@@ -313,7 +313,7 @@ namespace CAC {
     if (idM.has_value() && isBinop(idM.get_value()->getName())) {
       auto rhs = popOperand(postfixString);
       auto lhs = popOperand(postfixString);
-      return new BinopAST(lhs, rhs);
+      return new BinopAST(lhs, idM.get_value()->getName(), rhs);
       //return new BinopAST(lhs, idM.get_value()->getName(), rhs);
     }
 
@@ -624,7 +624,33 @@ namespace CAC {
       // TODO: Figure out widths via type inference?
       return c.activeMod->c(1, value);
     } else if (BinopAST::classof(l)) {
-      assert(false);
+      auto bop = sc<BinopAST>(l);
+      string op = bop->op;
+      cout << "Operand is " << op << endl;
+
+      Port lhs = genExpression(bop->a, c, t);
+      Port rhs = genExpression(bop->b, c, t);
+
+      if (op == "==") {
+        // TODO: Compute width
+        auto& context = *(c.activeMod->getContext());
+        auto wMod = getWireMod(context, 1);
+        auto tmpWire = c.activeMod->freshInstance(wMod, "cmp_tmp");
+        
+        auto compMod = addComparator(context, "eq", 1);
+        auto cmp =
+          c.activeMod->freshInstance(compMod, "cmp");
+        auto inv = c.activeMod->addInvokeInstruction(cmp->action("apply"));
+        bindByType(inv, cmp);
+        inv->bind("in0", lhs);
+        inv->bind("in1", rhs);
+        inv->bind("out", tmpWire->pt("in"));
+
+        return tmpWire->pt("out");
+      } else {
+        cout << "Error: Unsupported binop " << op << endl;
+        assert(false);
+      }
     } else {
       cout << "Error: Unsupported expression kind" << endl;
       assert(false);
