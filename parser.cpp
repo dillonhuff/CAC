@@ -162,6 +162,9 @@ namespace CAC {
 
   class InstrAST : public StmtAST{
   };
+
+  class ActivationAST {
+  };
   
   class BeginAST : public StmtAST {
   };
@@ -238,10 +241,34 @@ namespace CAC {
     return {};
   }
 
+  maybe<ActivationAST*> parseActivation(ParseState<Token>& tokens) {
+    try_consume("(", tokens);
+    // TODO: Change to expression parsing
+    Token cond = tokens.parseChar();
+    try_consume(",", tokens);
+
+    Token dest = tokens.parseChar();
+    try_consume(",", tokens);
+
+    Token delay = tokens.parseChar();
+    try_consume(")", tokens);    
+
+    return new ActivationAST();
+  }
+  
   maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
     cout << "Parsing instr at " << tokens.remainder() << endl;
     exit_end(tokens);
     Token lhs = tokens.parseChar();
+    if (lhs == Token("goto")) {
+      cout << "parsing goto at " << tokens.remainder() << endl;
+      auto activations =
+        sepBtwn0<ActivationAST*, Token>(parseActivation, parseComma, tokens);
+
+      try_consume(";", tokens);
+      return new InstrAST();
+    }
+
     try_consume("=", tokens);
     // TODO: Change to parse expression
     Token rhs = tokens.parseChar();
