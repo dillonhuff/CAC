@@ -52,7 +52,7 @@ module test();
       #1 clk = 0;
 
       $display("invalid result = %d", result);
-      `assert(result, 17)
+      `assert(result, 0)
 
       #10
 
