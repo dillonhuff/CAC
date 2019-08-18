@@ -246,9 +246,45 @@ namespace CAC {
     }
   }
 
+  bool isConstant(ModuleInstance* inst) {
+    return hasPrefix(inst->source->getName(), "const_");
+  }
+
+  std::string drop(std::string pattern, const std::string& name) {
+    size_t pos = name.find(pattern);
+    if (pos == std::string::npos) {
+      return name;
+    }
+
+    return name.substr(pos + pattern.size());
+  }
+
+  std::string takeUntil(std::string pattern, const std::string& name) {
+    size_t pos = name.find(pattern);
+    return name.substr(0, pos);
+  }
+  
+  string verilogConstString(ModuleInstance* inst) {
+    assert(isConstant(inst));
+    string nm = inst->source->getName();
+    string rest = drop("const_", nm);
+    string width = takeUntil("_", rest);
+    reverse(rest);
+    string val = takeUntil("_", rest);
+    reverse(val);
+
+    return width + "'d" + val;
+  }
+
   string verilogString(const Port pt, Module* m) {
     if (pt.inst != nullptr) {
-      return pt.inst->getName() + "_" + pt.getName();
+      ModuleInstance* inst = pt.inst;
+      if (isConstant(inst)) {
+        return verilogConstString(inst);
+        //return pt.inst->getName() + "_" + pt.getName();
+      } else {
+        return pt.inst->getName() + "_" + pt.getName();
+      }
     } else {
       return pt.getName();
     }
@@ -393,27 +429,29 @@ namespace CAC {
     out << "\t// --- Start of resource list" << endl << endl;
     
     for (auto r : m->getResources()) {
-      out << "\t// Module for " << r->getName() << endl;
-      //auto pts = r->source->getInterfacePorts();
-      auto pts = r->getPorts();
+      if (!isConstant(r)) {
+        out << "\t// Module for " << r->getName() << endl;
+        //auto pts = r->source->getInterfacePorts();
+        auto pts = r->getPorts();
 
-      for (auto pt : pts) {
-        if (shouldBeWire(pt, m)) {
-          out << "\twire " << "[ " << pt.getWidth() - 1 << " : 0 ] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
-        } else {
-          out << "\treg " << "[ " << pt.getWidth() - 1 << " : 0] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+        for (auto pt : pts) {
+          if (shouldBeWire(pt, m)) {
+            out << "\twire " << "[ " << pt.getWidth() - 1 << " : 0 ] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+          } else {
+            out << "\treg " << "[ " << pt.getWidth() - 1 << " : 0] " << verilogString(r->pt(pt.getName()), m) << ";" << endl;
+          }
         }
-      }
-      out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
+        out << "\t" << moduleDecl(r->source) + " " + r->getName() + "(";
 
-      for (int i = 0; i < (int) pts.size(); i++) {
-        out << "." << pts[i].getName() << "(" << verilogString(r->pt(pts[i].getName()), m) << ")";
-        if (i < ((int) pts.size() - 1)) {
-          out << ", ";
+        for (int i = 0; i < (int) pts.size(); i++) {
+          out << "." << pts[i].getName() << "(" << verilogString(r->pt(pts[i].getName()), m) << ")";
+          if (i < ((int) pts.size() - 1)) {
+            out << ", ";
+          }
         }
-      }
       
-      out << ");" << endl << endl;
+        out << ");" << endl << endl;
+      }
     }
 
     out << endl;
