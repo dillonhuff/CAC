@@ -30,7 +30,8 @@ module toggle(input [0:0] clk,
 	output [0:0] value);
 
 	reg1 v;
-
+	assign v.clk = clk;
+	assign v.rst = rst;
 	assign toggle = v.data;
 
 	sequence @(posedge clk, synch rst) begin
