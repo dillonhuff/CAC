@@ -48,6 +48,8 @@ namespace CAC {
       return width;
     }
 
+    std::string toString() const;
+
     std::string getName() const {
       return portName;
     }

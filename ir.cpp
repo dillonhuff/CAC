@@ -66,7 +66,10 @@ namespace CAC {
     return w;
   }
 
-  
+ 
+ 	std::string Port::toString() const {
+		return (inst == nullptr ? "self." : (inst->getName() + ".")) + getName() + "[" + (isInput ? "in" : "out") + " : " + to_string(getWidth()) + "]";
+	}	
   std::ostream& operator<<(std::ostream& out, const Port& pt) {
     out << (pt.inst == nullptr ? "self." : (pt.inst->getName() + ".")) << pt.getName() << "[" << (pt.isInput ? "in" : "out") << " : " << pt.getWidth() << "]";
     return out;
@@ -404,6 +407,10 @@ namespace CAC {
     return succ;
   }
 
+  string assertString(const std::string& cond, const std::string& msg) {
+	  return "if (!" + cond + ") begin $display(\"Assertion FAILED: " + cond + ", " + msg + "\"); $finish(1); end";
+  }
+
   string assertString(const std::string& cond) {
   	return "if (!" + cond + ") begin $display(\"Assertion FAILED: " + cond + "\"); $finish(1); end";
   }
@@ -547,13 +554,12 @@ namespace CAC {
 	 nonResetConds.push_back({predString, src});
        }
 
-       // Add assertions to check that the nonResetConds do not overlap?
-
       out << "\talways @(posedge clk) begin" << endl; 
        for (auto rstCond0 : nonResetConds) {
 	       for (auto rstCond1 : nonResetConds) {
 		       if (rstCond0.first != rstCond1.first) {
-			       out << "\t\t" << assertString(parens("!" + parens(rstCond0.first + " && " + rstCond1.first))) << ";" << endl;
+			       string failStr = "Setting port: " + pt.toString() + " from multiple instructions...";
+			       out << "\t\t" << assertString(parens("!" + parens(rstCond0.first + " && " + rstCond1.first)), failStr) << ";" << endl;
 		       }
 	       } 
        
