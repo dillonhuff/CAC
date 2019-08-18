@@ -404,6 +404,10 @@ namespace CAC {
     return succ;
   }
 
+  string assertString(const std::string& cond) {
+  	return "if (!" + cond + ") begin $display(\"Assertion FAILED: " + cond + "\"); $finish(1); end";
+  }
+
   void emitVerilog(Context& c, Module* m) {
     ofstream out(m->getName() + ".v");
     out << "module " << m->getName() << "(" << endl;
@@ -543,7 +547,30 @@ namespace CAC {
 	 nonResetConds.push_back({predString, src});
        }
 
-      
+       // Add assertions to check that the nonResetConds do not overlap?
+
+      out << "\talways @(posedge clk) begin" << endl; 
+       for (auto rstCond0 : nonResetConds) {
+	       for (auto rstCond1 : nonResetConds) {
+		       if (rstCond0.first != rstCond1.first) {
+			       out << "\t\t" << assertString(parens("!" + parens(rstCond0.first + " && " + rstCond1.first))) << ";" << endl;
+		       }
+	       } 
+       
+       }
+     out << "\tend" << endl;
+ 
+       out << "\talways @(posedge clk) begin" << endl; 
+       for (auto rstCond0 : resetConds) {
+	       for (auto rstCond1 : resetConds) {
+		       if (rstCond0.first != rstCond1.first) {
+			       out << "\t\t" << assertString(parens("!" + parens(rstCond0.first + " && " + rstCond1.first))) << ";" << endl;
+		       }
+	       } 
+       
+       }
+     out << "\tend" << endl;
+
        out << "\talways @(*) begin" << endl;
        out << "\t\tif (rst) begin" << endl;
 
