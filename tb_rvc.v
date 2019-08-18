@@ -33,6 +33,7 @@ module tb_rvc();
       #1 clk = 0;
 
       #1 valid = 1;
+      
       `assert(rdy.data, 1'b1)
 
       
@@ -41,13 +42,15 @@ module tb_rvc();
       #1 clk = 0;
 
       `assert(rdy.data, 1'b0)
+
+      #1 clk = 0;
+      
       $display("Passed");
       
    end // initial begin
 
    always @(posedge clk) begin
-      $display("ready_en = %d", rdy.en);
-      
+      $display("on clk ready_en  = %b, ready_in = %b, ready_data = %b", rdy.en, rdy.in, rdy.data);
    end
 
    mod_register #(.WIDTH(1)) rdy(.clk(clk), .rst(rst));

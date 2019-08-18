@@ -486,56 +486,56 @@ namespace CAC {
     }
 
     // For each port generate a controller?
-    for (auto entry : setters) {
-      Port pt = entry.first;
-      out << "\t// Controller for port " << pt << endl;
-      string defaultStr = "0";
-      if (pt.isSensitive()) {
-        string defaultStr = to_string(pt.defaultValue());
-      }
+    // for (auto entry : setters) {
+    //   Port pt = entry.first;
+    //   out << "\t// Controller for port " << pt << endl;
+    //   string defaultStr = "0";
+    //   if (pt.isSensitive()) {
+    //     defaultStr = to_string(pt.defaultValue());
+    //   }
 
-      vector<pair<string, Port> > resetConds;
-      vector<pair<string, Port> > nonResetConds;
-      for (auto instr : entry.second) {
-        Port src = source(instr);
-        string predString = predHappenedString(instr, m);
-        if (elem(instr, onRst)) {
-          string rstPredString = rstPredHappenedString(instr, m, onRst);          
-          if (instr->isStartAction) {
-            rstPredString = "1";
-          }
-          resetConds.push_back({rstPredString, src});
-        }
-        nonResetConds.push_back({predString, src});
-      }
+    //   vector<pair<string, Port> > resetConds;
+    //   vector<pair<string, Port> > nonResetConds;
+    //   for (auto instr : entry.second) {
+    //     Port src = source(instr);
+    //     string predString = predHappenedString(instr, m);
+    //     if (elem(instr, onRst)) {
+    //       string rstPredString = rstPredHappenedString(instr, m, onRst);          
+    //       if (instr->isStartAction) {
+    //         rstPredString = "1";
+    //       }
+    //       resetConds.push_back({rstPredString, src});
+    //     }
+    //     nonResetConds.push_back({predString, src});
+    //   }
 
       
-      out << "\talways @(*) begin" << endl;
-      out << "\t\tif (rst) begin" << endl;
+    //   out << "\talways @(*) begin" << endl;
+    //   out << "\t\tif (rst) begin" << endl;
 
-      for (auto c : resetConds) {
-        out << "\t\t\tif (" << c.first << ") begin" << endl;
-        out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
-        out << "\t\t\tend else " << endl;
-      }
-      out << "\t\t\tbegin" << endl;
-      out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
-      out << "\t\t\tend" << endl;
+    //   for (auto c : resetConds) {
+    //     out << "\t\t\tif (" << c.first << ") begin" << endl;
+    //     out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
+    //     out << "\t\t\tend else " << endl;
+    //   }
+    //   out << "\t\t\tbegin" << endl;
+    //   out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
+    //   out << "\t\t\tend" << endl;
         
-      out << "\t\tend else begin" << endl;
+    //   out << "\t\tend else begin" << endl;
 
-      for (auto c : nonResetConds) {
-        out << "\t\t\tif (" << c.first << ") begin" << endl;
-        out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
-        out << "\t\t\tend else " << endl;
-      }
-      out << "\t\t\tbegin" << endl;
-      out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
-      out << "\t\t\tend" << endl;
+    //   for (auto c : nonResetConds) {
+    //     out << "\t\t\tif (" << c.first << ") begin" << endl;
+    //     out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
+    //     out << "\t\t\tend else " << endl;
+    //   }
+    //   out << "\t\t\tbegin" << endl;
+    //   out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
+    //   out << "\t\t\tend" << endl;
 
-      out << "\t\tend" << endl;
-      out << "\tend" << endl;        
-    }
+    //   out << "\t\tend" << endl;
+    //   out << "\tend" << endl;        
+    // }
     
     for (auto instr : m->getBody()) {
       
@@ -554,16 +554,16 @@ namespace CAC {
       out << "\t\tif (rst) begin" << endl;
       if (elem(instr, onRst)) {
         if (instr->isStartAction) {
-          //out << "\t\t\t" << body << endl;
+          out << "\t\t\t" << body << endl;
           out << "\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;
         } else {
 
           assert(predString != "");
           out << "\t\t\tif (" << rstPredString << ") begin" << endl;
-          //out << "\t\t\t\t" << body << endl;
-          out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl; 
+          out << "\t\t\t\t" << body << endl;
+          out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;
           out << "\t\t\tend else begin" << endl;
-          //out << "\t\t\t\t" << defaultString << endl;
+          out << "\t\t\t\t" << defaultString << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
           out << "\t\t\tend" << endl;
         }
@@ -575,10 +575,10 @@ namespace CAC {
 
       if (predString != "") {
         out << "\t\t\tif (" << predString << ") begin" << endl;
-        //out << "\t\t\t\t" << body << endl;
+        out << "\t\t\t\t" << body << endl;
         out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;;
         out << "\t\t\tend else begin" << endl;
-        //out << "\t\t\t\t" << defaultString << endl;        
+        out << "\t\t\t\t" << defaultString << endl;        
         out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
         out << "\t\t\tend" << endl;
 
