@@ -465,6 +465,14 @@ namespace CAC {
   
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
 
+  maybe<ExternalAST*> parseExternal(ParseState<Token>& tokens) {
+  	exit_end(tokens);
+	try_consume("external", tokens);
+	try_consume(";", tokens);
+	return new ExternalAST();
+  
+  }
+
   maybe<DefaultAST*> parseDefault(ParseState<Token>& tokens) {
     exit_end(tokens);
     try_consume("default", tokens);
@@ -540,7 +548,12 @@ namespace CAC {
   }
   
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
-    auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
+	auto dE = tryParse<ExternalAST*>(parseExternal, tokens);
+	if (dE.has_value()) {
+		return dE.get_value();
+	}
+      
+	  auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
     if (dM.has_value()) {
       return dM.get_value();
     }

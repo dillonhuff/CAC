@@ -231,13 +231,20 @@ namespace CAC {
   
   enum BlockKind {
     BLOCK_KIND_SEQUENTIAL,
-    BLOCK_KIND_DEFAULT
+    BLOCK_KIND_DEFAULT,
+BLOCK_KIND_EXTERNAL
   };
   
   class BlockAST {
   public:
     virtual BlockKind getKind() const = 0;
   };
+
+  class ExternalAST : public BlockAST {
+  	public:
+		virtual BlockKind getKind() const { return BLOCK_KIND_EXTERNAL; }
+		static bool classof(const ExternalAST* const blk) { return blk->getKind() == BLOCK_KIND_EXTERNAL; }
+	};
 
   class DefaultAST : public BlockAST {
   public:
