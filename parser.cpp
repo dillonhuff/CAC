@@ -878,8 +878,16 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
           int val = genConstExpression(db->val, cgo, t);
           cout << "Setting default value of " << pt << " to " << val << endl;
           cgo.activeMod->setDefaultValue(pt.getName(), val);
-        } else {
-          assert(false);
+        } else if (ExternalAST::classof(blk)) {
+		cgo.activeMod->setPrimitive(true);	
+	} else if (AssignBlockAST::classof(blk)) {
+		auto asg = sc<AssignBlockAST>(blk);
+		Port lhs = genExpression(asg->lhs, cgo, t);
+		Port rhs = genExpression(asg->rhs, cgo, t);
+		cgo.activeMod->addStructuralConnection(lhs, rhs);
+	} else {
+		
+		assert(false);
         }
       }
       cgo.activeMod = nullptr;

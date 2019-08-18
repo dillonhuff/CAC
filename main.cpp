@@ -78,8 +78,8 @@ int main() {
  
   {
     TLU t = parseTLU("./toggle.iv");
-//    Context c;
-   //lowerTLU(c, t);
+    Context c;
+   lowerTLU(c, t);
 
    //auto m = c.getModule("toggle");
    //inlineInvokes(m);
