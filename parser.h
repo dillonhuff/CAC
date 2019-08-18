@@ -238,7 +238,7 @@ BLOCK_KIND_MODULE,
  BLOCK_KIND_ASSIGN 
   };
  
- 	class ModuleAST;
+  class ModuleAST;
 
   class BlockAST {
   public:
