@@ -40,7 +40,7 @@ module tb_rvc();
       #1 clk = 0;
       #1 clk = 1;
       #1 clk = 0;
-
+#1 valid = 0;
       `assert(rdy.data, 1'b0)
 
       #1 clk = 0;

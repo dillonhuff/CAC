@@ -253,6 +253,13 @@ namespace CAC {
     return hasPrefix(inst->source->getName(), "const_");
   }
 
+  bool isConstant(Port pt) {
+	  if (pt.inst != nullptr) {
+	  	return isConstant(pt.inst);
+	  }
+	  return false;
+  }
+
   std::string drop(std::string pattern, const std::string& name) {
     size_t pos = name.find(pattern);
     if (pos == std::string::npos) {
@@ -278,8 +285,23 @@ namespace CAC {
 
     return width + "'d" + val;
   }
+ string verilogStringLastCycle(const Port pt, Module* m) {
+    if (pt.inst != nullptr) {
+      ModuleInstance* inst = pt.inst;
+      if (isConstant(inst)) {
+        return verilogConstString(inst);
+        //return pt.inst->getName() + "_" + pt.getName();
+      } else {
 
-  string verilogString(const Port pt, Module* m) {
+     return pt.inst->getName() + "_" + pt.getName() + "_last_cycle"; 
+	//return pt.inst->getName() + "_" + pt.getName();
+      }
+    } else {
+      return pt.getName();
+    }                                                      
+  }                                                        
+ 
+ string verilogString(const Port pt, Module* m) {
     if (pt.inst != nullptr) {
       ModuleInstance* inst = pt.inst;
       if (isConstant(inst)) {
@@ -378,7 +400,7 @@ namespace CAC {
           } else {
             predConds.push_back(parens(happenedLastCycleVar(pred, m) +
                                        " && " +
-                                       verilogString(c.condition, m)));
+                                       verilogStringLastCycle(c.condition, m)));
             
           }
         }
@@ -483,8 +505,28 @@ namespace CAC {
       out << "\treg " << happenedLastCycleVar(instr, m) << ";" << endl;
     }
 
-    out << endl;
+    set<Port> usedInDelayedActivation;
+    for (auto instr : m->getBody()) {
+    	for (auto act : instr->continuations) {
+		if (act.delay == 1 && !isConstant(act.condition)) {
+			usedInDelayedActivation.insert(act.condition);
+		}
+	}
+    }
 
+	cout << "Used in delayed activations..." << endl;
+    for (auto pt : usedInDelayedActivation) {
+    	cout << "\t" << pt << endl;
+
+	out << "\treg " << verilogStringLastCycle(pt, m) << ";" << endl;
+    }
+
+	for (auto pt : usedInDelayedActivation) {
+		out << "\talways @(posedge clk) begin" << endl;
+	out << verilogStringLastCycle(pt, m) << " <= " << verilogString(pt, m) << ";" << endl;
+		out << "\tend" << endl;	
+    out << endl;
+	}
     set<CC*> work;
     set<CC*> onRst;
     bool found = true;
@@ -580,25 +622,25 @@ namespace CAC {
        out << "\talways @(*) begin" << endl;
        out << "\t\tif (rst) begin" << endl;
 
-       //for (auto c : resetConds) {
-	 //out << "\t\t\tif (" << c.first << ") begin" << endl;
-	 //out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
-	 //out << "\t\t\tend else " << endl;
-       //}
-       //out << "\t\t\tbegin" << endl;
-       //out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
-       //out << "\t\t\tend" << endl;
+       for (auto c : resetConds) {
+	 out << "\t\t\tif (" << c.first << ") begin" << endl;
+	 out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
+	 out << "\t\t\tend else " << endl;
+       }
+       out << "\t\t\tbegin" << endl;
+       out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
+       out << "\t\t\tend" << endl;
         
        out << "\t\tend else begin" << endl;
 
-       //for (auto c : nonResetConds) {
-	 //out << "\t\t\tif (" << c.first << ") begin" << endl;
-	 //out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
-	 //out << "\t\t\tend else " << endl;
-       //}
-       //out << "\t\t\tbegin" << endl;
-       //out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
-       //out << "\t\t\tend" << endl;
+       for (auto c : nonResetConds) {
+	 out << "\t\t\tif (" << c.first << ") begin" << endl;
+	 out << "\t\t\t\t" << verilogString(pt, m) << " = " << verilogString(c.second, m) << ";" << endl;
+	 out << "\t\t\tend else " << endl;
+       }
+       out << "\t\t\tbegin" << endl;
+       out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
+       out << "\t\t\tend" << endl;
 
        out << "\t\tend" << endl;
        out << "\tend" << endl;        
@@ -621,16 +663,16 @@ namespace CAC {
       out << "\t\tif (rst) begin" << endl;
       if (elem(instr, onRst)) {
         if (instr->isStartAction) {
-          out << "\t\t\t" << body << endl;
+          //out << "\t\t\t" << body << endl;
           out << "\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;
         } else {
 
           assert(predString != "");
           out << "\t\t\tif (" << rstPredString << ") begin" << endl;
-          out << "\t\t\t\t" << body << endl;
+          //out << "\t\t\t\t" << body << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;
           out << "\t\t\tend else begin" << endl;
-          out << "\t\t\t\t" << defaultString << endl;
+          //out << "\t\t\t\t" << defaultString << endl;
           out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
           out << "\t\t\tend" << endl;
         }
@@ -642,10 +684,10 @@ namespace CAC {
 
       if (predString != "") {
         out << "\t\t\tif (" << predString << ") begin" << endl;
-        out << "\t\t\t\t" << body << endl;
+        //out << "\t\t\t\t" << body << endl;
         out << "\t\t\t\t" << happenedVar(instr, m) << " = 1;" << endl;;
         out << "\t\t\tend else begin" << endl;
-        out << "\t\t\t\t" << defaultString << endl;        
+        //out << "\t\t\t\t" << defaultString << endl;        
         out << "\t\t\t\t" << happenedVar(instr, m) << " = 0;" << endl;
         out << "\t\t\tend" << endl;
 
