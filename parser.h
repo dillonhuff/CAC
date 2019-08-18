@@ -232,18 +232,31 @@ namespace CAC {
   enum BlockKind {
     BLOCK_KIND_SEQUENTIAL,
     BLOCK_KIND_DEFAULT,
-BLOCK_KIND_EXTERNAL
+BLOCK_KIND_EXTERNAL,
+BLOCK_KIND_MODULE
   };
-  
+ 
+ 	class ModuleAST;
+
   class BlockAST {
   public:
     virtual BlockKind getKind() const = 0;
   };
 
+  class ModuleBlockAST : public BlockAST {
+	  public:
+		ModuleAST* m;
+		ModuleBlockAST(ModuleAST* ast) : m(ast) {}
+
+		virtual BlockKind getKind() const { return BLOCK_KIND_MODULE; }
+		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_MODULE; }
+  };
+
+
   class ExternalAST : public BlockAST {
   	public:
 		virtual BlockKind getKind() const { return BLOCK_KIND_EXTERNAL; }
-		static bool classof(const ExternalAST* const blk) { return blk->getKind() == BLOCK_KIND_EXTERNAL; }
+		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_EXTERNAL; }
 	};
 
   class DefaultAST : public BlockAST {

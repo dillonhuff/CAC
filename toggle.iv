@@ -12,7 +12,7 @@ module reg1(input [0:0] clk,
 		sequence @(posedge clk, synch rst) begin
 			en = 1;
 			in = d;
-			wait();
+//			wait();
 		end
 	endmodule			
 

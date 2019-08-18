@@ -546,9 +546,16 @@ namespace CAC {
 
     return new SequenceBlockAST(synchM.get_value(), rstM.get_value(), stmtM.get_value());
   }
-  
+    maybe<ModuleAST*> parseModule(ParseState<Token>& tokens);
+
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
-	auto dE = tryParse<ExternalAST*>(parseExternal, tokens);
+
+ 	auto mM = tryParse<ModuleAST*>(parseModule, tokens);
+       if (mM.has_value()) {
+	return new ModuleBlockAST(mM.get_value());
+       }
+
+	  auto dE = tryParse<ExternalAST*>(parseExternal, tokens);
 	if (dE.has_value()) {
 		return dE.get_value();
 	}
