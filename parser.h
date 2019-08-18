@@ -168,7 +168,8 @@ namespace CAC {
     STMT_KIND_GOTO,
     STMT_KIND_ICONNECT,    
     STMT_KIND_BEGIN,
-    STMT_KIND_DEFAULT    
+    STMT_KIND_DEFAULT,
+    STMT_KIND_INVOKE
   };
 
   class StmtAST {
@@ -179,6 +180,12 @@ namespace CAC {
     virtual StmtKind getKind() const = 0;
   };
 
+	class InvokeAST : public StmtAST {
+		public:
+			InvokeAST() {}
+    virtual StmtKind getKind() const { return STMT_KIND_INVOKE; }    
+    static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_INVOKE; }        
+	};
 
   class InstrAST : public StmtAST {
   public:

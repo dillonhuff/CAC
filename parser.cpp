@@ -494,10 +494,33 @@ namespace CAC {
 
     return new BeginAST(stmts);
   }
-  
-  maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
+ 
+  maybe<InvokeAST*> parseInvoke(ParseState<Token>& tokens) { 
+ 	exit_end(tokens);
+	Token rs = tokens.parseChar();
+	try_consume(".", tokens);
+	Token method = tokens.parseChar();
+	try_consume("(", tokens);
+	auto args =
+		sepBtwn0<ExpressionAST*, Token>(parseExpression, parseComma, tokens);
+	try_consume(")", tokens);
+	try_consume(";", tokens);
+
+	return new InvokeAST();
+  }
+
+maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     cout << "Parsing stmt at " << tokens.remainder() << endl;
     auto lblM = tryParse<LabelAST*>(parseLabel, tokens);
+
+    auto iM = tryParse<InvokeAST*>(parseInvoke, tokens);
+    if (iM.has_value()) {
+	auto s = iM.get_value();
+	if (lblM.has_value()) {
+		s->label = lblM.get_value();
+	}
+	return s;
+    }
 
     auto bM = tryParse<BeginAST*>(parseBegin, tokens);
     if (bM.has_value()) {
