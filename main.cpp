@@ -75,7 +75,25 @@ int main() {
     emitVerilog(c, m);
     assert(runIVerilogTB("rvc"));
   }
-  
+ 
+  {
+    TLU t = parseTLU("./toggle.iv");
+    Context c;
+    lowerTLU(c, t);
+
+    auto m = c.getModule("toggle");
+    inlineInvokes(m);
+    synthesizeDelays(m);
+    deleteNoEffectInstructions(m);
+    synthesizeChannels(m);
+    reduceStructures(m);
+    deleteNoEffectInstructions(m);    
+    deleteDeadResources(m);
+    
+    emitVerilog(c, m);
+    assert(runIVerilogTB("toggle"));
+  }
+
   {
     Context c;
 
