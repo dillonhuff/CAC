@@ -724,30 +724,36 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       string op = bop->op;
       cout << "Operand is " << op << endl;
 
-      Port lhs = genExpression(bop->a, c, t);
-      Port rhs = genExpression(bop->b, c, t);
-
-      if (op == "==") {
-        // TODO: Compute width
-        auto& context = *(c.activeMod->getContext());
-        auto wMod = getWireMod(context, 1);
-        auto tmpWire = c.activeMod->freshInstance(wMod, "cmp_tmp");
-        
-        auto compMod = addComparator(context, "eq", 1);
-        auto cmp =
-          c.activeMod->freshInstance(compMod, "cmp");
-        auto inv = c.activeMod->addInvokeInstruction(cmp->action("apply"));
-        bindByType(inv, cmp);
-        inv->bind("in0", lhs);
-        inv->bind("in1", rhs);
-        inv->bind("out", tmpWire->pt("in"));
-
-        return tmpWire->pt("out");
+      if (op == ".") {
+	ModuleInstance* rName = genResourceName(bop->a, c, t);
+	string ptName = genName(bop->b, c, t);
+     	return rName->pt(ptName); 
       } else {
-        cout << "Error: Unsupported binop " << op << endl;
-        assert(false);
+        Port lhs = genExpression(bop->a, c, t);
+        Port rhs = genExpression(bop->b, c, t);
+
+        if (op == "==") {
+          // TODO: Compute width
+          auto& context = *(c.activeMod->getContext());
+          auto wMod = getWireMod(context, 1);
+          auto tmpWire = c.activeMod->freshInstance(wMod, "cmp_tmp");
+        
+          auto compMod = addComparator(context, "eq", 1);
+          auto cmp =
+            c.activeMod->freshInstance(compMod, "cmp");
+          auto inv = c.activeMod->addInvokeInstruction(cmp->action("apply"));
+          bindByType(inv, cmp);
+          inv->bind("in0", lhs);
+          inv->bind("in1", rhs);
+          inv->bind("out", tmpWire->pt("in"));
+
+          return tmpWire->pt("out");
+        }  else {
+          cout << "Error: Unsupported binop " << op << endl;
+          assert(false);
+        }
       }
-    } else {
+    } else {		
       cout << "Error: Unsupported expression kind" << endl;
       assert(false);
     }
@@ -885,8 +891,11 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 		Port lhs = genExpression(asg->lhs, cgo, t);
 		Port rhs = genExpression(asg->rhs, cgo, t);
 		cgo.activeMod->addStructuralConnection(lhs, rhs);
+	} else if (ModuleBlockAST::classof(blk)) {
+
+	
+	} else if (ResourceAST::classof(blk)) {
 	} else {
-		
 		assert(false);
         }
       }

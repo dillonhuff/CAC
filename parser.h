@@ -180,12 +180,12 @@ namespace CAC {
     virtual StmtKind getKind() const = 0;
   };
 
-	class InvokeAST : public StmtAST {
-		public:
-			InvokeAST() {}
+  class InvokeAST : public StmtAST {
+  public:
+    InvokeAST() {}
     virtual StmtKind getKind() const { return STMT_KIND_INVOKE; }    
     static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_INVOKE; }        
-	};
+  };
 
   class InstrAST : public StmtAST {
   public:
@@ -239,10 +239,10 @@ namespace CAC {
   enum BlockKind {
     BLOCK_KIND_SEQUENTIAL,
     BLOCK_KIND_DEFAULT,
-BLOCK_KIND_EXTERNAL,
-BLOCK_KIND_MODULE,
- BLOCK_KIND_RESOURCE, 
- BLOCK_KIND_ASSIGN 
+    BLOCK_KIND_EXTERNAL,
+    BLOCK_KIND_MODULE,
+    BLOCK_KIND_RESOURCE, 
+    BLOCK_KIND_ASSIGN 
   };
  
   class ModuleAST;
@@ -254,41 +254,41 @@ BLOCK_KIND_MODULE,
 
 
   class AssignBlockAST : public BlockAST {
-	  public:
-		  ExpressionAST* lhs;
-		  ExpressionAST* rhs;
+  public:
+    ExpressionAST* lhs;
+    ExpressionAST* rhs;
 
-		 AssignBlockAST(ExpressionAST* lhs_, ExpressionAST* rhs_) :
-			 lhs(lhs_), rhs(rhs_) {} 
-		  virtual BlockKind getKind() const { return BLOCK_KIND_ASSIGN; }
-		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_ASSIGN; }
+    AssignBlockAST(ExpressionAST* lhs_, ExpressionAST* rhs_) :
+      lhs(lhs_), rhs(rhs_) {} 
+    virtual BlockKind getKind() const { return BLOCK_KIND_ASSIGN; }
+    static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_ASSIGN; }
   };
 	      
-	class ResourceAST : public BlockAST {
-  	public:
-		Token typeName;
-		Token name;
+  class ResourceAST : public BlockAST {
+  public:
+    Token typeName;
+    Token name;
 
-		ResourceAST(Token t_, Token n_) : typeName(t_), name(n_) {}
-		virtual BlockKind getKind() const { return BLOCK_KIND_RESOURCE; }
-		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_RESOURCE; }
+    ResourceAST(Token t_, Token n_) : typeName(t_), name(n_) {}
+    virtual BlockKind getKind() const { return BLOCK_KIND_RESOURCE; }
+    static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_RESOURCE; }
   };
 
   class ModuleBlockAST : public BlockAST {
-	  public:
-		ModuleAST* m;
-		ModuleBlockAST(ModuleAST* ast) : m(ast) {}
+  public:
+    ModuleAST* m;
+    ModuleBlockAST(ModuleAST* ast) : m(ast) {}
 
-		virtual BlockKind getKind() const { return BLOCK_KIND_MODULE; }
-		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_MODULE; }
+    virtual BlockKind getKind() const { return BLOCK_KIND_MODULE; }
+    static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_MODULE; }
   };
 
 
   class ExternalAST : public BlockAST {
-  	public:
-		virtual BlockKind getKind() const { return BLOCK_KIND_EXTERNAL; }
-		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_EXTERNAL; }
-	};
+  public:
+    virtual BlockKind getKind() const { return BLOCK_KIND_EXTERNAL; }
+    static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_EXTERNAL; }
+  };
 
   class DefaultAST : public BlockAST {
   public:
