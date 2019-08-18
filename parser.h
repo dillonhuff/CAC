@@ -234,8 +234,8 @@ namespace CAC {
     BLOCK_KIND_DEFAULT,
 BLOCK_KIND_EXTERNAL,
 BLOCK_KIND_MODULE,
- BLOCK_KIND_RESOURCE 
-  
+ BLOCK_KIND_RESOURCE, 
+ BLOCK_KIND_ASSIGN 
   };
  
  	class ModuleAST;
@@ -245,7 +245,16 @@ BLOCK_KIND_MODULE,
     virtual BlockKind getKind() const = 0;
   };
 
-  class ResourceAST : public BlockAST {
+
+  class AssignBlock : public BlockAST {
+	  public:
+		  ExpressionAST* lhs;
+		  ExpressionAST* rhs;
+		virtual BlockKind getKind() const { return BLOCK_KIND_ASSIGN; }
+		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_ASSIGN; }
+  };
+	      
+	class ResourceAST : public BlockAST {
   	public:
 		Token typeName;
 		Token name;
