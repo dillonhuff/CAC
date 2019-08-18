@@ -548,7 +548,23 @@ namespace CAC {
   }
     maybe<ModuleAST*> parseModule(ParseState<Token>& tokens);
 
+    maybe<ResourceAST*> parseResource(ParseState<Token>& tokens) {
+
+	exit_end(tokens);
+	Token t = tokens.parseChar();
+	exit_end(tokens);
+	Token n = tokens.parseChar();
+	try_consume(";", tokens);
+
+	return new ResourceAST(t, n);	
+    }
+
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
+
+	  auto rM = tryParse<ResourceAST*>(parseResource, tokens);
+	  if (rM.has_value()) {
+		  return rM.get_value();
+	  }
 
  	auto mM = tryParse<ModuleAST*>(parseModule, tokens);
        if (mM.has_value()) {
