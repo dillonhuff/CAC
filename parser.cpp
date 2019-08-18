@@ -21,13 +21,13 @@ namespace CAC {
   }
   
   int precedence(Token op) {
-    map<string, int> prec{{"+", 100}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
+    map<string, int> prec{{"+", 100}, {".", 110}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
     assert(contains_key(op.getStr(), prec));
     return map_find(op.getStr(), prec);
   }
   
   bool isBinop(const Token t) {
-    vector<string> binopStrings{"==", "+", "&", "-", "/", "^", "%", "&&", "||", "<=", ">=", "<", ">", "*", "%"};
+    vector<string> binopStrings{".", "==", "+", "&", "-", "/", "^", "%", "&&", "||", "<=", ">=", "<", ">", "*", "%"};
     return elem(t.getStr(), binopStrings);
   }
   
@@ -559,8 +559,27 @@ namespace CAC {
 	return new ResourceAST(t, n);	
     }
 
+    maybe<AssignBlockAST*> parseAssign(ParseState<Token>& tokens) {
+	exit_end(tokens);
+	try_consume("assign", tokens);
+	auto expr = tryParse<ExpressionAST*>(parseExpression, tokens);
+	exit_failed(expr);
+	try_consume("=", tokens);
+	auto rhs = tryParse<ExpressionAST*>(parseExpression, tokens);
+	exit_failed(rhs);
+	try_consume(";", tokens);
+
+   	return new AssignBlockAST(expr.get_value(), rhs.get_value()); 
+    } 
+
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
 
+	  auto aM = tryParse<AssignBlockAST*>(parseAssign, tokens);
+	  if (aM.has_value()) {
+		return aM.get_value();
+	  
+	  }
+	  
 	  auto rM = tryParse<ResourceAST*>(parseResource, tokens);
 	  if (rM.has_value()) {
 		  return rM.get_value();

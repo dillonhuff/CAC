@@ -246,11 +246,14 @@ BLOCK_KIND_MODULE,
   };
 
 
-  class AssignBlock : public BlockAST {
+  class AssignBlockAST : public BlockAST {
 	  public:
 		  ExpressionAST* lhs;
 		  ExpressionAST* rhs;
-		virtual BlockKind getKind() const { return BLOCK_KIND_ASSIGN; }
+
+		 AssignBlockAST(ExpressionAST* lhs_, ExpressionAST* rhs_) :
+			 lhs(lhs_), rhs(rhs_) {} 
+		  virtual BlockKind getKind() const { return BLOCK_KIND_ASSIGN; }
 		static bool classof(const BlockAST* const blk) { return blk->getKind() == BLOCK_KIND_ASSIGN; }
   };
 	      
