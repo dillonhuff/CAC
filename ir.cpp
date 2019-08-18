@@ -545,7 +545,7 @@ namespace CAC {
 
       
        out << "\talways @(*) begin" << endl;
-       //out << "\t\tif (rst) begin" << endl;
+       out << "\t\tif (rst) begin" << endl;
 
        //for (auto c : resetConds) {
 	 //out << "\t\t\tif (" << c.first << ") begin" << endl;
@@ -556,7 +556,7 @@ namespace CAC {
        //out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
        //out << "\t\t\tend" << endl;
         
-       //out << "\t\tend else begin" << endl;
+       out << "\t\tend else begin" << endl;
 
        //for (auto c : nonResetConds) {
 	 //out << "\t\t\tif (" << c.first << ") begin" << endl;
@@ -567,7 +567,7 @@ namespace CAC {
        //out << "\t\t\t\t" << verilogString(pt, m) << " = " << defaultStr << ";" << endl;
        //out << "\t\t\tend" << endl;
 
-       //out << "\t\tend" << endl;
+       out << "\t\tend" << endl;
        out << "\tend" << endl;        
      }
     
