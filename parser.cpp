@@ -825,8 +825,12 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
       // Continuations are added after all code has been generated
 
+    } if (InvokeAST::classof(body)) {
+	assert(false);
     } else {
-      assert(ImpConnectAST::classof(body));
+      
+	   cout << "Stmt kind = " << body->getKind() << endl; 
+	    assert(ImpConnectAST::classof(body));
       cout << "Generating codde for imp connect" << endl;
       // Get expressions out and generate code for them?
       auto icSt = sc<ImpConnectAST>(body);
