@@ -834,6 +834,10 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 	ModuleInstance* m =
 		c.activeMod->getResource(name);
 	cout << "instance has name " << m->getName() << endl;
+	string methodName = m->source->getName() + "_" + inv->method.getStr();
+	cout << "Method name = " << methodName << endl;
+	Module* methodAction = m->action(inv->method.getStr());
+	cout << "Method action has name = " << methodAction->getName() << endl;
 	assert(false);
     } else {
       
