@@ -182,7 +182,13 @@ namespace CAC {
 
   class InvokeAST : public StmtAST {
   public:
-    InvokeAST() {}
+
+	 Token name;
+	 Token method;
+	 vector<ExpressionAST*> args;
+
+	  InvokeAST(Token name_, Token method_, vector<ExpressionAST*> args_) :
+		  name(name_), method(method_), args(args_) {}
     virtual StmtKind getKind() const { return STMT_KIND_INVOKE; }    
     static bool classof(const StmtAST* const stmt) { return stmt->getKind() == STMT_KIND_INVOKE; }        
   };

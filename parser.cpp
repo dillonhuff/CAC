@@ -506,7 +506,7 @@ namespace CAC {
 	try_consume(")", tokens);
 	try_consume(";", tokens);
 
-	return new InvokeAST();
+	return new InvokeAST(rs, method, args);
   }
 
 maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
@@ -826,6 +826,14 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       // Continuations are added after all code has been generated
 
     } else if (InvokeAST::classof(body)) {
+//	assert(false);
+	InvokeAST* inv = sc<InvokeAST>(body);
+	map<ExpressionAST*, Port> exprsToPorts;
+	string name = inv->name.getStr();
+	cout << "Getting invocation for " << name << endl;
+	ModuleInstance* m =
+		c.activeMod->getResource(name);
+	cout << "instance has name " << m->getName() << endl;
 	assert(false);
     } else {
       
