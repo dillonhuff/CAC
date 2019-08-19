@@ -919,7 +919,13 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 		// containing module as needed?
 
 		Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
-
+		for (auto pt : cgo.activeMod->getInterfacePorts()) {
+			if (pt.isInput) {
+				ctrl->addOutPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+			} else {
+				ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+			}
+		}
 		cgo.activeMod->addAction(ctrl);
 	} else if (ResourceAST::classof(blk)) {
 		ResourceAST* r = sc<ResourceAST>(blk);
