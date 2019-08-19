@@ -910,7 +910,17 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 		cgo.activeMod->addStructuralConnection(lhs, rhs);
 	} else if (ModuleBlockAST::classof(blk)) {
 
-	
+		ModuleBlockAST* mBlock = sc<ModuleBlockAST>(blk);
+		ModuleAST* mInternal = mBlock->m;
+		
+		// TODO: Create new module with name active_mod_<name>
+		// then add all ports on active mod to this module
+		// and then: do code generation looking up ports in the
+		// containing module as needed?
+
+		Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
+
+		cgo.activeMod->addAction(ctrl);
 	} else if (ResourceAST::classof(blk)) {
 		ResourceAST* r = sc<ResourceAST>(blk);
 		string rName = r->typeName.getStr();
