@@ -326,7 +326,17 @@ namespace CAC {
     ModuleInstance* freshReg(const int width, const std::string& name) {
       return freshInstanceSeq(getRegMod(*(getContext()), width), name);
     }
-    
+   
+    ModuleInstance* getResource(const std::string& name) const {
+	    for (auto r : resources) {
+		    if (r->getName() == name) {
+			    return r;
+		    }
+	    }
+	    cout << "Error: No resource named " << name << " in mod" << endl;
+    	assert(false);
+    }
+
     void erase(ModuleInstance* inst) {
       assert(elem(inst, resources));
       set<CC*> toEmpty;

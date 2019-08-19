@@ -32,7 +32,7 @@ module toggle(input [0:0] clk,
 	reg1 v;
 	assign v.clk = clk;
 	assign v.rst = rst;
-	assign toggle = v.data;
+	assign value = v.data;
 
 	sequence @(posedge clk, synch rst) begin
 		wait: goto (1, wait, 1), (toggle, do_toggle, 0);	

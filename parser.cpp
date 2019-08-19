@@ -706,6 +706,18 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     int value = stoi(id->getName());
     return value;
   }
+ 
+  string genName(ExpressionAST* l, CodeGenState& c, TLU& t) {
+	assert(IdentifierAST::classof(l));
+	auto id = sc<IdentifierAST>(l);
+ 	return id->getName(); 
+  }
+
+  ModuleInstance* genResource(ExpressionAST* l, CodeGenState& c, TLU& t) {
+	  string rName = genName(l, c, t);
+	return c.activeMod->getResource(rName);
+  
+  }
   
   Port genExpression(ExpressionAST* l,
                      CodeGenState& c,
@@ -725,7 +737,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       cout << "Operand is " << op << endl;
 
       if (op == ".") {
-	ModuleInstance* rName = genResourceName(bop->a, c, t);
+	ModuleInstance* rName = genResource(bop->a, c, t);
 	string ptName = genName(bop->b, c, t);
      	return rName->pt(ptName); 
       } else {
@@ -895,6 +907,11 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
 	
 	} else if (ResourceAST::classof(blk)) {
+		ResourceAST* r = sc<ResourceAST>(blk);
+		string rName = r->typeName.getStr();
+		Module* rMod = cgo.activeMod->getContext()->getModule(rName);
+		string instName = r->name.getStr();
+		m->addInstance(rMod, instName);
 	} else {
 		assert(false);
         }
