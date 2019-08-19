@@ -826,7 +826,6 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       // Continuations are added after all code has been generated
 
     } else if (InvokeAST::classof(body)) {
-//	assert(false);
 	InvokeAST* inv = sc<InvokeAST>(body);
 	map<ExpressionAST*, Port> exprsToPorts;
 	string name = inv->name.getStr();
@@ -838,7 +837,11 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 	cout << "Method name = " << methodName << endl;
 	Module* methodAction = m->action(inv->method.getStr());
 	cout << "Method action has name = " << methodAction->getName() << endl;
-	assert(false);
+	auto invokeCall = c.activeMod->addInvokeInstruction(methodAction);
+	//assert(false);
+	c.stmtStarts[body] = invokeCall;
+	c.lastInstr = invokeCall;
+	fst = invokeCall;
     } else {
       
 	   cout << "Stmt kind = " << body->getKind() << endl; 
