@@ -889,6 +889,13 @@ namespace CAC {
 
   }
 
+  void genModuleBody(Module* ctrl, CodeGenState& cgo, TLU& t) {
+
+    assert(false); 
+  
+  }
+
+
   void lowerTLU(Context& c, TLU& t) {
     CodeGenState cgo;
     cgo.c = &c;
@@ -902,6 +909,8 @@ namespace CAC {
           m->addOutPort(pAST->width, pAST->getName());
         }
       }
+
+      genModuleBody(m, cgo, t); 
       cgo.activeMod->setVerilogDeclString(mAST->getName().getStr());
       for (auto blk : mAST->blocks) {
 
@@ -956,6 +965,8 @@ namespace CAC {
           // Add code generation for this module
           cgo.surroundingMod = cgo.activeMod;
           cgo.activeMod = ctrl;
+
+          genModuleBody(ctrl, cgo, t);
 
           cgo.activeMod = cgo.surroundingMod;
           cgo.surroundingMod = nullptr;
