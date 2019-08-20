@@ -7,34 +7,34 @@ using namespace dbhc;
 namespace CAC {
 
   template<typename ResultType, typename InputType>
-  ResultType* sc(InputType* tp) {
-    return static_cast<ResultType*>(tp);
-  }
-  
-  template<typename ResultType, typename InputType>
-  dbhc::maybe<ResultType*> extractM(InputType* tp) {
-    if (ResultType::classof(tp)) {
-      return sc<ResultType>(tp);
+    ResultType* sc(InputType* tp) {
+      return static_cast<ResultType*>(tp);
     }
 
-    return dbhc::maybe<ResultType*>();
-  }
-  
+  template<typename ResultType, typename InputType>
+    dbhc::maybe<ResultType*> extractM(InputType* tp) {
+      if (ResultType::classof(tp)) {
+        return sc<ResultType>(tp);
+      }
+
+      return dbhc::maybe<ResultType*>();
+    }
+
   int precedence(Token op) {
     map<string, int> prec{{"+", 100}, {".", 110}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
     assert(contains_key(op.getStr(), prec));
     return map_find(op.getStr(), prec);
   }
-  
+
   bool isBinop(const Token t) {
     vector<string> binopStrings{".", "==", "+", "&", "-", "/", "^", "%", "&&", "||", "<=", ">=", "<", ">", "*", "%"};
     return elem(t.getStr(), binopStrings);
   }
-  
+
   bool isUnderscore(const char c) { return c == '_'; }
 
   bool isAlphaNum(const char c) { return isalnum(c); }
-  
+
   maybe<Token> parseStr(const std::string target, TokenState& chars) {
     string str = "";
     for (int i = 0; i < (int) target.size(); i++) {
@@ -49,23 +49,23 @@ namespace CAC {
         return maybe<Token>();
       }
     }
-  
+
     return maybe<Token>(Token(str));
   }
-  
+
   std::function<maybe<Token>(TokenState& chars)> mkParseStr(const std::string str) {
     return [str](TokenState& state) { return parseStr(str, state); };
   }
-  
-  static inline
-  maybe<Token> parseComma(ParseState<Token>& tokens) {
-    Token t = tokens.parseChar();
-    if (t.getStr() == ",") {
-      return t;
-    }
 
-    return maybe<Token>();
-  }
+  static inline
+    maybe<Token> parseComma(ParseState<Token>& tokens) {
+      Token t = tokens.parseChar();
+      if (t.getStr() == ",") {
+        return t;
+      }
+
+      return maybe<Token>();
+    }
 
   maybe<Token> parseComment(TokenState& state) {
     // Parse any number of comment lines and whitespace
@@ -87,37 +87,37 @@ namespace CAC {
     }
 
   }
-  
+
   static inline
-  bool isWhitespace(const char c) {
-    return isspace(c);
-  }
-  
+    bool isWhitespace(const char c) {
+      return isspace(c);
+    }
+
   template<typename F>
-  maybe<Token> consumeWhile(TokenState& state, F shouldContinue) {
-    string tok = "";
-    while (!state.atEnd() && shouldContinue(state.peekChar())) {
-      tok += state.parseChar();
+    maybe<Token> consumeWhile(TokenState& state, F shouldContinue) {
+      string tok = "";
+      while (!state.atEnd() && shouldContinue(state.peekChar())) {
+        tok += state.parseChar();
+      }
+      if (tok.size() > 0) {
+        return Token(tok);
+      } else {
+        return maybe<Token>();
+      }
     }
-    if (tok.size() > 0) {
-      return Token(tok);
-    } else {
-      return maybe<Token>();
-    }
-  }
-  
+
   static inline
-  void consumeWhitespace(TokenState& state) {
-    while (true) {
-      auto commentM = tryParse<Token>(parseComment, state);
-      if (!commentM.has_value()) {
-        auto ws = consumeWhile(state, isWhitespace);
-        if (!ws.has_value()) {
-          return;
+    void consumeWhitespace(TokenState& state) {
+      while (true) {
+        auto commentM = tryParse<Token>(parseComment, state);
+        if (!commentM.has_value()) {
+          auto ws = consumeWhile(state, isWhitespace);
+          if (!ws.has_value()) {
+            return;
+          }
         }
       }
     }
-  }
 
   Token parse_token(TokenState& state) {
     if (isalnum(state.peekChar())) {
@@ -139,12 +139,12 @@ namespace CAC {
       if (result.has_value()) {
         return result.get_value();
       }
-      
+
       result = tryParse<Token>(mkParseStr("->"), state);
       if (result.has_value()) {
         return result.get_value();
       }
-    
+
       char res = state.parseChar();
       string r;
       r += res;
@@ -155,32 +155,32 @@ namespace CAC {
     }
 
   }
-  
-  
-  static inline
-  std::vector<Token> tokenize(const std::string& classCode) {
-    vector<char> chars;
-    for (int i = 0; i < (int) classCode.size(); i++) {
-      chars.push_back(classCode[i]);
-    }
-    TokenState state(chars);
-    vector<Token> tokens;
-  
-    while (!state.atEnd()) {
-      //cout << "Next char = " << state.peekChar() << endl;
-      consumeWhitespace(state);
 
-      if (state.atEnd()) {
-        break;
+
+  static inline
+    std::vector<Token> tokenize(const std::string& classCode) {
+      vector<char> chars;
+      for (int i = 0; i < (int) classCode.size(); i++) {
+        chars.push_back(classCode[i]);
+      }
+      TokenState state(chars);
+      vector<Token> tokens;
+
+      while (!state.atEnd()) {
+        //cout << "Next char = " << state.peekChar() << endl;
+        consumeWhitespace(state);
+
+        if (state.atEnd()) {
+          break;
+        }
+
+        Token t = parse_token(state);
+        //cout << "Next char after token = " << state.peekChar() << endl;
+        tokens.push_back(t);
       }
 
-      Token t = parse_token(state);
-      //cout << "Next char after token = " << state.peekChar() << endl;
-      tokens.push_back(t);
+      return tokens;
     }
-
-    return tokens;
-  }
 
 #define exit_failed(res) if (!res.has_value()) { return {}; }
 #define exit_end(tokens) if (tokens.atEnd()) { return {}; }
@@ -194,7 +194,7 @@ namespace CAC {
 
     return maybe<IdentifierAST*>();
   }
-  
+
   maybe<PortAST*> parsePortDecl(ParseState<Token>& tokens) {
     Token p = tokens.peekChar();
     if (p == Token("input") ||
@@ -232,7 +232,7 @@ namespace CAC {
     return {};
 
   }
-  
+
   maybe<EventAST*> parseEvent(ParseState<Token>& tokens) {
     if (tokens.atEnd()) {
       return {};
@@ -250,65 +250,65 @@ namespace CAC {
   }
 
   maybe<ExpressionAST*>
-  parsePrimitiveExpressionMaybe(ParseState<Token>& tokens) {
-    exit_end(tokens);
-    // //cout << "-- Parsing primitive expression " << tokens.remainder() << endl;
+    parsePrimitiveExpressionMaybe(ParseState<Token>& tokens) {
+      exit_end(tokens);
+      // //cout << "-- Parsing primitive expression " << tokens.remainder() << endl;
 
-    // if (tokens.nextCharIs(Token("("))) {
-    //   tokens.parseChar();
+      // if (tokens.nextCharIs(Token("("))) {
+      //   tokens.parseChar();
 
-    //   //cout << "Inside parens " << tokens.remainder() << endl;
-    //   auto inner = parseExpressionMaybe(tokens);
-    //   if (inner.has_value()) {
-    //     if (tokens.nextCharIs(Token(")"))) {
-    //       tokens.parseChar();
-    //       return inner;
-    //     }
-    //   }
-    //   return maybe<Expression*>();
-    // }
+      //   //cout << "Inside parens " << tokens.remainder() << endl;
+      //   auto inner = parseExpressionMaybe(tokens);
+      //   if (inner.has_value()) {
+      //     if (tokens.nextCharIs(Token(")"))) {
+      //       tokens.parseChar();
+      //       return inner;
+      //     }
+      //   }
+      //   return maybe<Expression*>();
+      // }
 
-  
-    // auto fCall = tryParse<FunctionCall*>(parseFunctionCall, tokens);
-    // if (fCall.has_value()) {
-    //   return fCall.get_value();
-    // }
 
-    // //cout << "---- Trying to parse method call " << tokens.remainder() << endl;
-    // auto mCall = tryParse<Expression*>(parseMethodCall, tokens);
-    // if (mCall.has_value()) {
-    //   return mCall;
-    // }
+      // auto fCall = tryParse<FunctionCall*>(parseFunctionCall, tokens);
+      // if (fCall.has_value()) {
+      //   return fCall.get_value();
+      // }
 
-    // auto faccess = tryParse<Expression*>(parseFieldAccess, tokens);
-    // if (faccess.has_value()) {
-    //   return faccess;
-    // }
-    
-    // Try parsing a function call
-    // If that does not work try to parse an identifier
-    // If that does not work try parsing a parenthesis
-    auto id = tryParse<IdentifierAST*>(parseId, tokens);
-    if (id.has_value()) {
-      cout << "Getting id" << endl;
-      return id.get_value();
+      // //cout << "---- Trying to parse method call " << tokens.remainder() << endl;
+      // auto mCall = tryParse<Expression*>(parseMethodCall, tokens);
+      // if (mCall.has_value()) {
+      //   return mCall;
+      // }
+
+      // auto faccess = tryParse<Expression*>(parseFieldAccess, tokens);
+      // if (faccess.has_value()) {
+      //   return faccess;
+      // }
+
+      // Try parsing a function call
+      // If that does not work try to parse an identifier
+      // If that does not work try parsing a parenthesis
+      auto id = tryParse<IdentifierAST*>(parseId, tokens);
+      if (id.has_value()) {
+        cout << "Getting id" << endl;
+        return id.get_value();
+      }
+
+      // //cout << "Expressions = " << tokens.remainder() << endl;
+      if (!tokens.atEnd() && tokens.peekChar().isNum()) {
+        cout << "Getting integer" << endl;
+        return new IntegerAST(tokens.parseChar().getStr());
+      }
+
+      return maybe<ExpressionAST*>();
     }
-
-    // //cout << "Expressions = " << tokens.remainder() << endl;
-    if (!tokens.atEnd() && tokens.peekChar().isNum()) {
-      cout << "Getting integer" << endl;
-      return new IntegerAST(tokens.parseChar().getStr());
-    }
-
-    return maybe<ExpressionAST*>();
-  }
 
   ExpressionAST* popOperand(vector<ExpressionAST*>& postfixString) {
     assert(postfixString.size() > 0);
 
     ExpressionAST* top = postfixString.back();
     postfixString.pop_back();
-  
+
     auto idM = extractM<IdentifierAST>(top);
     if (idM.has_value() && isBinop(idM.get_value()->getName())) {
       auto rhs = popOperand(postfixString);
@@ -319,13 +319,13 @@ namespace CAC {
 
     return top;
   }
-  
+
   maybe<ExpressionAST*> parseExpression(ParseState<Token>& tokens) {
     cout << "-- Parsing expression " << tokens.remainder() << endl;
 
     vector<Token> operatorStack;
     vector<ExpressionAST*> postfixString;
-  
+
     while (true) {
       auto pExpr = parsePrimitiveExpressionMaybe(tokens);
       cout << "After primitive expr = " << tokens.remainder() << endl;
@@ -336,7 +336,7 @@ namespace CAC {
       cout << "Found expr: "  << pExpr.get_value() << endl;
 
       postfixString.push_back(pExpr.get_value());
-    
+
       if (tokens.atEnd() || !isBinop(tokens.peekChar())) {
         break;
       }
@@ -362,7 +362,7 @@ namespace CAC {
           //cout << "Popping " << topOp << " from op stack" << endl;
 
           postfixString.push_back(new IdentifierAST(topOp));
-        
+
           if ((operatorStack.size() == 0) ||
               (precedence(binop) > precedence(operatorStack.back()))) {
             break;
@@ -402,7 +402,7 @@ namespace CAC {
     //cout << "Returning expression " << *final << endl;
     return final;
   }
-  
+
   maybe<ActivationAST*> parseActivation(ParseState<Token>& tokens) {
     try_consume("(", tokens);
     // TODO: Change to expression parsing
@@ -432,7 +432,7 @@ namespace CAC {
   maybe<GotoAST*> parseGoto(ParseState<Token>& tokens) {
     exit_end(tokens);
     Token lhs = tokens.parseChar();
-    if (lhs == Token("goto")) {
+    if (lhs == Token("goto")) {// Hll
       cout << "parsing goto at " << tokens.remainder() << endl;
       auto activations =
         sepBtwn0<ActivationAST*, Token>(parseActivation, parseComma, tokens);
@@ -443,7 +443,7 @@ namespace CAC {
 
     return {};
   }
-  
+
   maybe<InstrAST*> parseInstr(ParseState<Token>& tokens) {
     auto gt = tryParse<GotoAST*>(parseGoto, tokens);
     if (gt.has_value()) {
@@ -458,19 +458,19 @@ namespace CAC {
     try_consume("=", tokens);
     auto rhsM = tryParse<ExpressionAST*>(parseExpression, tokens);
     exit_failed(rhsM);
-    
+
     try_consume(";", tokens);
     return new ImpConnectAST(lhsM.get_value(), rhsM.get_value());
   }
-  
+
   maybe<StmtAST*> parseStmt(ParseState<Token>& tokens);
 
   maybe<ExternalAST*> parseExternal(ParseState<Token>& tokens) {
-  	exit_end(tokens);
-	try_consume("external", tokens);
-	try_consume(";", tokens);
-	return new ExternalAST();
-  
+    exit_end(tokens);
+    try_consume("external", tokens);
+    try_consume(";", tokens);
+    return new ExternalAST();
+
   }
 
   maybe<DefaultAST*> parseDefault(ParseState<Token>& tokens) {
@@ -483,10 +483,10 @@ namespace CAC {
     exit_failed(rhs);
 
     try_consume(";", tokens);
-    
+
     return new DefaultAST(lhs.get_value(), rhs.get_value());
   }
-  
+
   maybe<BeginAST*> parseBegin(ParseState<Token>& tokens) {
     try_consume("begin", tokens);
     auto stmts = many<StmtAST*>(parseStmt, tokens);
@@ -494,32 +494,32 @@ namespace CAC {
 
     return new BeginAST(stmts);
   }
- 
-  maybe<InvokeAST*> parseInvoke(ParseState<Token>& tokens) { 
- 	exit_end(tokens);
-	Token rs = tokens.parseChar();
-	try_consume(".", tokens);
-	Token method = tokens.parseChar();
-	try_consume("(", tokens);
-	auto args =
-		sepBtwn0<ExpressionAST*, Token>(parseExpression, parseComma, tokens);
-	try_consume(")", tokens);
-	try_consume(";", tokens);
 
-	return new InvokeAST(rs, method, args);
+  maybe<InvokeAST*> parseInvoke(ParseState<Token>& tokens) { 
+    exit_end(tokens);
+    Token rs = tokens.parseChar();
+    try_consume(".", tokens);
+    Token method = tokens.parseChar();
+    try_consume("(", tokens);
+    auto args =
+      sepBtwn0<ExpressionAST*, Token>(parseExpression, parseComma, tokens);
+    try_consume(")", tokens);
+    try_consume(";", tokens);
+
+    return new InvokeAST(rs, method, args);
   }
 
-maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
+  maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     cout << "Parsing stmt at " << tokens.remainder() << endl;
     auto lblM = tryParse<LabelAST*>(parseLabel, tokens);
 
     auto iM = tryParse<InvokeAST*>(parseInvoke, tokens);
     if (iM.has_value()) {
-	auto s = iM.get_value();
-	if (lblM.has_value()) {
-		s->label = lblM.get_value();
-	}
-	return s;
+      auto s = iM.get_value();
+      if (lblM.has_value()) {
+        s->label = lblM.get_value();
+      }
+      return s;
     }
 
     auto bM = tryParse<BeginAST*>(parseBegin, tokens);
@@ -554,7 +554,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     }
 
     try_consume(",", tokens);
-    
+
     auto rstM = parseReset(tokens);
     if (!rstM.has_value()) {
       return {};
@@ -569,60 +569,60 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
     return new SequenceBlockAST(synchM.get_value(), rstM.get_value(), stmtM.get_value());
   }
-    maybe<ModuleAST*> parseModule(ParseState<Token>& tokens);
+  maybe<ModuleAST*> parseModule(ParseState<Token>& tokens);
 
-    maybe<ResourceAST*> parseResource(ParseState<Token>& tokens) {
+  maybe<ResourceAST*> parseResource(ParseState<Token>& tokens) {
 
-	exit_end(tokens);
-	Token t = tokens.parseChar();
-	exit_end(tokens);
-	Token n = tokens.parseChar();
-	try_consume(";", tokens);
+    exit_end(tokens);
+    Token t = tokens.parseChar();
+    exit_end(tokens);
+    Token n = tokens.parseChar();
+    try_consume(";", tokens);
 
-	return new ResourceAST(t, n);	
-    }
+    return new ResourceAST(t, n);	
+  }
 
-    maybe<AssignBlockAST*> parseAssign(ParseState<Token>& tokens) {
-	exit_end(tokens);
-	try_consume("assign", tokens);
-	auto expr = tryParse<ExpressionAST*>(parseExpression, tokens);
-	exit_failed(expr);
-	try_consume("=", tokens);
-	auto rhs = tryParse<ExpressionAST*>(parseExpression, tokens);
-	exit_failed(rhs);
-	try_consume(";", tokens);
+  maybe<AssignBlockAST*> parseAssign(ParseState<Token>& tokens) {
+    exit_end(tokens);
+    try_consume("assign", tokens);
+    auto expr = tryParse<ExpressionAST*>(parseExpression, tokens);
+    exit_failed(expr);
+    try_consume("=", tokens);
+    auto rhs = tryParse<ExpressionAST*>(parseExpression, tokens);
+    exit_failed(rhs);
+    try_consume(";", tokens);
 
-   	return new AssignBlockAST(expr.get_value(), rhs.get_value()); 
-    } 
+    return new AssignBlockAST(expr.get_value(), rhs.get_value()); 
+  } 
 
   maybe<BlockAST*> parseBlock(ParseState<Token>& tokens) {
 
-	  auto aM = tryParse<AssignBlockAST*>(parseAssign, tokens);
-	  if (aM.has_value()) {
-		return aM.get_value();
-	  
-	  }
-	  
-	  auto rM = tryParse<ResourceAST*>(parseResource, tokens);
-	  if (rM.has_value()) {
-		  return rM.get_value();
-	  }
+    auto aM = tryParse<AssignBlockAST*>(parseAssign, tokens);
+    if (aM.has_value()) {
+      return aM.get_value();
 
- 	auto mM = tryParse<ModuleAST*>(parseModule, tokens);
-       if (mM.has_value()) {
-	return new ModuleBlockAST(mM.get_value());
-       }
+    }
 
-	  auto dE = tryParse<ExternalAST*>(parseExternal, tokens);
-	if (dE.has_value()) {
-		return dE.get_value();
-	}
-      
-	  auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
+    auto rM = tryParse<ResourceAST*>(parseResource, tokens);
+    if (rM.has_value()) {
+      return rM.get_value();
+    }
+
+    auto mM = tryParse<ModuleAST*>(parseModule, tokens);
+    if (mM.has_value()) {
+      return new ModuleBlockAST(mM.get_value());
+    }
+
+    auto dE = tryParse<ExternalAST*>(parseExternal, tokens);
+    if (dE.has_value()) {
+      return dE.get_value();
+    }
+
+    auto dM = tryParse<DefaultAST*>(parseDefault, tokens);
     if (dM.has_value()) {
       return dM.get_value();
     }
-    
+
     auto sBlockM = tryParse<SequenceBlockAST*>(parseSequence, tokens);
     if (sBlockM.has_value()) {
       return sBlockM.get_value();
@@ -630,7 +630,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
     return {};
   }
-  
+
   maybe<ModuleAST*> parseModule(ParseState<Token>& tokens) {
     try_consume("module", tokens);
     Token modName = tokens.parseChar();
@@ -642,7 +642,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
     auto body = many<BlockAST*, Token>(parseBlock, tokens);
     try_consume("endmodule", tokens);
-    
+
     return new ModuleAST(modName, ports, body);
   }
 
@@ -659,11 +659,11 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     cout << ps.remainder() << endl;
     assert(ps.atEnd());
   }
-  
+
   TLU parseTLU(const std::string& filePath) {
     ifstream f(filePath);
     std::string str((std::istreambuf_iterator<char>(f)),
-                    std::istreambuf_iterator<char>());    
+        std::istreambuf_iterator<char>());    
     TLU t;
     vector<Token> tokens = tokenize(str);
     cout << "Tokens" << endl;
@@ -672,56 +672,56 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     }
 
     parseTokens(t, tokens);
-                          
+
     return t;
   }
 
   class CodeGenState {
-  public:
-    Context* c;
-    Module* activeMod;
-    CC* lastInstr;
-    StmtAST* lastStmt;
+    public:
+      Context* c;
+      Module* activeMod;
+      CC* lastInstr;
+      StmtAST* lastStmt;
 
-    map<string, StmtAST*> labelMap;
-    map<StmtAST*, CC*> stmtStarts;
-    map<StmtAST*, CC*> stmtEnds;
-    
-    CodeGenState() : activeMod(nullptr), lastInstr(nullptr), lastStmt(nullptr) {}
+      map<string, StmtAST*> labelMap;
+      map<StmtAST*, CC*> stmtStarts;
+      map<StmtAST*, CC*> stmtEnds;
 
-    CC* getStartForLabel(const std::string& name) {
-      cout << "Finding label " << name << endl;
-      assert(contains_key(name, labelMap));      
-      StmtAST* stmt = map_find(name, labelMap);
-      assert(contains_key(stmt, stmtStarts));
-      return map_find(stmt, stmtStarts);
-    }
+      CodeGenState() : activeMod(nullptr), lastInstr(nullptr), lastStmt(nullptr) {}
+
+      CC* getStartForLabel(const std::string& name) {
+        cout << "Finding label " << name << endl;
+        assert(contains_key(name, labelMap));      
+        StmtAST* stmt = map_find(name, labelMap);
+        assert(contains_key(stmt, stmtStarts));
+        return map_find(stmt, stmtStarts);
+      }
   };
 
   int genConstExpression(ExpressionAST* l,
-                     CodeGenState& c,
-                     TLU& t) {
+      CodeGenState& c,
+      TLU& t) {
     assert(IntegerAST::classof(l));
     auto id = sc<IntegerAST>(l);
     int value = stoi(id->getName());
     return value;
   }
- 
+
   string genName(ExpressionAST* l, CodeGenState& c, TLU& t) {
-	assert(IdentifierAST::classof(l));
-	auto id = sc<IdentifierAST>(l);
- 	return id->getName(); 
+    assert(IdentifierAST::classof(l));
+    auto id = sc<IdentifierAST>(l);
+    return id->getName(); 
   }
 
   ModuleInstance* genResource(ExpressionAST* l, CodeGenState& c, TLU& t) {
-	  string rName = genName(l, c, t);
-	return c.activeMod->getResource(rName);
-  
+    string rName = genName(l, c, t);
+    return c.activeMod->getResource(rName);
+
   }
-  
+
   Port genExpression(ExpressionAST* l,
-                     CodeGenState& c,
-                     TLU& t) {
+      CodeGenState& c,
+      TLU& t) {
     if (IdentifierAST::classof(l)) {
       auto id = sc<IdentifierAST>(l);
       string name = id->getName();
@@ -737,9 +737,9 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       cout << "Operand is " << op << endl;
 
       if (op == ".") {
-	ModuleInstance* rName = genResource(bop->a, c, t);
-	string ptName = genName(bop->b, c, t);
-     	return rName->pt(ptName); 
+        ModuleInstance* rName = genResource(bop->a, c, t);
+        string ptName = genName(bop->b, c, t);
+        return rName->pt(ptName); 
       } else {
         Port lhs = genExpression(bop->a, c, t);
         Port rhs = genExpression(bop->b, c, t);
@@ -749,7 +749,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
           auto& context = *(c.activeMod->getContext());
           auto wMod = getWireMod(context, 1);
           auto tmpWire = c.activeMod->freshInstance(wMod, "cmp_tmp");
-        
+
           auto compMod = addComparator(context, "eq", 1);
           auto cmp =
             c.activeMod->freshInstance(compMod, "cmp");
@@ -791,7 +791,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
     }
 
   }
-  
+
   void genCode(StmtAST* body, CodeGenState& c, TLU& t) {
     cout << "Generating code" << endl;
 
@@ -809,7 +809,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
 
       c.lastInstr = fst;
       c.lastStmt = body;
-      
+
       for (auto stmt : bst->stmts) {
         genCode(stmt, c, t);
       }
@@ -817,7 +817,7 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       auto endB = c.activeMod->addEmpty();
       c.lastInstr = endB;
     } else if (GotoAST::classof(body)) {
-      auto gts = sc<GotoAST>(body);
+      //auto gts = sc<GotoAST>(body);
       auto gt = c.activeMod->addEmpty();
       c.stmtStarts[body] = gt;      
       fst = gt;
@@ -826,27 +826,29 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
       // Continuations are added after all code has been generated
 
     } else if (InvokeAST::classof(body)) {
-	InvokeAST* inv = sc<InvokeAST>(body);
-	map<ExpressionAST*, Port> exprsToPorts;
-	string name = inv->name.getStr();
-	cout << "Getting invocation for " << name << endl;
-	ModuleInstance* m =
-		c.activeMod->getResource(name);
-	cout << "instance has name " << m->getName() << endl;
-	string methodName = m->source->getName() + "_" + inv->method.getStr();
-	cout << "Method name = " << methodName << endl;
-	Module* methodAction = m->action(inv->method.getStr());
-	cout << "Method action has name = " << methodAction->getName() << endl;
-	auto invokeCall = c.activeMod->addInvokeInstruction(methodAction);
-	//assert(false);
-	c.stmtStarts[body] = invokeCall;
-	c.lastInstr = invokeCall;
-	fst = invokeCall;
+      InvokeAST* inv = sc<InvokeAST>(body);
+      map<ExpressionAST*, Port> exprsToPorts;
+      string name = inv->name.getStr();
+      cout << "Getting invocation for " << name << endl;
+      ModuleInstance* m =
+        c.activeMod->getResource(name);
+      cout << "instance has name " << m->getName() << endl;
+      string methodName = m->source->getName() + "_" + inv->method.getStr();
+      cout << "Method name = " << methodName << endl;
+      Module* methodAction = m->action(inv->method.getStr());
+      cout << "Method action has name = " << methodAction->getName() << endl;
+      auto invokeCall = c.activeMod->addInvokeInstruction(methodAction);
+      //assert(false);
+      bindByType(invokeCall, m);
+      // Need to bind to arguments
+      c.stmtStarts[body] = invokeCall;
+      c.lastInstr = invokeCall;
+      fst = invokeCall;
     } else {
-      
-	   cout << "Stmt kind = " << body->getKind() << endl; 
-	    //assert(body->getKind() == STMT_KIND_GOTO);
-	    assert(ImpConnectAST::classof(body));
+
+      cout << "Stmt kind = " << body->getKind() << endl; 
+      //assert(body->getKind() == STMT_KIND_GOTO);
+      assert(ImpConnectAST::classof(body));
       cout << "Generating codde for imp connect" << endl;
       // Get expressions out and generate code for them?
       auto icSt = sc<ImpConnectAST>(body);
@@ -899,9 +901,9 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
           m->addOutPort(pAST->width, pAST->getName());
         }
       }
-
+      cgo.activeMod->setVerilogDeclString(mAST->getName().getStr());
       for (auto blk : mAST->blocks) {
-        
+
         if (SequenceBlockAST::classof(blk)) {
           auto sblk = sc<SequenceBlockAST>(blk);
           StmtAST* body = sblk->body;
@@ -917,39 +919,41 @@ maybe<StmtAST*> parseStmt(ParseState<Token>& tokens) {
           cout << "Setting default value of " << pt << " to " << val << endl;
           cgo.activeMod->setDefaultValue(pt.getName(), val);
         } else if (ExternalAST::classof(blk)) {
-		cgo.activeMod->setPrimitive(true);	
-	} else if (AssignBlockAST::classof(blk)) {
-		auto asg = sc<AssignBlockAST>(blk);
-		Port lhs = genExpression(asg->lhs, cgo, t);
-		Port rhs = genExpression(asg->rhs, cgo, t);
-		cgo.activeMod->addStructuralConnection(lhs, rhs);
-	} else if (ModuleBlockAST::classof(blk)) {
+          cgo.activeMod->setPrimitive(true);	
+        } else if (AssignBlockAST::classof(blk)) {
+          auto asg = sc<AssignBlockAST>(blk);
+          Port lhs = genExpression(asg->lhs, cgo, t);
+          Port rhs = genExpression(asg->rhs, cgo, t);
+          cgo.activeMod->addStructuralConnection(lhs, rhs);
+        } else if (ModuleBlockAST::classof(blk)) {
 
-		ModuleBlockAST* mBlock = sc<ModuleBlockAST>(blk);
-		ModuleAST* mInternal = mBlock->m;
-		
-		// TODO: Create new module with name active_mod_<name>
-		// then add all ports on active mod to this module
-		// and then: do code generation looking up ports in the
-		// containing module as needed?
+          ModuleBlockAST* mBlock = sc<ModuleBlockAST>(blk);
+          ModuleAST* mInternal = mBlock->m;
 
-		Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
-		for (auto pt : cgo.activeMod->getInterfacePorts()) {
-			if (pt.isInput) {
-				ctrl->addOutPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
-			} else {
-				ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
-			}
-		}
-		cgo.activeMod->addAction(ctrl);
-	} else if (ResourceAST::classof(blk)) {
-		ResourceAST* r = sc<ResourceAST>(blk);
-		string rName = r->typeName.getStr();
-		Module* rMod = cgo.activeMod->getContext()->getModule(rName);
-		string instName = r->name.getStr();
-		m->addInstance(rMod, instName);
-	} else {
-		assert(false);
+          // TODO: Create new module with name active_mod_<name>
+          // then add all ports on active mod to this module
+          // and then: do code generation looking up ports in the
+          // containing module as needed?
+
+          Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
+          for (auto pt : cgo.activeMod->getInterfacePorts()) {
+            if (pt.isInput) {
+              ctrl->addOutPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+            } else {
+              ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+            }
+          }
+
+          ctrl->setVerilogDeclString(ctrl->getName());
+          cgo.activeMod->addAction(ctrl);
+        } else if (ResourceAST::classof(blk)) {
+          ResourceAST* r = sc<ResourceAST>(blk);
+          string rName = r->typeName.getStr();
+          Module* rMod = cgo.activeMod->getContext()->getModule(rName);
+          string instName = r->name.getStr();
+          m->addInstance(rMod, instName);
+        } else {
+          assert(false);
         }
       }
       cgo.activeMod = nullptr;

@@ -3,14 +3,14 @@
 //if ((signal) !== (value)) begin $display("ASSERTION FAILED in %m: signal != value"); $finish(1); end
 
 module constant(output [WIDTH - 1 : 0] out);
-   parameter WIDTH = 16;
-   parameter VALUE = 0;
+parameter WIDTH = 16;
+parameter VALUE = 0;
    
    assign out = VALUE;
    
-endmodule
-   
-module load();
+   endmodule
+
+   module load();
 endmodule // load
 
 module store();
@@ -462,6 +462,22 @@ module register(input clk, input rst, input [WIDTH - 1:0] raddr, input [WIDTH - 
    assign rdata = data;
    
 endmodule // register
+
+module reg1(input clk, input rst, input en, input in, output data);
+  reg data_r;
+
+  always @(posedge clk) begin
+    if (rst) begin
+      data_r <= 0;
+    end else begin
+      if (en) begin
+        data_r <= in;
+      end
+    end
+  end
+
+  assign data = data_r;
+  endmodule
 
 module mod_register(input clk, input rst, input en, input [WIDTH - 1:0] in, output [WIDTH - 1:0] data);
 
