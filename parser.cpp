@@ -20,6 +20,10 @@ namespace CAC {
       return dbhc::maybe<ResultType*>();
     }
 
+  std::string getName(ExpressionAST* expr) {
+    assert(IdentifierAST::classof(expr));
+    return sc<IdentifierAST>(expr)->getName();
+  }
   int precedence(Token op) {
     map<string, int> prec{{"+", 100}, {".", 110}, {"==", 99}, {"-", 100}, {"*", 100}, {"<", 99}, {">", 99}, {"<=", 99}, {">=", 99}, {"%", 100}};
     assert(contains_key(op.getStr(), prec));
@@ -738,6 +742,11 @@ namespace CAC {
       cout << "Operand is " << op << endl;
 
       if (op == ".") {
+        if (getName(bop->a) == "this") {
+          string portName = getName(bop->b);
+          assert(c.surroundingMod != nullptr);
+          return c.activeMod->ipt(c.surroundingMod->getName() + "_" + portName);
+        }
         ModuleInstance* rName = genResource(bop->a, c, t);
         string ptName = genName(bop->b, c, t);
         return rName->pt(ptName); 
