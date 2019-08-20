@@ -682,6 +682,7 @@ namespace CAC {
       Module* activeMod;
       CC* lastInstr;
       StmtAST* lastStmt;
+      Module* surroundingMod;
 
       map<string, StmtAST*> labelMap;
       map<StmtAST*, CC*> stmtStarts;
@@ -943,8 +944,21 @@ namespace CAC {
               ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
             }
           }
-
+          
+          for (auto pt : mInternal->ports) {
+            if (pt->isInput) {
+              ctrl->addInPort(pt->width, pt->getName());
+            } else {
+              ctrl->addOutPort(pt->width, pt->getName());
+            }
+          }
           ctrl->setVerilogDeclString(ctrl->getName());
+          // Add code generation for this module
+          cgo.surroundingMod = cgo.activeMod;
+          cgo.activeMod = ctrl;
+
+          cgo.activeMod = cgo.surroundingMod;
+          cgo.surroundingMod = nullptr;
           cgo.activeMod->addAction(ctrl);
         } else if (ResourceAST::classof(blk)) {
           ResourceAST* r = sc<ResourceAST>(blk);
