@@ -944,7 +944,7 @@ namespace CAC {
           cgo.surroundingMod = cgo.activeMod;
           cgo.activeMod = ctrl;
 
-          genModuleBody(ctrl, cgo, t);
+          genModuleBody(mInternal, cgo, t);
 
           cgo.activeMod = cgo.surroundingMod;
           cgo.surroundingMod = nullptr;
@@ -977,77 +977,77 @@ namespace CAC {
         }
       }
 
-      genModuleBody(m, cgo, t); 
+      genModuleBody(mAST, cgo, t); 
       cgo.activeMod->setVerilogDeclString(mAST->getName().getStr());
-      for (auto blk : mAST->blocks) {
+      //for (auto blk : mAST->blocks) {
 
-        if (SequenceBlockAST::classof(blk)) {
-          auto sblk = sc<SequenceBlockAST>(blk);
-          StmtAST* body = sblk->body;
-          genCode(body, cgo, t);
-          addGotos(body, cgo, t);
-        } else if (DefaultAST::classof(blk)) {
-          auto db = sc<DefaultAST>(blk);
-          auto id = db->pt;
-          assert(IdentifierAST::classof(id));
-          auto ids = sc<IdentifierAST>(id)->getName();
-          Port pt = cgo.activeMod->ipt(ids);
-          int val = genConstExpression(db->val, cgo, t);
-          cout << "Setting default value of " << pt << " to " << val << endl;
-          cgo.activeMod->setDefaultValue(pt.getName(), val);
-        } else if (ExternalAST::classof(blk)) {
-          cgo.activeMod->setPrimitive(true);	
-        } else if (AssignBlockAST::classof(blk)) {
-          auto asg = sc<AssignBlockAST>(blk);
-          Port lhs = genExpression(asg->lhs, cgo, t);
-          Port rhs = genExpression(asg->rhs, cgo, t);
-          cgo.activeMod->addStructuralConnection(lhs, rhs);
-        } else if (ModuleBlockAST::classof(blk)) {
+        //if (SequenceBlockAST::classof(blk)) {
+          //auto sblk = sc<SequenceBlockAST>(blk);
+          //StmtAST* body = sblk->body;
+          //genCode(body, cgo, t);
+          //addGotos(body, cgo, t);
+        //} else if (DefaultAST::classof(blk)) {
+          //auto db = sc<DefaultAST>(blk);
+          //auto id = db->pt;
+          //assert(IdentifierAST::classof(id));
+          //auto ids = sc<IdentifierAST>(id)->getName();
+          //Port pt = cgo.activeMod->ipt(ids);
+          //int val = genConstExpression(db->val, cgo, t);
+          //cout << "Setting default value of " << pt << " to " << val << endl;
+          //cgo.activeMod->setDefaultValue(pt.getName(), val);
+        //} else if (ExternalAST::classof(blk)) {
+          //cgo.activeMod->setPrimitive(true);	
+        //} else if (AssignBlockAST::classof(blk)) {
+          //auto asg = sc<AssignBlockAST>(blk);
+          //Port lhs = genExpression(asg->lhs, cgo, t);
+          //Port rhs = genExpression(asg->rhs, cgo, t);
+          //cgo.activeMod->addStructuralConnection(lhs, rhs);
+        //} else if (ModuleBlockAST::classof(blk)) {
 
-          ModuleBlockAST* mBlock = sc<ModuleBlockAST>(blk);
-          ModuleAST* mInternal = mBlock->m;
+          //ModuleBlockAST* mBlock = sc<ModuleBlockAST>(blk);
+          //ModuleAST* mInternal = mBlock->m;
 
-          // TODO: Create new module with name active_mod_<name>
-          // then add all ports on active mod to this module
-          // and then: do code generation looking up ports in the
-          // containing module as needed?
+           //TODO: Create new module with name active_mod_<name>
+           //then add all ports on active mod to this module
+           //and then: do code generation looking up ports in the
+           //containing module as needed?
 
-          Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
-          for (auto pt : cgo.activeMod->getInterfacePorts()) {
-            if (pt.isInput) {
-              ctrl->addOutPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
-            } else {
-              ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
-            }
-          }
+          //Module* ctrl = cgo.activeMod->getContext()->addModule(cgo.activeMod->getName() + "_" + mInternal->getName().getStr()); 
+          //for (auto pt : cgo.activeMod->getInterfacePorts()) {
+            //if (pt.isInput) {
+              //ctrl->addOutPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+            //} else {
+              //ctrl->addInPort(pt.width, cgo.activeMod->getName() + "_" + pt.getName());
+            //}
+          //}
           
-          for (auto pt : mInternal->ports) {
-            if (pt->isInput) {
-              ctrl->addInPort(pt->width, pt->getName());
-            } else {
-              ctrl->addOutPort(pt->width, pt->getName());
-            }
-          }
-          ctrl->setVerilogDeclString(ctrl->getName());
-          // Add code generation for this module
-          cgo.surroundingMod = cgo.activeMod;
-          cgo.activeMod = ctrl;
+          //for (auto pt : mInternal->ports) {
+            //if (pt->isInput) {
+              //ctrl->addInPort(pt->width, pt->getName());
+            //} else {
+              //ctrl->addOutPort(pt->width, pt->getName());
+            //}
+          //}
+          //ctrl->setVerilogDeclString(ctrl->getName());
+//           Add code generation for this module
+          //cgo.surroundingMod = cgo.activeMod;
+          //cgo.activeMod = ctrl;
 
-          genModuleBody(ctrl, cgo, t);
+          //genModuleBody(mInternal, cgo, t);
 
-          cgo.activeMod = cgo.surroundingMod;
-          cgo.surroundingMod = nullptr;
-          cgo.activeMod->addAction(ctrl);
-        } else if (ResourceAST::classof(blk)) {
-          ResourceAST* r = sc<ResourceAST>(blk);
-          string rName = r->typeName.getStr();
-          Module* rMod = cgo.activeMod->getContext()->getModule(rName);
-          string instName = r->name.getStr();
-          m->addInstance(rMod, instName);
-        } else {
-          assert(false);
-        }
-      }
+          //cgo.activeMod = cgo.surroundingMod;
+          //cgo.surroundingMod = nullptr;
+          //cgo.activeMod->addAction(ctrl);
+        //} else if (ResourceAST::classof(blk)) {
+          //ResourceAST* r = sc<ResourceAST>(blk);
+          //string rName = r->typeName.getStr();
+          //Module* rMod = cgo.activeMod->getContext()->getModule(rName);
+          //string instName = r->name.getStr();
+          //m->addInstance(rMod, instName);
+        //} else {
+          //assert(false);
+        //}
+      //}
       cgo.activeMod = nullptr;
     }
   }
